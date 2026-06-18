@@ -17,6 +17,15 @@ export const GUEST = {
   avatarSeed: 'Alice Vance',
 };
 
+// ─── Accounts (unified login / signup) ──────────────────────────────────────
+// Registered host/guest accounts. status: ACTIVE | PENDING_ADMIN_APPROVAL | REJECTED.
+// Staff are NOT here — they join via an Invite ID (see `staff` + loginAsStaff).
+export const users = [
+  { role: 'host', hostType: 'individual', name: 'Alex Rivera', email: 'alex@safalevent.com', phone: '+1 (555) 999-8888', status: 'ACTIVE' },
+  { role: 'host', hostType: 'organization', orgName: 'Safal Foundation', name: 'Safal Foundation', email: 'org@safalevent.com', phone: '+1 (555) 777-6666', status: 'PENDING_ADMIN_APPROVAL' },
+  { role: 'guest', name: 'Alice Vance', email: 'alice@example.com', phone: '+1 (555) 123-4567', status: 'ACTIVE' },
+];
+
 export const events = [
   {
     id: '1',
@@ -238,6 +247,37 @@ export const getStaffPermissions = (staffMember) => {
 export const staffCan = (perm) => {
   if (!_currentStaff) return false;
   return !!getStaffPermissions(_currentStaff)[perm];
+};
+
+// Find a registered host/guest account by email or phone.
+const _digits = (s) => (s || '').replace(/\D/g, '');
+export const findUser = (contact) => {
+  const c = (contact || '').trim().toLowerCase();
+  if (!c) return null;
+  const d = _digits(c);
+  return users.find((u) => u.email.toLowerCase() === c || (d && _digits(u.phone) === d)) || null;
+};
+
+// UC-12/US-ACCESS-002: unified login — look up the account and route by its stored
+// type. US-AUTH-006: pending/rejected hosts are blocked with a clear reason.
+export const loginByContact = (contact) => {
+  const user = findUser(contact);
+  if (!user) return { success: false, error: 'No account found with this email/phone. Sign up below.' };
+  if (user.role === 'host' && user.status === 'PENDING_ADMIN_APPROVAL')
+    return { success: false, error: 'Your organization application is under admin review. You’ll get an email once it’s approved.' };
+  if (user.status === 'REJECTED')
+    return { success: false, error: `Your host registration was not approved.${user.rejectReason ? ' Reason: ' + user.rejectReason : ''}` };
+  return { success: true, user };
+};
+
+// US-ACCESS-001 / US-AUTH-002/003: register a new account. Organization hosts land
+// PENDING_ADMIN_APPROVAL (cannot enter the host dashboard yet); everyone else ACTIVE.
+export const registerUser = (u) => {
+  if (findUser(u.email)) return { success: false, error: 'An account with this email already exists. Try logging in instead.' };
+  const status = u.role === 'host' && u.hostType === 'organization' ? 'PENDING_ADMIN_APPROVAL' : 'ACTIVE';
+  const record = { ...u, status };
+  users.push(record);
+  return { success: true, user: record };
 };
 
 // UC-13: validate an Invite ID against the email/phone it was issued to.

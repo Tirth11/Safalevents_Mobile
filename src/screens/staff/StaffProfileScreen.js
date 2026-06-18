@@ -55,7 +55,7 @@ export default function StaffProfileScreen({ navigation }) {
         label="Switch account"
         icon="swap-horizontal-outline"
         variant="outline"
-        onPress={() => { auth.signOut(); navigation.navigate('Auth'); }}
+        onPress={() => { auth.signOut(); navigation.navigate('Auth', { mode: 'login' }); }}
         style={{ marginBottom: 10 }}
       />
       <Button

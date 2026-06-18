@@ -99,7 +99,7 @@ export default function GuestProfileScreen({ navigation, route }) {
         variant="outline"
         icon="swap-horizontal-outline"
         style={{ marginBottom: spacing.md }}
-        onPress={() => { auth.signOut(); navigation.navigate('Auth'); }}
+        onPress={() => { auth.signOut(); navigation.navigate('Auth', { mode: 'login' }); }}
       />
       <Button
         label="Log out"
