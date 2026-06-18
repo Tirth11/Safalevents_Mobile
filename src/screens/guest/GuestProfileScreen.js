@@ -22,7 +22,10 @@ const MENU = [
   { key: 'help', label: 'Help & Support', icon: 'chatbubbles-outline' },
 ];
 
+import { useAuth } from '../../auth/AuthContext';
+
 export default function GuestProfileScreen({ navigation, route }) {
+  const auth = useAuth();
   return (
     <Screen>
       <Text style={[font.h1, { marginBottom: spacing.md }]}>Profile</Text>
@@ -92,17 +95,17 @@ export default function GuestProfileScreen({ navigation, route }) {
       </Card>
 
       <Button
-        label="Switch role"
+        label="Switch account"
         variant="outline"
         icon="swap-horizontal-outline"
         style={{ marginBottom: spacing.md }}
-        onPress={() => navigation.replace('RoleSelect')}
+        onPress={() => { auth.signOut(); navigation.navigate('Auth'); }}
       />
       <Button
         label="Log out"
         variant="danger"
         icon="log-out-outline"
-        onPress={() => navigation.replace('RoleSelect')}
+        onPress={() => { auth.signOut(); navigation.navigate('Browse'); }}
       />
     </Screen>
   );

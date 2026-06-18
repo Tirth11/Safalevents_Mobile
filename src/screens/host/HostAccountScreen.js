@@ -27,7 +27,10 @@ const MENU = [
   { icon: 'mail-outline', label: 'Help & Support' },
 ];
 
+import { useAuth } from '../../auth/AuthContext';
+
 export default function HostAccountScreen({ navigation, route }) {
+  const auth = useAuth();
   return (
     <Screen>
       <Card style={{ marginBottom: spacing.lg }}>
@@ -100,17 +103,17 @@ export default function HostAccountScreen({ navigation, route }) {
       </Card>
 
       <Button
-        label="Switch role"
+        label="Switch account"
         variant="outline"
         icon="swap-horizontal-outline"
         style={{ marginBottom: spacing.md }}
-        onPress={() => navigation.replace('RoleSelect')}
+        onPress={() => { auth.signOut(); navigation.navigate('Auth'); }}
       />
       <Button
         label="Log out"
         variant="danger"
         icon="log-out-outline"
-        onPress={() => navigation.replace('RoleSelect')}
+        onPress={() => { auth.signOut(); navigation.navigate('Browse'); }}
       />
     </Screen>
   );

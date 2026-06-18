@@ -6,8 +6,10 @@ import { Screen, Card, Badge, Button, SectionTitle, Avatar, Row, Divider } from 
 import {
   useStore, getCurrentStaff, getEvent, getRoleById, getStaffPermissions, setCurrentStaff, PERMISSION_LABELS,
 } from '../../data/mock';
+import { useAuth } from '../../auth/AuthContext';
 
 export default function StaffProfileScreen({ navigation }) {
+  const auth = useAuth();
   useStore();
   const staff = getCurrentStaff();
   const role = staff && getRoleById(staff.roleId);
@@ -50,17 +52,17 @@ export default function StaffProfileScreen({ navigation }) {
       </Card>
 
       <Button
-        label="Switch role"
+        label="Switch account"
         icon="swap-horizontal-outline"
         variant="outline"
-        onPress={() => { setCurrentStaff(null); navigation.replace('RoleSelect'); }}
+        onPress={() => { auth.signOut(); navigation.navigate('Auth'); }}
         style={{ marginBottom: 10 }}
       />
       <Button
         label="Log out"
         icon="log-out-outline"
         variant="danger"
-        onPress={() => { setCurrentStaff(null); navigation.replace('RoleSelect'); }}
+        onPress={() => { auth.signOut(); navigation.navigate('Browse'); }}
       />
     </Screen>
   );

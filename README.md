@@ -1,10 +1,23 @@
 # SafalEvents — Mobile (UI Prototype)
 
 A React Native (Expo) prototype of the SafalEvents **host + guest + staff** experience.
-Single app with a **role switcher** at launch — pick *Host*, *Guest*, or *Login as Staff*.
-There's no backend; data lives in `src/data/mock.js`, but a small in-memory **live store**
-makes gate check-ins propagate: a staff QR scan marks the guest arrived, "sends" a
-confirmation email (delivery log), and the **host dashboard updates live**.
+
+**Browse-before-login (Guest Mode, UC-14):** the app opens past a splash straight into a
+landing/**Discover** browse home — no login wall. You can explore events and open detail
+screens with no account. Tapping a **gated action** (RSVP, Message host, Save, Create event,
+My account) routes to the **Auth** screen; after you sign in it **returns you to exactly
+that action**. Dismiss the auth modal to keep browsing, unchanged. A persistent
+**Log in / Sign up** entry stays visible while browsing. On web, sessions are remembered so
+returning users skip Guest Mode.
+
+**Auth:** Register/Login as **Guest** or **Host** (email/phone + demo OTP), or **Login as
+Staff** with an **Invite ID**. There's no backend; data lives in `src/data/mock.js`, but a
+small in-memory **live store** makes gate check-ins propagate: a staff QR scan marks the
+guest arrived, "sends" a confirmation email (delivery log), and the **host dashboard updates
+live**.
+
+**Opened in a browser** (the Netlify build), the whole app renders inside a **phone-frame
+device mockup** so it looks and behaves like a handset.
 
 This mirrors the feature set of the SafalEvents web app: RSVP approval workflow
 (Under Approval → Approve/Reject), capacity → waitlist (held under approval), staff & roles

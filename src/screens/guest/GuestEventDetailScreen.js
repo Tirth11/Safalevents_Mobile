@@ -13,8 +13,10 @@ import {
   Divider,
 } from '../../components/ui';
 import { events, getEvent } from '../../data/mock';
+import { useAuth, gateAction } from '../../auth/AuthContext';
 
 export default function GuestEventDetailScreen({ navigation, route }) {
+  const auth = useAuth();
   const event = getEvent(route.params?.eventId) || events[0];
 
   return (
@@ -105,7 +107,7 @@ export default function GuestEventDetailScreen({ navigation, route }) {
             label={event.approvalRequired ? 'Request to Join' : 'RSVP Now'}
             variant="primary"
             style={{ marginTop: spacing.lg }}
-            onPress={() => navigation.navigate('GuestRsvp', { eventId: event.id })}
+            onPress={() => gateAction(auth, navigation, { nav: 'GuestRsvp', params: { eventId: event.id }, role: 'guest' })}
           />
 
           {event.messagingEnabled ? (
@@ -114,8 +116,14 @@ export default function GuestEventDetailScreen({ navigation, route }) {
               variant="outline"
               icon="chatbubbles-outline"
               style={{ marginTop: spacing.sm }}
-              onPress={() => navigation.navigate('GuestChat', { eventId: event.id })}
+              onPress={() => gateAction(auth, navigation, { nav: 'GuestChat', params: { eventId: event.id } })}
             />
+          ) : null}
+
+          {!auth.isAuthed ? (
+            <Text style={[font.tiny, { textAlign: 'center', marginTop: 10 }]}>
+              You're browsing as a guest — we'll ask you to sign in when you RSVP.
+            </Text>
           ) : null}
         </Card>
       </View>
