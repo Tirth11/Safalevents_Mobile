@@ -46,6 +46,9 @@ export default function PhoneFrame({ children }) {
           <View style={{ height: contentH, width: '100%' }}>{children}</View>
         </View>
       </View>
+      <Text style={{ color: '#7a7682', marginTop: 14, fontSize: 13, textAlign: 'center', fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif' }}>
+        © 2026 Safalvir Inc. All rights reserved.
+      </Text>
     </View>
   );
 }
