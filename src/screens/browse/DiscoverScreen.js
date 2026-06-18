@@ -102,7 +102,7 @@ export default function DiscoverScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingTop: Platform.OS === 'web' ? 24 : 6, paddingBottom: 10 },
+  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingTop: 10, paddingBottom: 10 },
   logo: { width: 30, height: 30, borderRadius: 9, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   loginPill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 7 },
   loginPillTxt: { color: colors.primary, fontWeight: '700', fontSize: 12.5 },
@@ -111,8 +111,8 @@ const styles = StyleSheet.create({
   heroSub: { color: 'rgba(255,255,255,0.9)', fontSize: 13.5, marginTop: 6, lineHeight: 19 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  card: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', marginBottom: 12, ...shadow },
-  cardImg: { width: 96, height: '100%', minHeight: 96, backgroundColor: colors.surfaceHover },
+  card: { flexDirection: 'row', alignItems: 'stretch', backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', marginBottom: 12, ...shadow },
+  cardImg: { width: 104, alignSelf: 'stretch', minHeight: 104, backgroundColor: colors.surfaceHover },
   saveBtn: { padding: 12, justifyContent: 'center' },
   hostCta: { margin: spacing.lg, marginTop: spacing.xl, padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
 });

@@ -130,7 +130,7 @@ export { GuestTicketsScreen };
 const styles = StyleSheet.create({
   between: { justifyContent: 'space-between' },
   ticketCard: { marginBottom: spacing.md, overflow: 'hidden' },
-  ticketCover: { width: 90, height: '100%', minHeight: 120, backgroundColor: colors.surfaceHover },
+  ticketCover: { width: 96, alignSelf: 'stretch', minHeight: 124, backgroundColor: colors.surfaceHover },
   histIcon: {
     width: 38,
     height: 38,
