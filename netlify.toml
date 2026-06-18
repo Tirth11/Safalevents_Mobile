@@ -1,0 +1,13 @@
+# Netlify build for the Expo web export of the SafalEvents mobile UI prototype.
+[build]
+  command = "npm run build:web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Single-page app: serve index.html for any route so client-side navigation works.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

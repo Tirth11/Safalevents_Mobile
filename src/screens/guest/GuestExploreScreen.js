@@ -1,0 +1,96 @@
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, radius, font, shadow, avatarUrl } from '../../theme/theme';
+import {
+  Screen,
+  Card,
+  Badge,
+  Button,
+  SectionTitle,
+  Avatar,
+  Row,
+  Divider,
+  Field,
+} from '../../components/ui';
+import { events } from '../../data/mock';
+
+const CATEGORIES = ['All', 'Party', 'Meetup', 'Fitness', 'Comedy'];
+
+export default function GuestExploreScreen({ navigation, route }) {
+  const [activeCat, setActiveCat] = useState('All');
+
+  return (
+    <Screen>
+      <Text style={[font.h1, { marginBottom: spacing.md }]}>Explore</Text>
+
+      <Field placeholder="Search events, venues…" />
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ flexGrow: 0, marginBottom: spacing.lg }}
+      >
+        <Row>
+          {CATEGORIES.map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              activeOpacity={0.8}
+              onPress={() => setActiveCat(cat)}
+              style={{ marginRight: spacing.sm }}
+            >
+              <Badge tone={activeCat === cat ? 'primary' : 'gray'} label={cat} />
+            </TouchableOpacity>
+          ))}
+        </Row>
+      </ScrollView>
+
+      {events.map((e) => (
+        <Card
+          key={e.id}
+          padded={false}
+          style={styles.eventCard}
+          onPress={() => navigation.navigate('GuestEventDetail', { eventId: e.id })}
+        >
+          <Image source={{ uri: e.cover }} style={styles.cover} />
+          <View style={{ padding: spacing.lg }}>
+            <Text style={font.h3} numberOfLines={1}>
+              {e.title}
+            </Text>
+            <Row style={[styles.between, { marginTop: 6 }]}>
+              <Row>
+                <Ionicons name="star" size={14} color={colors.amber} />
+                <Text style={[font.small, { marginLeft: 4, color: colors.text, fontWeight: '700' }]}>
+                  {e.rating}
+                </Text>
+              </Row>
+              <Badge tone="blue" label={e.eventType} />
+            </Row>
+            <Row style={{ marginTop: 8 }}>
+              <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
+              <Text style={[font.small, { marginLeft: 4, flex: 1 }]} numberOfLines={1}>
+                {e.date} • {e.location}
+              </Text>
+            </Row>
+            <Divider style={{ marginVertical: spacing.sm }} />
+            <Row>
+              <Avatar seed={e.hostName} size={22} />
+              <Text style={[font.small, { marginLeft: 6, flex: 1 }]} numberOfLines={1}>
+                Hosted by {e.hostName}
+              </Text>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </Row>
+          </View>
+        </Card>
+      ))}
+    </Screen>
+  );
+}
+
+export { GuestExploreScreen };
+
+const styles = StyleSheet.create({
+  between: { justifyContent: 'space-between' },
+  eventCard: { marginBottom: spacing.md, overflow: 'hidden' },
+  cover: { width: '100%', height: 150, backgroundColor: colors.surfaceHover },
+});
