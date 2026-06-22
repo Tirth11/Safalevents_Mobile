@@ -12,8 +12,9 @@ import {
   StatCard,
   Row,
   Divider,
+  VerificationGate,
 } from '../../components/ui';
-import { events, rsvps, HOST, useStore } from '../../data/mock';
+import { events, rsvps, useStore, getCurrentHost, hostFullyVerified } from '../../data/mock';
 
 const STATUS_TONE = {
   Published: 'green',
@@ -23,6 +24,13 @@ const STATUS_TONE = {
 
 export default function HostDashboardScreen({ navigation, route }) {
   useStore(); // live update when staff check guests in at the gate
+  const host = getCurrentHost();
+
+  // Phase 1d — org hosts are locked out until docs uploaded + admin-approved.
+  if (!hostFullyVerified(host)) {
+    return <VerificationGate onUpload={() => navigation.navigate('Account')} />;
+  }
+
   const pendingCount = rsvps.filter((r) => r.approvalState === 'UNDER_APPROVAL').length;
   const checkedInCount = rsvps.filter((r) => r.checkedIn).length;
   const checkinPct = rsvps.length ? Math.round((checkedInCount / rsvps.length) * 100) : 0;
@@ -31,10 +39,10 @@ export default function HostDashboardScreen({ navigation, route }) {
     <Screen>
       <Row style={[styles.between, { marginBottom: spacing.lg }]}>
         <Row>
-          <Avatar seed={HOST.avatarSeed} size={46} />
+          <Avatar seed={host.avatarSeed || host.name} size={46} />
           <View style={{ marginLeft: spacing.md }}>
             <Text style={font.small}>Welcome back,</Text>
-            <Text style={font.h2}>Alex</Text>
+            <Text style={font.h2}>{(host.name || 'Host').split(' ')[0]}</Text>
           </View>
         </Row>
         <TouchableOpacity

@@ -177,7 +177,7 @@ export function ToggleRow({ label, desc, value, icon }) {
 // Simple in-screen segmented tab control.
 export function Tabs({ tabs, active, onChange }) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsWrap}>
+    <View style={styles.tabsWrap}>
       {tabs.map((t) => {
         const key = typeof t === 'string' ? t : t.key;
         const label = typeof t === 'string' ? t : t.label;
@@ -191,7 +191,7 @@ export function Tabs({ tabs, active, onChange }) {
           </TouchableOpacity>
         );
       })}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -224,6 +224,116 @@ export function ScreenHeader({ title, subtitle, onBack, right }) {
         {right}
       </Row>
     </View>
+  );
+}
+
+// ─── Controlled inputs (for forms/wizards that need to read values) ──────────
+// The plain `Field` above is uncontrolled (defaultValue); use TextField when the
+// screen must capture what the user types.
+export function TextField({ label, value, onChangeText, placeholder, multiline, keyboardType, half }) {
+  return (
+    <View style={{ marginBottom: spacing.md, flex: half ? 1 : undefined }}>
+      {label ? <Text style={[font.small, { fontWeight: '700', marginBottom: 4, color: colors.text }]}>{label}</Text> : null}
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={colors.textMuted}
+        keyboardType={keyboardType}
+        multiline={multiline}
+        style={[styles.input, multiline && { height: 90, textAlignVertical: 'top' }]}
+      />
+    </View>
+  );
+}
+
+// Controlled on/off row (mirrors ToggleRow visuals but reports state to parent).
+export function Toggle({ label, desc, value, onValueChange, icon }) {
+  return (
+    <View style={[styles.rowBetween, styles.toggleRow]}>
+      <View style={{ flex: 1, paddingRight: 12 }}>
+        <Row>
+          {icon ? <ListItemIcon name={icon} /> : null}
+          <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{label}</Text>
+        </Row>
+        {desc ? <Text style={[font.tiny, { marginTop: 2 }]}>{desc}</Text> : null}
+      </View>
+      <RNSwitch value={!!value} onValueChange={onValueChange} trackColor={{ true: colors.primary, false: '#cbd5e1' }} thumbColor="#fff" />
+    </View>
+  );
+}
+
+// Selectable pill chips (single-select). options: array of strings or {key,label}.
+export function Chips({ options, value, onChange, multi = false }) {
+  const sel = multi ? (Array.isArray(value) ? value : []) : value;
+  const isOn = (k) => (multi ? sel.includes(k) : sel === k);
+  return (
+    <View style={styles.chipsWrap}>
+      {options.map((o) => {
+        const key = typeof o === 'string' ? o : o.key;
+        const label = typeof o === 'string' ? o : o.label;
+        const on = isOn(key);
+        return (
+          <TouchableOpacity
+            key={key}
+            onPress={() => onChange(multi ? (on ? sel.filter((x) => x !== key) : [...sel, key]) : key)}
+            style={[styles.chip, on && styles.chipActive]}
+            activeOpacity={0.85}
+          >
+            <Text style={{ color: on ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>{label}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
+// Step indicator dots for a multi-step wizard.
+export function StepIndicator({ steps, current }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg }}>
+      {steps.map((label, i) => {
+        const done = i < current;
+        const active = i === current;
+        return (
+          <React.Fragment key={label}>
+            <View style={{ alignItems: 'center', width: 64 }}>
+              <View style={[styles.stepDot, (active || done) && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
+                {done ? (
+                  <Ionicons name="checkmark" size={13} color="#fff" />
+                ) : (
+                  <Text style={{ color: active ? '#fff' : colors.textMuted, fontWeight: '800', fontSize: 12 }}>{i + 1}</Text>
+                )}
+              </View>
+              <Text numberOfLines={1} style={{ fontSize: 9.5, marginTop: 4, fontWeight: '700', color: active ? colors.primary : colors.textMuted }}>
+                {label}
+              </Text>
+            </View>
+            {i < steps.length - 1 ? <View style={{ flex: 1, height: 2, backgroundColor: done ? colors.primary : colors.border, marginBottom: 14 }} /> : null}
+          </React.Fragment>
+        );
+      })}
+    </View>
+  );
+}
+
+// Full-screen lock shown when an org host isn't verified yet (Phase 1 gating).
+export function VerificationGate({ onUpload, title = 'Verification required', message }) {
+  return (
+    <Screen>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 }}>
+        <View style={[styles.iconTile, { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.amberTint }]}>
+          <Ionicons name="lock-closed" size={32} color={colors.amber} />
+        </View>
+        <Text style={[font.h2, { marginTop: 16, textAlign: 'center' }]}>{title}</Text>
+        <Text style={[font.small, { textAlign: 'center', marginTop: 8, lineHeight: 19, paddingHorizontal: 8 }]}>
+          {message || 'Upload your organization documents and get approved by Safal Events to start hosting.'}
+        </Text>
+        {onUpload ? (
+          <Button label="Go to verification" icon="cloud-upload-outline" onPress={onUpload} style={{ marginTop: 20 }} />
+        ) : null}
+      </View>
+    </Screen>
   );
 }
 
@@ -281,9 +391,13 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
   },
-  tabsWrap: { borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: spacing.lg, flexGrow: 0 },
-  tabBtn: { marginRight: 18, paddingBottom: 2 },
+  tabsWrap: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 4, columnGap: 4, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: spacing.lg },
+  tabBtn: { marginRight: 14, paddingBottom: 6 },
   header: { marginBottom: spacing.lg },
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  stepDot: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
 });
 
 export { styles as uiStyles };

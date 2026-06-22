@@ -21,8 +21,20 @@ export const GUEST = {
 // Registered host/guest accounts. status: ACTIVE | PENDING_ADMIN_APPROVAL | REJECTED.
 // Staff are NOT here — they join via an Invite ID (see `staff` + loginAsStaff).
 export const users = [
-  { role: 'host', hostType: 'individual', name: 'Alex Rivera', email: 'alex@safalevent.com', phone: '+1 (555) 999-8888', status: 'ACTIVE' },
-  { role: 'host', hostType: 'organization', orgName: 'Safal Foundation', name: 'Safal Foundation', email: 'org@safalevent.com', phone: '+1 (555) 777-6666', status: 'PENDING_ADMIN_APPROVAL' },
+  { role: 'host', hostType: 'individual', name: 'Alex Rivera', email: 'alex@safalevent.com', phone: '+1 (555) 999-8888', status: 'ACTIVE', avatarSeed: 'Alex Rivera' },
+  {
+    role: 'host',
+    hostType: 'organization',
+    orgName: 'Safal Foundation',
+    name: 'Safal Foundation',
+    email: 'org@safalevent.com',
+    phone: '+1 (555) 777-6666',
+    status: 'PENDING_ADMIN_APPROVAL',
+    avatarSeed: 'Safal Foundation',
+    // Org hosts upload verification docs INSIDE the app (never at signup).
+    orgDocsUploaded: false,
+    orgProfile: { orgName: 'Safal Foundation', orgType: 'NGO', website: 'https://safalfoundation.org', city: 'New York', state: 'NY', docs: [] },
+  },
   { role: 'guest', name: 'Alice Vance', email: 'alice@example.com', phone: '+1 (555) 123-4567', status: 'ACTIVE' },
 ];
 
@@ -209,10 +221,47 @@ export const payouts = [
   { id: 'po2', date: '2026-06-08', amount: 320.0, status: 'Processing', bank: 'Chase Bank (...1234)' },
 ];
 
+// ─── Manage-event extras (Phase 3) ──────────────────────────────────────────
+// Polls keyed by eventId. Each poll has options with a vote count.
+export const polls = [
+  {
+    id: 'poll1',
+    eventId: '1',
+    question: 'Which welcome drink should we feature?',
+    status: 'Published',
+    options: [
+      { id: 'op1', text: 'Aperol Spritz', votes: 14 },
+      { id: 'op2', text: 'Classic Mojito', votes: 9 },
+      { id: 'op3', text: 'Non-alcoholic Punch', votes: 6 },
+    ],
+  },
+];
+
+// Public event comments keyed by eventId.
+export const comments = [
+  { id: 'cm1', eventId: '1', name: 'Alice Vance', text: 'So excited for this! Is there a coat check?', time: 'Jun 6, 5:12 PM' },
+  { id: 'cm2', eventId: '1', name: 'Bob Smith', text: 'The rooftop view last year was unreal. Count me in.', time: 'Jun 7, 9:40 AM' },
+];
+
+// Cover image presets (reuse the Unsplash URLs already used by seed events).
+export const COVER_PRESETS = events.map((e) => e.cover).filter(Boolean);
+
+// Named accent gradients used when creating an event.
+export const ACCENT_THEMES = [
+  { key: 'sunset', name: 'Sunset Coral', colors: ['#F2541B', '#F59E0B'] },
+  { key: 'ocean', name: 'Ocean Indigo', colors: ['#0ea5e9', '#6366f1'] },
+  { key: 'emerald', name: 'Emerald Forest', colors: ['#00A63E', '#0d9488'] },
+  { key: 'midnight', name: 'Midnight', colors: ['#1e293b', '#7c3aed'] },
+];
+
+export const EVENT_TYPES = ['Party', 'Meetup', 'Meeting', 'Webinar', 'Workshop', 'Religious', 'Wedding', 'Other'];
+
 // Helpers
 export const getEvent = (id) => events.find((e) => e.id === id);
 export const getRsvps = (eventId) => rsvps.filter((r) => r.eventId === eventId);
 export const getRoleById = (id) => roles.find((r) => r.id === id) || null;
+export const getPolls = (eventId) => polls.filter((p) => p.eventId === eventId);
+export const getComments = (eventId) => comments.filter((c) => c.eventId === eventId);
 
 // ─── Live store layer ─────────────────────────────────────────────────────────
 // Minimal pub/sub so a staff check-in re-renders the host dashboard live.
@@ -238,6 +287,191 @@ export function useStore() {
 let _currentStaff = null;
 export const setCurrentStaff = (s) => { _currentStaff = s; _notify(); };
 export const getCurrentStaff = () => _currentStaff;
+
+// ─── Current host account ────────────────────────────────────────────────────
+// Host screens read this instead of the hardcoded HOST. Default is the individual
+// host (Alex Rivera, ACTIVE) so the normal full experience shows out of the box.
+// Switching to the org demo account surfaces the verification gate.
+const _individualHost = users.find((u) => u.email === 'alex@safalevent.com');
+const _orgHost = users.find((u) => u.email === 'org@safalevent.com');
+export const ORG_HOST_EMAIL = 'org@safalevent.com';
+export const INDIVIDUAL_HOST_EMAIL = 'alex@safalevent.com';
+
+let _currentHost = _individualHost || { ...HOST, role: 'host', hostType: 'individual', status: 'ACTIVE' };
+export const getCurrentHost = () => _currentHost;
+export const setCurrentHost = (account) => { _currentHost = account; _notify(); };
+
+// Convenience: jump straight to one of the two demo host personas.
+export const useIndividualHost = () => setCurrentHost(_individualHost);
+export const useOrgHost = () => setCurrentHost(_orgHost);
+
+export const isOrgHost = (account) => !!account && account.hostType === 'organization';
+
+// A host can do host activity only when individual, OR (org docs uploaded AND admin-approved).
+export const hostFullyVerified = (account) =>
+  !!account && (account.hostType !== 'organization' || (!!account.orgDocsUploaded && account.status === 'ACTIVE'));
+
+// Org host uploads/submits documents from inside their profile (never at signup).
+export const saveOrgDocuments = (docNames) => {
+  const h = _currentHost;
+  if (!h) return;
+  if (!h.orgProfile) h.orgProfile = { docs: [] };
+  h.orgProfile.docs = Array.isArray(docNames) ? [...docNames] : [];
+  h.orgDocsUploaded = h.orgProfile.docs.length > 0;
+  // Submitting moves the org into the admin-review queue (still gated until ACTIVE).
+  if (h.orgDocsUploaded && h.status !== 'ACTIVE') h.status = 'PENDING_ADMIN_APPROVAL';
+  _notify();
+};
+
+// Demo-only: approve the current org host (so the unlocked experience is reachable
+// without a real admin console).
+export const approveCurrentOrgHost = () => {
+  const h = _currentHost;
+  if (h && h.hostType === 'organization' && h.orgDocsUploaded) { h.status = 'ACTIVE'; _notify(); }
+};
+
+// ─── Create event (Phase 2) ─────────────────────────────────────────────────
+// Prepends a new event using the current host's identity; returns the record.
+export const createEvent = (data, asDraft = false) => {
+  const host = _currentHost || {};
+  const record = {
+    id: 'e_' + Math.random().toString(36).slice(2, 8),
+    title: data.title || 'Untitled event',
+    date: data.date || '',
+    time: data.time || '',
+    location: data.location || '',
+    city: data.city || '',
+    cover: data.cover || COVER_PRESETS[0],
+    description: data.description || '',
+    eventType: data.eventType || 'Other',
+    accentTheme: data.accentTheme || 'sunset',
+    status: asDraft ? 'Draft' : 'Published',
+    privacy: data.privacy || 'Public',
+    rsvpStatus: data.rsvpStatus || 'Open',
+    capacity: Number(data.capacity) || 0,
+    maxGuestsPerRsvp: Number(data.maxGuestsPerRsvp) || 1,
+    rsvpDeadline: data.rsvpDeadline || '',
+    approvalRequired: !!data.approvalRequired,
+    messagingEnabled: data.messagingEnabled !== false,
+    allowSelfEdit: !!data.allowSelfEdit,
+    allowSelfCancellation: !!data.allowSelfCancellation,
+    cancellationCutoff: Number(data.cancellationCutoff) || 0,
+    requireCancellationReason: !!data.requireCancellationReason,
+    allowComments: !!data.allowComments,
+    sendRsvpConfirmationEmail: data.sendRsvpConfirmationEmail !== false,
+    sendRsvpConfirmationSms: !!data.sendRsvpConfirmationSms,
+    sendPreEventReminders: data.sendPreEventReminders !== false,
+    sendPostEventFeedbackEmail: !!data.sendPostEventFeedbackEmail,
+    enablePayments: !!data.enablePayments,
+    ticketPrice: Number(data.ticketPrice) || 0,
+    bank: data.bank || null,
+    seriesType: data.seriesType || 'None',
+    hostName: host.name || HOST.name,
+    hostEmail: host.email || HOST.email,
+    questions: Array.isArray(data.questions) ? data.questions.filter((q) => (q || '').trim()) : [],
+    rating: 0,
+  };
+  events.unshift(record);
+  _notify();
+  return record;
+};
+
+// ─── Create poll (Phase 3) ──────────────────────────────────────────────────
+export const createPoll = (eventId, question, optionTexts) => {
+  const poll = {
+    id: 'poll_' + Math.random().toString(36).slice(2, 8),
+    eventId,
+    question: question || 'Untitled poll',
+    status: 'Published',
+    options: (optionTexts || [])
+      .filter((t) => (t || '').trim())
+      .map((t, i) => ({ id: 'op_' + Math.random().toString(36).slice(2, 6) + i, text: t.trim(), votes: 0 })),
+  };
+  polls.unshift(poll);
+  _notify();
+  return poll;
+};
+
+// ─── Comments (Phase 3) ─────────────────────────────────────────────────────
+export const addComment = (eventId, name, text) => {
+  const c = { id: 'cm_' + Math.random().toString(36).slice(2, 8), eventId, name: name || 'Host', text: text || '', time: 'just now' };
+  comments.unshift(c);
+  _notify();
+  return c;
+};
+export const deleteComment = (commentId) => {
+  const i = comments.findIndex((c) => c.id === commentId);
+  if (i >= 0) comments.splice(i, 1);
+  _notify();
+};
+
+// ─── Add guest manually / invitations (Phase 3) ─────────────────────────────
+// Creates an APPROVED rsvp, respecting capacity. Returns {ok, error?, rsvp?}.
+export const addManualGuest = (eventId, data) => {
+  const ev = getEvent(eventId);
+  if (!ev) return { ok: false, error: 'Event not found.' };
+  const going = rsvps.filter((r) => r.eventId === eventId && r.status === 'going' && r.approvalState === 'APPROVED');
+  const seats = going.reduce((n, r) => n + (r.guestCount || 1), 0);
+  const want = Number(data.guestCount) || 1;
+  if (ev.capacity && seats + want > ev.capacity)
+    return { ok: false, error: `Adding ${want} would exceed capacity (${seats}/${ev.capacity}).` };
+  const rsvp = {
+    id: 'r_' + Math.random().toString(36).slice(2, 8),
+    eventId,
+    name: data.name || 'Guest',
+    email: data.email || '',
+    phone: data.phone || '',
+    status: 'going',
+    approvalState: 'APPROVED',
+    checkedIn: false,
+    guestCount: want,
+    timestamp: new Date().toISOString(),
+    answers: {},
+    manual: true,
+  };
+  rsvps.push(rsvp);
+  outbox.unshift({
+    id: 'o_' + Math.random().toString(36).slice(2, 8),
+    to: rsvp.email || rsvp.name,
+    channel: 'Email',
+    subject: `You've been added to ${ev.title}`,
+    time: 'just now',
+  });
+  _notify();
+  return { ok: true, rsvp };
+};
+
+// ─── Broadcast to all guests (Phase 3) ──────────────────────────────────────
+// Logs one outbox entry per confirmed guest; returns the number reached.
+export const broadcast = (eventId, subject, channel = 'Email') => {
+  const ev = getEvent(eventId);
+  const recipients = rsvps.filter((r) => r.eventId === eventId && r.status === 'going');
+  recipients.forEach((r) => {
+    outbox.unshift({
+      id: 'o_' + Math.random().toString(36).slice(2, 8),
+      to: r.email || r.name,
+      channel,
+      subject: subject || `Update for ${ev ? ev.title : 'your event'}`,
+      time: 'just now',
+    });
+  });
+  _notify();
+  return recipients.length;
+};
+
+// ─── Edit / delete event (Phase 3 Settings) ─────────────────────────────────
+export const updateEvent = (eventId, patch) => {
+  const ev = getEvent(eventId);
+  if (!ev) return null;
+  Object.assign(ev, patch);
+  _notify();
+  return ev;
+};
+export const deleteEvent = (eventId) => {
+  const i = events.findIndex((e) => e.id === eventId);
+  if (i >= 0) events.splice(i, 1);
+  _notify();
+};
 
 // Resolve a staff member's permission set from their role.
 export const getStaffPermissions = (staffMember) => {

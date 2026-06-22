@@ -13,12 +13,19 @@ import {
   Divider,
   Field,
   EmptyState,
+  VerificationGate,
 } from '../../components/ui';
-import { conversations } from '../../data/mock';
+import { conversations, useStore, getCurrentHost, hostFullyVerified } from '../../data/mock';
 
 export default function HostMessagesScreen({ navigation, route }) {
+  useStore();
   const [selectedId, setSelectedId] = useState(null);
   const selected = conversations.find((c) => c.id === selectedId);
+  const host = getCurrentHost();
+
+  if (!hostFullyVerified(host)) {
+    return <VerificationGate onUpload={() => navigation.navigate('Account')} />;
+  }
 
   return (
     <Screen>

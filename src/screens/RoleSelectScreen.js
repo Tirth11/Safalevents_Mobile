@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius } from '../theme/theme';
-import { loginAsStaff } from '../data/mock';
+import { loginAsStaff, useIndividualHost, useOrgHost } from '../data/mock';
 
 function RoleCard({ icon, title, desc, onPress, tint = 'rgba(242,84,27,0.10)' }) {
   return (
@@ -55,7 +55,14 @@ export default function RoleSelectScreen({ navigation }) {
               icon="grid"
               title="Host an event"
               desc="Create events, approve RSVPs, manage staff & messaging."
-              onPress={() => navigation.replace('HostTabs')}
+              onPress={() => { useIndividualHost(); navigation.replace('HostTabs'); }}
+            />
+            <RoleCard
+              icon="business"
+              title="Host as an organization"
+              desc="Upload verification docs & get approved before hosting."
+              onPress={() => { useOrgHost(); navigation.replace('HostTabs'); }}
+              tint="rgba(234,179,8,0.16)"
             />
             <RoleCard
               icon="ticket"

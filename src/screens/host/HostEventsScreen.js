@@ -12,8 +12,9 @@ import {
   Divider,
   Field,
   Tabs,
+  VerificationGate,
 } from '../../components/ui';
-import { events, getRsvps } from '../../data/mock';
+import { events, getRsvps, useStore, getCurrentHost, hostFullyVerified } from '../../data/mock';
 
 const STATUS_TONE = {
   Published: 'green',
@@ -28,7 +29,13 @@ const TABS = [
 ];
 
 export default function HostEventsScreen({ navigation, route }) {
+  useStore();
   const [active, setActive] = useState('upcoming');
+  const host = getCurrentHost();
+
+  if (!hostFullyVerified(host)) {
+    return <VerificationGate onUpload={() => navigation.navigate('Account')} />;
+  }
 
   return (
     <Screen>

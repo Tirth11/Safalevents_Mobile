@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font } from '../theme/theme';
 import { Button } from '../components/ui';
-import { HOST, GUEST, loginAsStaff, loginByContact, registerUser, findUser } from '../data/mock';
+import { HOST, GUEST, loginAsStaff, loginByContact, registerUser, findUser, setCurrentHost } from '../data/mock';
 import { useAuth } from '../auth/AuthContext';
 
 const ORG_TYPES = ['NGO', 'Temple', 'Company', 'Community', 'Other'];
@@ -15,7 +15,7 @@ const DEMO_PERSONAS = [
   { key: 'host', title: 'Alex Rivera · Host', desc: 'Manage events, approvals & analytics.', contact: 'alex@safalevent.com', icon: 'grid', tint: 'rgba(242,84,27,0.10)' },
   { key: 'guest', title: 'Alice Vance · Guest', desc: 'Tickets, QR passes, explore events.', contact: 'alice@example.com', icon: 'ticket', tint: 'rgba(0,166,62,0.12)' },
   { key: 'staff', title: 'Sam Carter · Staff', desc: 'Coordinator — approvals & check-in.', invite: 'INV-SAM-2026', contact: 'sam@safalevent.com', icon: 'shield-checkmark', tint: 'rgba(124,58,237,0.14)' },
-  { key: 'pending', title: 'Safal Foundation · Pending', desc: 'Org host awaiting admin review.', contact: 'org@safalevent.com', icon: 'time', tint: 'rgba(234,179,8,0.16)' },
+  { key: 'pending', title: 'Safal Foundation · Org host', desc: 'Unverified org — see the verification gate.', contact: 'org@safalevent.com', icon: 'time', tint: 'rgba(234,179,8,0.16)' },
 ];
 
 function Segment({ options, value, onChange }) {
@@ -53,6 +53,7 @@ export default function AuthScreen({ navigation, route }) {
   const [agree, setAgree] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loginUser, setLoginUser] = useState(null); // the looked-up account during login
+  const [registeredOrg, setRegisteredOrg] = useState(null); // org record created at signup
   const [f, setF] = useState({
     firstName: '', lastName: '', email: '', phone: '', city: '', state: '',
     orgName: '', orgType: 'NGO', website: '', contactName: '', name: '',
@@ -112,6 +113,7 @@ export default function AuthScreen({ navigation, route }) {
     if (mode === 'login') {
       const u = loginUser;
       if (!u) { setError('Something went wrong — please re-enter your email/phone.'); setStep('form'); return; }
+      if (u.role === 'host') setCurrentHost(u); // host screens read the current host account
       auth.signIn({ role: u.role, name: u.name, email: u.email, hostType: u.hostType });
       routeAfterAuth(u);
       return;
@@ -121,14 +123,21 @@ export default function AuthScreen({ navigation, route }) {
     const newUser = role === 'host'
       ? { role: 'host', hostType, name: isOrg ? (f.orgName || 'My Organization') : (`${f.firstName} ${f.lastName}`.trim() || HOST.name), email: f.email.trim() || HOST.email, phone: f.phone.trim() }
       : { role: 'guest', name: f.name.trim() || GUEST.name, email: f.email.trim() || GUEST.email, phone: f.phone.trim() };
+    // Org hosts start unverified: no docs yet (uploaded inside the app), PENDING.
+    if (isOrg) {
+      newUser.orgDocsUploaded = false;
+      newUser.orgProfile = { orgName: f.orgName || 'My Organization', orgType: f.orgType, website: f.website, city: f.city, state: f.state, docs: [] };
+    }
     const reg = registerUser(newUser);
     const user = reg.user || newUser;
 
-    // Organization hosts are PENDING — show the review screen, don't enter the dashboard.
+    // Organization hosts must verify INSIDE the app — show the next-step screen.
     if (user.role === 'host' && user.hostType === 'organization') {
+      setRegisteredOrg(user);
       setStep('success');
       return;
     }
+    if (user.role === 'host') setCurrentHost(user);
     auth.signIn(user);
     routeAfterAuth(user);
   };
@@ -151,8 +160,18 @@ export default function AuthScreen({ navigation, route }) {
       routeAfterAuth({ role: 'staff' });
       return;
     }
+    // The pending org persona demos the inside-app verification gate: sign in and
+    // route into the (locked) host experience rather than blocking at login.
+    if (p.key === 'pending') {
+      const u = findUser(p.contact);
+      setCurrentHost(u);
+      auth.signIn({ role: 'host', name: u.name, email: u.email, hostType: 'organization' });
+      navigation.replace('HostTabs');
+      return;
+    }
     const res = loginByContact(p.contact);
-    if (!res.success) { setError(res.error); return; } // pending org → shows the block
+    if (!res.success) { setError(res.error); return; }
+    if (res.user.role === 'host') setCurrentHost(res.user);
     auth.signIn({ role: res.user.role, name: res.user.name, email: res.user.email, hostType: res.user.hostType });
     routeAfterAuth(res.user);
   };
@@ -191,14 +210,25 @@ export default function AuthScreen({ navigation, route }) {
             </TouchableOpacity>
           </View>
         ) : step === 'success' ? (
-          /* Organization signup — pending admin review (US-AUTH-006). */
+          /* Organization signup — account created, now must verify INSIDE the app. */
           <View style={{ alignItems: 'center', paddingTop: spacing.lg }}>
             <View style={styles.successIcon}><Ionicons name="hourglass-outline" size={34} color={colors.primary} /></View>
-            <Text style={[font.h2, { textAlign: 'center' }]}>Application submitted</Text>
+            <Text style={[font.h2, { textAlign: 'center' }]}>Account created</Text>
             <Text style={[font.small, { textAlign: 'center', marginTop: 6, marginBottom: spacing.lg }]}>
-              Your organization is pending admin review. You can browse events now — we’ll email you once you’re approved to publish.
+              Next, head to your account to upload your organization's verification documents. A Safal Events admin reviews them before you can host.
             </Text>
-            <Button label="Browse events" icon="compass" onPress={() => navigation.goBack()} style={{ width: '100%' }} />
+            <Button
+              label="Continue to verification"
+              icon="cloud-upload-outline"
+              onPress={() => {
+                const u = registeredOrg || findUser('org@safalevent.com');
+                setCurrentHost(u);
+                auth.signIn({ role: 'host', name: u.name, email: u.email, hostType: 'organization' });
+                navigation.replace('HostTabs');
+              }}
+              style={{ width: '100%' }}
+            />
+            <Button label="Browse events" variant="outline" icon="compass" onPress={() => navigation.goBack()} style={{ width: '100%', marginTop: 10 }} />
             <TouchableOpacity onPress={() => { setStep('form'); setMode('login'); setError(''); }} style={styles.backLink}>
               <Text style={{ color: colors.textMuted, fontWeight: '600' }}>Back to login</Text>
             </TouchableOpacity>
@@ -280,10 +310,12 @@ export default function AuthScreen({ navigation, route }) {
                   <Field half label="State" value={f.state} onChangeText={(t) => set('state', t)} placeholder="NY" />
                 </View>
                 <Field label="Contact person" value={f.contactName} onChangeText={(t) => set('contactName', t)} placeholder="Maya Sharma" />
-                <TouchableOpacity onPress={() => Alert.alert('Verification documents', 'Document upload (demo). An admin reviews these before activation.')} style={styles.docBtn}>
-                  <Ionicons name="cloud-upload-outline" size={16} color={colors.primary} />
-                  <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>Upload verification documents</Text>
-                </TouchableOpacity>
+                <View style={styles.docNote}>
+                  <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
+                  <Text style={{ color: colors.textMuted, fontSize: 12, flex: 1, lineHeight: 17 }}>
+                    You'll upload verification documents inside your account after signing up. An admin reviews them before you can host.
+                  </Text>
+                </View>
               </>
             ) : null}
 
@@ -360,7 +392,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  docBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.primary, borderRadius: radius.md, padding: 12, marginBottom: 12, backgroundColor: colors.primaryTint },
+  docNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 12, marginBottom: 12, backgroundColor: colors.surfaceHover },
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
   demoBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 12, marginBottom: 10, backgroundColor: colors.surface },
   demoIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
