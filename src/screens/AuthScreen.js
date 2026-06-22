@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font } from '../theme/theme';
@@ -162,7 +162,7 @@ export default function AuthScreen({ navigation, route }) {
       <ScrollView contentContainerStyle={{ padding: spacing.lg }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={styles.logo}><Ionicons name="calendar" size={16} color="#fff" /></View>
+            <Image source={require('../../assets/logo-mark.png')} style={styles.logo} resizeMode="contain" />
             <Text style={{ fontWeight: '800', fontSize: 18, color: colors.text }}>SafalEvents</Text>
           </View>
           <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={10}>
@@ -344,7 +344,7 @@ export default function AuthScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
-  logo: { width: 30, height: 30, borderRadius: 9, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  logo: { width: 32, height: 32 },
   segment: { flexDirection: 'row', backgroundColor: colors.surfaceHover, borderRadius: radius.full, padding: 4, gap: 4 },
   segBtn: { flex: 1, paddingVertical: 9, borderRadius: radius.full, alignItems: 'center' },
   segBtnActive: { backgroundColor: colors.primary },

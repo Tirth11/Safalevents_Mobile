@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius } from '../theme/theme';
@@ -40,7 +40,7 @@ export default function RoleSelectScreen({ navigation }) {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.primary }}>
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
         <View style={styles.logoBadge}>
-          <Ionicons name="calendar" size={26} color="#fff" />
+          <Image source={require('../../assets/logo-mark.png')} style={{ width: 40, height: 40 }} resizeMode="contain" />
         </View>
         <Text style={styles.brand}>SafalEvents</Text>
         <Text style={styles.tagline}>
@@ -117,7 +117,7 @@ export default function RoleSelectScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  logoBadge: { width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  logoBadge: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   brand: { fontSize: 34, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
   tagline: { color: 'rgba(255,255,255,0.88)', marginTop: 8, marginBottom: 28, fontSize: 15, lineHeight: 21 },
   card: { backgroundColor: '#fff', borderRadius: radius.lg, padding: 18, flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 14 },

@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, ActivityIndicator, Image } from 'react-native';
 import { colors } from '../theme/theme';
 import { useAuth } from '../auth/AuthContext';
 
@@ -23,8 +22,8 @@ export default function SplashScreen({ navigation }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: 72, height: 72, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-        <Ionicons name="calendar" size={34} color="#fff" />
+      <View style={{ width: 92, height: 92, borderRadius: 26, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+        <Image source={require('../../assets/logo-mark.png')} style={{ width: 64, height: 64 }} resizeMode="contain" />
       </View>
       <Text style={{ fontSize: 30, fontWeight: '800', color: '#fff', letterSpacing: -0.5 }}>SafalEvents</Text>
       <Text style={{ color: 'rgba(255,255,255,0.85)', marginTop: 6 }}>Events worth showing up for</Text>

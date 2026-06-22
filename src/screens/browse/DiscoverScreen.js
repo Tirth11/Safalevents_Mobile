@@ -21,7 +21,7 @@ export default function DiscoverScreen({ navigation }) {
         {/* Top bar */}
         <View style={styles.topbar}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={styles.logo}><Ionicons name="calendar" size={16} color="#fff" /></View>
+            <Image source={require('../../../assets/logo-mark.png')} style={styles.logo} resizeMode="contain" />
             <Text style={{ fontWeight: '800', fontSize: 18, color: colors.text }}>SafalEvents</Text>
           </View>
           {auth.isAuthed ? (
@@ -103,7 +103,7 @@ export default function DiscoverScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingTop: 10, paddingBottom: 10 },
-  logo: { width: 30, height: 30, borderRadius: 9, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  logo: { width: 32, height: 32 },
   loginPill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 7 },
   loginPillTxt: { color: colors.primary, fontWeight: '700', fontSize: 12.5 },
   hero: { marginHorizontal: spacing.lg, borderRadius: radius.lg, overflow: 'hidden', minHeight: 230, justifyContent: 'flex-end', ...shadow },
