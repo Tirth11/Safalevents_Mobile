@@ -117,7 +117,8 @@ export function Avatar({ seed, size = 40, style }) {
 // onLight=true → dark text for light backgrounds; false → white text for the
 // orange/dark splash. tile=true wraps the emblem in a white rounded card.
 export function BrandLockup({ size = 38, onLight = true, subtitle = true, tile = false, align = 'left' }) {
-  const eventsColor = onLight ? '#1F3A63' : '#FFFFFF';
+  const safalColor = onLight ? '#1F3A63' : '#FFFFFF';
+  const eventsColor = onLight ? '#C28C32' : '#FFFFFF';
   const subColor = onLight ? colors.textMuted : 'rgba(255,255,255,0.9)';
   const mark = (
     <Image source={require('../../assets/logo-mark.png')} style={{ width: size, height: size, resizeMode: 'contain' }} />
@@ -129,7 +130,7 @@ export function BrandLockup({ size = 38, onLight = true, subtitle = true, tile =
       ) : mark}
       <View style={{ marginLeft: 10 }}>
         <Text style={{ fontSize: Math.round(size * 0.52), fontWeight: '800', letterSpacing: -0.3 }}>
-          <Text style={{ color: '#C0871F' }}>Safal</Text>
+          <Text style={{ color: safalColor }}>Safal</Text>
           <Text style={{ color: eventsColor }}>Events</Text>
         </Text>
         {subtitle ? (
