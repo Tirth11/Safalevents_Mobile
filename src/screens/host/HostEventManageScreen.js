@@ -155,6 +155,7 @@ export default function HostEventManageScreen({ navigation, route }) {
     seriesType: event.seriesType || 'None',
     approvalRequired: !!event.approvalRequired, messagingEnabled: event.messagingEnabled !== false,
     allowSelfEdit: !!event.allowSelfEdit, enablePayments: !!event.enablePayments,
+    ageRestricted: !!event.ageRestricted, minimumAge: String(event.minimumAge || 18),
   });
   const setE = (k, v) => setEdit((p) => ({ ...p, [k]: v }));
   const saveSettings = () => {
@@ -163,6 +164,7 @@ export default function HostEventManageScreen({ navigation, route }) {
       capacity: Number(edit.capacity) || 0, description: edit.description, seriesType: edit.seriesType,
       approvalRequired: edit.approvalRequired, messagingEnabled: edit.messagingEnabled,
       allowSelfEdit: edit.allowSelfEdit, enablePayments: edit.enablePayments,
+      ageRestricted: edit.ageRestricted, minimumAge: Number(edit.minimumAge) || 18,
     });
     Alert.alert('Saved', 'Event settings updated.');
   };
@@ -835,6 +837,13 @@ export default function HostEventManageScreen({ navigation, route }) {
             <Toggle label="Allow guest messaging" value={edit.messagingEnabled} onValueChange={(v) => setE('messagingEnabled', v)} icon="chatbubbles-outline" />
             <Toggle label="Allow guest self-edit" value={edit.allowSelfEdit} onValueChange={(v) => setE('allowSelfEdit', v)} icon="create-outline" />
             <Toggle label="Paid ticket" value={edit.enablePayments} onValueChange={(v) => setE('enablePayments', v)} icon="card-outline" />
+            <Toggle label="Age restriction" desc="Collect DOB at RSVP; block guests under the minimum age" value={edit.ageRestricted} onValueChange={(v) => setE('ageRestricted', v)} icon="lock-closed-outline" />
+            {edit.ageRestricted ? (
+              <>
+                <TextField label="Minimum age" value={edit.minimumAge} onChangeText={(t) => setE('minimumAge', t)} placeholder="18" keyboardType="numeric" />
+                <Chips options={['13', '16', '18', '21']} value={edit.minimumAge} onChange={(v) => setE('minimumAge', v)} />
+              </>
+            ) : null}
           </Card>
           <Button label="Save settings" variant="primary" icon="checkmark-circle" style={{ marginBottom: spacing.md }} onPress={saveSettings} />
           <Button label="Delete event" variant="danger" icon="trash-outline" onPress={removeEvent} />
