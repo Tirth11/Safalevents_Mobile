@@ -11,10 +11,14 @@ import {
   Divider,
   ScreenHeader,
 } from '../../components/ui';
-import { events, getEvent, GUEST } from '../../data/mock';
+import { events, getEvent, GUEST, myRsvps, meetsAge } from '../../data/mock';
 
 export default function GuestTicketPassScreen({ navigation, route }) {
   const event = getEvent(route.params?.eventId) || events[0];
+  const myRsvp = myRsvps.find((r) => r.eventId === event.id);
+  const ageVerified = myRsvp
+    ? (myRsvp.dob ? meetsAge(myRsvp.dob, event.minimumAge || 18) : !!myRsvp.ageVerified)
+    : true;
 
   return (
     <Screen>
@@ -36,6 +40,15 @@ export default function GuestTicketPassScreen({ navigation, route }) {
 
           <Text style={[font.small, { marginTop: spacing.md }]}>Booking ID</Text>
           <Text style={[font.h3, { color: colors.primary }]}>{'RSVP-' + event.id}</Text>
+
+          {event.ageRestricted ? (
+            <View style={{ marginTop: spacing.md }}>
+              <Badge
+                tone={ageVerified ? 'green' : 'amber'}
+                label={ageVerified ? `🔒 Age Verified: ${event.minimumAge}+` : '⚠️ Age Unverified – Check ID'}
+              />
+            </View>
+          ) : null}
 
           <Divider />
 
@@ -92,6 +105,14 @@ export default function GuestTicketPassScreen({ navigation, route }) {
           onPress={() => navigation.navigate('GuestChat', { eventId: event.id })}
         />
       ) : null}
+
+      <Button
+        label="Back to My Tickets"
+        variant="ghost"
+        icon="chevron-back"
+        style={{ marginTop: spacing.md }}
+        onPress={() => navigation.goBack()}
+      />
     </Screen>
   );
 }

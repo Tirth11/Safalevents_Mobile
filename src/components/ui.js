@@ -113,6 +113,35 @@ export function Avatar({ seed, size = 40, style }) {
   );
 }
 
+// Brand lockup: emblem + "SafalEvents" wordmark (gold + navy) + subheading.
+// onLight=true → dark text for light backgrounds; false → white text for the
+// orange/dark splash. tile=true wraps the emblem in a white rounded card.
+export function BrandLockup({ size = 38, onLight = true, subtitle = true, tile = false, align = 'left' }) {
+  const eventsColor = onLight ? '#1F3A63' : '#FFFFFF';
+  const subColor = onLight ? colors.textMuted : 'rgba(255,255,255,0.9)';
+  const mark = (
+    <Image source={require('../../assets/logo-mark.png')} style={{ width: size, height: size, resizeMode: 'contain' }} />
+  );
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: align === 'center' ? 'center' : 'flex-start' }}>
+      {tile ? (
+        <View style={{ backgroundColor: '#fff', borderRadius: Math.round(size * 0.28), padding: Math.round(size * 0.14) }}>{mark}</View>
+      ) : mark}
+      <View style={{ marginLeft: 10 }}>
+        <Text style={{ fontSize: Math.round(size * 0.52), fontWeight: '800', letterSpacing: -0.3 }}>
+          <Text style={{ color: '#C0871F' }}>Safal</Text>
+          <Text style={{ color: eventsColor }}>Events</Text>
+        </Text>
+        {subtitle ? (
+          <Text style={{ fontSize: Math.max(8, Math.round(size * 0.23)), fontWeight: '700', letterSpacing: 1.3, color: subColor, textTransform: 'uppercase', marginTop: 2 }}>
+            Creating Successful Moments
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 export function StatCard({ label, value, icon, color = colors.primary, style }) {
   return (
     <View style={[styles.card, { flex: 1, padding: spacing.lg }, style]}>
@@ -153,8 +182,9 @@ export function Field({ label, value, placeholder, multiline, keyboardType }) {
   );
 }
 
-export function ToggleRow({ label, desc, value, icon }) {
+export function ToggleRow({ label, desc, value, icon, onChange }) {
   const [on, setOn] = React.useState(!!value);
+  const handle = (v) => { setOn(v); onChange && onChange(v); };
   return (
     <View style={[styles.rowBetween, styles.toggleRow]}>
       <View style={{ flex: 1, paddingRight: 12 }}>
@@ -166,7 +196,7 @@ export function ToggleRow({ label, desc, value, icon }) {
       </View>
       <RNSwitch
         value={on}
-        onValueChange={setOn}
+        onValueChange={handle}
         trackColor={{ true: colors.primary, false: '#cbd5e1' }}
         thumbColor="#fff"
       />

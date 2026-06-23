@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, StyleSheet,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font } from '../theme/theme';
-import { Button } from '../components/ui';
+import { Button, BrandLockup } from '../components/ui';
 import { HOST, GUEST, loginAsStaff, loginByContact, registerUser, findUser, setCurrentHost } from '../data/mock';
 import { useAuth } from '../auth/AuthContext';
 
@@ -180,10 +180,7 @@ export default function AuthScreen({ navigation, route }) {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ padding: spacing.lg }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Image source={require('../../assets/logo-mark.png')} style={styles.logo} resizeMode="contain" />
-            <Text style={{ fontWeight: '800', fontSize: 18, color: colors.text }}>SafalEvents</Text>
-          </View>
+          <BrandLockup size={34} />
           <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={10}>
             <Ionicons name="close" size={26} color={colors.textMuted} />
           </TouchableOpacity>

@@ -23,8 +23,31 @@ import {
   approveCurrentOrgHost,
   useIndividualHost,
   useOrgHost,
+  plans,
+  hostSubscription,
+  hostUsage,
+  topUps,
+  transactions,
+  getPlanById,
 } from '../../data/mock';
 import { useAuth } from '../../auth/AuthContext';
+
+// Horizontal usage bar used in the billing card.
+function UsageBar({ label, current, max, color }) {
+  const unlimited = max === -1;
+  const pct = unlimited ? 12 : Math.min(100, Math.round((current / Math.max(max, 1)) * 100));
+  return (
+    <View style={{ marginBottom: 12 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+        <Text style={{ fontSize: 12.5, fontWeight: '600', color: colors.textMuted }}>{label}</Text>
+        <Text style={{ fontSize: 12.5, fontWeight: '700', color: colors.text }}>{current} / {unlimited ? '∞' : max}</Text>
+      </View>
+      <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: 'hidden' }}>
+        <View style={{ height: 6, borderRadius: 3, width: `${pct}%`, backgroundColor: pct >= 90 ? colors.red : pct >= 70 ? colors.amber : color }} />
+      </View>
+    </View>
+  );
+}
 
 const PAYOUT_TONE = { Paid: 'green', Processing: 'amber', Failed: 'red' };
 
@@ -151,6 +174,12 @@ export default function HostAccountScreen({ navigation }) {
   const org = isOrgHost(host);
   const verified = hostFullyVerified(host);
 
+  const plan = getPlanById(hostSubscription.planId) || plans[0];
+  const [showPlans, setShowPlans] = useState(false);
+  const [showStore, setShowStore] = useState(false);
+  const photoPct = plan.limits.photos === -1 ? 0 : Math.round((hostUsage.photos / Math.max(plan.limits.photos, 1)) * 100);
+  const photoPack = topUps.find((t) => t.id === 't_photos');
+
   return (
     <Screen>
       <Card style={{ marginBottom: spacing.lg }}>
@@ -166,6 +195,103 @@ export default function HostAccountScreen({ navigation }) {
 
       {/* Phase 1c — org verification card */}
       {org ? <OrgVerificationCard /> : null}
+
+      {/* Plan & Billing (US-UI-002) */}
+      <SectionTitle>Billing & Subscription</SectionTitle>
+      <Card style={{ marginBottom: spacing.lg }}>
+        <Row style={[styles.between, { marginBottom: spacing.sm }]}>
+          <View>
+            <Text style={font.small}>Current plan</Text>
+            <Text style={[font.h2, { marginTop: 2 }]}>{plan.emoji} {plan.name}</Text>
+          </View>
+          <Badge tone="green" label={hostSubscription.status} />
+        </Row>
+        <Text style={[font.small, { marginBottom: spacing.md }]}>
+          {plan.monthlyPrice === 0 ? 'Free' : `$${plan.monthlyPrice}/mo`} · {plan.commission}% commission · renews {hostSubscription.renews}
+        </Text>
+
+        <UsageBar label="Active Events" current={hostUsage.activeEvents} max={plan.limits.activeEvents} color={colors.blue} />
+        <UsageBar label="Staff Seats" current={hostUsage.staffMembers} max={plan.limits.staffMembers} color={colors.amber} />
+        <UsageBar label="Guest Photos" current={hostUsage.photos} max={plan.limits.photos} color={colors.primary} />
+
+        {photoPct >= 80 && photoPack ? (
+          <Row style={{ backgroundColor: colors.primaryTint, borderRadius: radius.md, padding: 10, marginBottom: spacing.md }}>
+            <Text style={{ fontSize: 18, marginRight: 8 }}>{photoPack.icon}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 12.5, fontWeight: '700', color: colors.text }}>Photo album {photoPct}% full</Text>
+              <Text style={font.tiny}>{photoPack.name} · ${photoPack.price}</Text>
+            </View>
+            <Button label={`$${photoPack.price}`} small variant="outline" onPress={() => Alert.alert('Photo Pack', 'Prototype — top-up not wired.')} />
+          </Row>
+        ) : null}
+
+        <Row style={{ gap: spacing.sm }}>
+          <View style={{ flex: 1 }}>
+            <Button label="Upgrade plan" icon="arrow-up-circle-outline" small onPress={() => setShowPlans((v) => !v)} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button label="Top-Up store" icon="cart-outline" variant="outline" small onPress={() => setShowStore((v) => !v)} />
+          </View>
+        </Row>
+
+        {showPlans ? (
+          <View style={{ marginTop: spacing.md }}>
+            <Text style={[font.tiny, { fontWeight: '700', color: colors.text, marginBottom: 6 }]}>Choose a plan</Text>
+            {plans.map((p) => {
+              const cur = p.id === plan.id;
+              return (
+                <Row key={p.id} style={[styles.between, styles.planRow, cur && { borderColor: colors.accent }]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }}>{p.emoji} {p.name}{p.popular ? '  ⭐ Popular' : ''}</Text>
+                    <Text style={font.tiny}>{p.limits.activeEvents === -1 ? '∞' : p.limits.activeEvents} events · {p.limits.attendeesPerEvent} attendees · {p.commission}% fee</Text>
+                  </View>
+                  {cur ? (
+                    <Badge tone="green" label="Current" />
+                  ) : (
+                    <Button label={p.monthlyPrice === 0 ? 'Free' : `$${p.monthlyPrice}`} small variant="outline" onPress={() => Alert.alert('Change plan', `Prototype — switch to ${p.name}.`)} />
+                  )}
+                </Row>
+              );
+            })}
+          </View>
+        ) : null}
+
+        {showStore ? (
+          <View style={{ marginTop: spacing.md }}>
+            <Text style={[font.tiny, { fontWeight: '700', color: colors.text, marginBottom: 6 }]}>Top-up add-ons</Text>
+            {topUps.map((t) => (
+              <Row key={t.id} style={[styles.between, styles.planRow]}>
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 18, marginRight: 8 }}>{t.icon}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontWeight: '700', fontSize: 13, color: colors.text }}>{t.name}</Text>
+                    <Text style={font.tiny}>{t.desc}</Text>
+                  </View>
+                </View>
+                <Button label={`$${t.price}`} small variant="outline" onPress={() => Alert.alert('Top-up', `Prototype — buy ${t.name}.`)} />
+              </Row>
+            ))}
+          </View>
+        ) : null}
+      </Card>
+
+      {/* Transaction history */}
+      <SectionTitle>Transaction history</SectionTitle>
+      <Card style={{ marginBottom: spacing.lg }}>
+        {transactions.map((t, i) => (
+          <View key={t.id}>
+            {i > 0 ? <Divider style={{ marginVertical: spacing.sm }} /> : null}
+            <Row style={styles.between}>
+              <View style={{ flex: 1, paddingRight: spacing.sm }}>
+                <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }}>{t.desc}</Text>
+                <Text style={font.tiny}>{t.date} · {t.type}</Text>
+              </View>
+              <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text, marginRight: spacing.sm }}>${t.amount.toFixed(2)}</Text>
+              <Badge tone="green" label={t.status} />
+            </Row>
+          </View>
+        ))}
+      </Card>
 
       {/* Earnings & settings only make sense for an active hosting account */}
       {verified ? (
@@ -259,4 +385,11 @@ const styles = StyleSheet.create({
   switchRow: { flexDirection: 'row', alignItems: 'center' },
   docRow: { backgroundColor: colors.surfaceHover, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
   noteBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: radius.md, padding: 12 },
+  planRow: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: 10,
+    marginBottom: 8,
+  },
 });

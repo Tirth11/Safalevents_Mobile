@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, Text, ActivityIndicator, Image } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { colors } from '../theme/theme';
+import { BrandLockup } from '../components/ui';
 import { useAuth } from '../auth/AuthContext';
 
 // Brief branded splash. Routes a remembered user straight to their flow,
@@ -22,11 +23,8 @@ export default function SplashScreen({ navigation }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: 92, height: 92, borderRadius: 26, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-        <Image source={require('../../assets/logo-mark.png')} style={{ width: 64, height: 64 }} resizeMode="contain" />
-      </View>
-      <Text style={{ fontSize: 30, fontWeight: '800', color: '#fff', letterSpacing: -0.5 }}>SafalEvents</Text>
-      <Text style={{ color: 'rgba(255,255,255,0.85)', marginTop: 6 }}>Events worth showing up for</Text>
+      <BrandLockup size={54} onLight={false} tile align="center" />
+      <Text style={{ color: 'rgba(255,255,255,0.9)', marginTop: 14, fontWeight: '600' }}>Events worth showing up for</Text>
       <ActivityIndicator color="#fff" style={{ marginTop: 24 }} />
     </View>
   );

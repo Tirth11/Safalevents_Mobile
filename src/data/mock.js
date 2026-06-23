@@ -59,6 +59,11 @@ export const events = [
     hostName: 'Alex Rivera',
     hostEmail: 'alex@safalevent.com',
     rating: 4.8,
+    ageRestricted: true,
+    minimumAge: 18,
+    enablePhotoAlbum: true,
+    photoUploadPermission: 'guests',
+    requirePhotoApproval: true,
     questions: ['Any food allergies?', 'Song request for the DJ?'],
   },
   {
@@ -120,17 +125,22 @@ export const events = [
     messagingEnabled: true,
     enablePayments: true,
     ticketPrice: 25,
+    enablePhotoAlbum: true,
+    photoUploadPermission: 'host_only',
+    requirePhotoApproval: false,
     hostName: 'Riley Morgan',
     hostEmail: 'riley@comedyclub.com',
     rating: 4.7,
+    ageRestricted: true,
+    minimumAge: 21,
     questions: [],
   },
 ];
 
 // approvalState: UNDER_APPROVAL | APPROVED | REJECTED  (orthogonal to status)
 export const rsvps = [
-  { id: 'r1', eventId: '1', name: 'Alice Vance', email: 'alice@example.com', phone: '+1 (555) 123-4567', status: 'going', approvalState: 'APPROVED', checkedIn: true, guestCount: 2, timestamp: '2026-06-01T12:00:00Z', answers: { 'Any food allergies?': 'None', 'Song request for the DJ?': 'Levitating' } },
-  { id: 'r2', eventId: '1', name: 'Bob Smith', email: 'bob@example.com', phone: '+1 (555) 234-5678', status: 'going', approvalState: 'APPROVED', checkedIn: false, guestCount: 1, timestamp: '2026-06-02T14:30:00Z', answers: { 'Any food allergies?': 'Gluten-free' } },
+  { id: 'r1', eventId: '1', name: 'Alice Vance', email: 'alice@example.com', phone: '+1 (555) 123-4567', status: 'going', approvalState: 'APPROVED', checkedIn: true, guestCount: 2, dob: '1996-04-12', ageVerified: true, additionalGuests: [{ firstName: 'Jane', lastName: 'Doe', dob: '1998-09-30' }], timestamp: '2026-06-01T12:00:00Z', answers: { 'Any food allergies?': 'None', 'Song request for the DJ?': 'Levitating' } },
+  { id: 'r2', eventId: '1', name: 'Bob Smith', email: 'bob@example.com', phone: '+1 (555) 234-5678', status: 'going', approvalState: 'APPROVED', checkedIn: false, guestCount: 1, dob: '2000-02-20', ageVerified: true, additionalGuests: [], timestamp: '2026-06-02T14:30:00Z', answers: { 'Any food allergies?': 'Gluten-free' } },
   { id: 'r3', eventId: '1', name: 'Charlie Brown', email: 'charlie@example.com', phone: '+1 (555) 345-6789', status: 'going', approvalState: 'APPROVED', checkedIn: false, guestCount: 1, timestamp: '2026-06-03T09:15:00Z', answers: {} },
   // Event 2 — approval required: a mix of pending / approved / waitlisted-pending
   { id: 'r6', eventId: '2', name: 'Fiona Gallagher', email: 'fiona@example.com', phone: '+1 (555) 678-9012', status: 'going', approvalState: 'UNDER_APPROVAL', checkedIn: false, guestCount: 1, timestamp: '2026-06-05T11:00:00Z', answers: { 'What are you building?': 'EcoClean Tech', 'Looking for funding?': 'Yes, seed' } },
@@ -256,12 +266,72 @@ export const ACCENT_THEMES = [
 
 export const EVENT_TYPES = ['Party', 'Meetup', 'Meeting', 'Webinar', 'Workshop', 'Religious', 'Wedding', 'Other'];
 
+// ─── Event photo albums (EP-001) ──────────────────────────────────────────────
+// status: APPROVED | PENDING | REJECTED. role: host | guest.
+export let photos = [
+  { id: 'ph1', eventId: '1', url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80', caption: 'Setting up the rooftop ✨', uploader: 'Alex Rivera', role: 'host', status: 'APPROVED', time: 'Aug 14' },
+  { id: 'ph2', eventId: '1', url: 'https://images.unsplash.com/photo-1556761175-5973dc0f32b7?auto=format&fit=crop&w=600&q=80', caption: 'Great crowd tonight!', uploader: 'Alice Vance', role: 'guest', status: 'APPROVED', time: 'Aug 15' },
+  { id: 'ph3', eventId: '1', url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600&q=80', caption: 'Dance floor 🔥', uploader: 'Bob Smith', role: 'guest', status: 'PENDING', time: 'Aug 15' },
+  { id: 'ph5', eventId: '5', url: 'https://images.unsplash.com/photo-1516280440614-37939bbacd6a?auto=format&fit=crop&w=600&q=80', caption: 'Headliner on stage', uploader: 'Riley Morgan', role: 'host', status: 'APPROVED', time: 'Jul 10' },
+];
+
+const STOCK_PHOTOS = [
+  'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1543007630-9710e4a00a20?auto=format&fit=crop&w=600&q=80',
+];
+
 // Helpers
 export const getEvent = (id) => events.find((e) => e.id === id);
 export const getRsvps = (eventId) => rsvps.filter((r) => r.eventId === eventId);
 export const getRoleById = (id) => roles.find((r) => r.id === id) || null;
 export const getPolls = (eventId) => polls.filter((p) => p.eventId === eventId);
 export const getComments = (eventId) => comments.filter((c) => c.eventId === eventId);
+
+// ─── Age helpers (age-restricted events: US-EVENT-013/014/015) ─────────────────
+// DOB is stored as 'YYYY-MM-DD'. calcAge returns full years or null.
+export function calcAge(dob) {
+  if (!dob) return null;
+  const d = new Date(dob);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age;
+}
+export const meetsAge = (dob, min) => {
+  const a = calcAge(dob);
+  return a !== null && a >= min;
+};
+
+// ─── Subscription & pricing (US-UI-002) ───────────────────────────────────────
+export const plans = [
+  { id: 'ind_free', name: 'Free', emoji: '🌱', monthlyPrice: 0, commission: 0, limits: { activeEvents: 1, attendeesPerEvent: 50, staffMembers: 0, photos: 0 } },
+  { id: 'ind_basic', name: 'Basic', emoji: '⭐', monthlyPrice: 3.99, commission: 5, limits: { activeEvents: 3, attendeesPerEvent: 200, staffMembers: 0, photos: 20 } },
+  { id: 'ind_advanced', name: 'Advanced', emoji: '🚀', monthlyPrice: 9.99, commission: 3, popular: true, limits: { activeEvents: 10, attendeesPerEvent: 500, staffMembers: 1, photos: 100 } },
+  { id: 'ind_premium', name: 'Premium', emoji: '💎', monthlyPrice: 24.99, commission: 2, limits: { activeEvents: -1, attendeesPerEvent: 1500, staffMembers: 2, photos: 500 } },
+  { id: 'ind_premium_plus', name: 'Premium Plus', emoji: '👑', monthlyPrice: 49.99, commission: 1, limits: { activeEvents: -1, attendeesPerEvent: 5000, staffMembers: 5, photos: -1 } },
+];
+
+export const hostSubscription = { planId: 'ind_advanced', billingCycle: 'monthly', status: 'ACTIVE', renews: 'Jul 15, 2026' };
+export const hostUsage = { activeEvents: 3, staffMembers: 1, photos: 60 };
+
+export const topUps = [
+  { id: 't_photos', name: 'Photo Pack', desc: '+50 guest photo uploads', price: 0.99, icon: '📸' },
+  { id: 't_attendees', name: 'Extra 250 Attendees', desc: 'Add 250 to one event', price: 2.99, icon: '👥' },
+  { id: 't_event', name: 'Extra Event Slot', desc: 'One more active event', price: 1.99, icon: '📅' },
+  { id: 't_staff', name: 'Assistant Pass', desc: 'One extra staff member', price: 1.49, icon: '🎫' },
+];
+
+export const transactions = [
+  { id: 'tx1', date: 'Jun 1, 2026', type: 'Subscription', desc: 'Advanced Plan — Monthly', amount: 9.99, status: 'Success' },
+  { id: 'tx2', date: 'May 5, 2026', type: 'Top-Up', desc: 'Extra 250 Attendees', amount: 2.99, status: 'Success' },
+  { id: 'tx3', date: 'May 1, 2026', type: 'Subscription', desc: 'Advanced Plan — Monthly', amount: 9.99, status: 'Success' },
+];
+
+export const getPlanById = (id) => plans.find((p) => p.id === id) || null;
 
 // ─── Live store layer ─────────────────────────────────────────────────────────
 // Minimal pub/sub so a staff check-in re-renders the host dashboard live.
@@ -583,4 +653,35 @@ export const checkInGuest = (rsvpId, scannerName = 'Gate Staff') => {
   });
   _notify();
   return rsvp;
+};
+
+// ─── Photo album store (EP-001) ───────────────────────────────────────────────
+export const getEventPhotos = (eventId) => photos.filter((p) => p.eventId === eventId);
+
+// Prototype upload: cycles through stock images. Guest uploads go to PENDING when
+// the host requires approval; host uploads are always APPROVED.
+export const uploadPhoto = (eventId, { uploader = 'You', role = 'guest', caption = '' } = {}) => {
+  const ev = getEvent(eventId);
+  const needsApproval = !!(ev && ev.requirePhotoApproval) && role === 'guest';
+  const url = STOCK_PHOTOS[photos.length % STOCK_PHOTOS.length];
+  const photo = {
+    id: 'ph_' + Math.random().toString(36).slice(2, 8),
+    eventId, url, caption, uploader, role,
+    status: needsApproval ? 'PENDING' : 'APPROVED',
+    time: 'just now',
+  };
+  photos.unshift(photo);
+  _notify();
+  return photo;
+};
+
+export const setPhotoStatus = (id, status) => {
+  const p = photos.find((x) => x.id === id);
+  if (p) { p.status = status; _notify(); }
+  return p;
+};
+
+export const deletePhoto = (id) => {
+  photos = photos.filter((x) => x.id !== id);
+  _notify();
 };

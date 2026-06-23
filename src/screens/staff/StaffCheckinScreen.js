@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font } from '../../theme/theme';
 import { Screen, Card, Badge, Button, SectionTitle, Avatar, Row, ApprovalBadge, EmptyState } from '../../components/ui';
 import {
-  useStore, getCurrentStaff, getEvent, getRsvps, validateScan, checkInGuest, staffCan,
+  useStore, getCurrentStaff, getEvent, getRsvps, validateScan, checkInGuest, staffCan, calcAge, meetsAge,
 } from '../../data/mock';
 
 export default function StaffCheckinScreen() {
@@ -120,6 +120,20 @@ export default function StaffCheckinScreen() {
                 <DetailRow icon="ticket-outline" label="Pass ID" value={result.rsvp.id} />
                 <DetailRow icon="calendar-outline" label="Event" value={event.title} />
               </View>
+
+              {event.ageRestricted ? (() => {
+                const verified = result.rsvp.dob ? meetsAge(result.rsvp.dob, event.minimumAge) : !!result.rsvp.ageVerified;
+                const yrs = calcAge(result.rsvp.dob);
+                return (
+                  <View style={{ marginTop: 10, padding: 10, borderRadius: radius.md, backgroundColor: verified ? colors.accentTint : colors.amberTint }}>
+                    <Text style={{ fontWeight: '800', fontSize: 13.5, color: verified ? colors.accent : colors.amber }}>
+                      {verified
+                        ? `🔒 Age Verified: ${event.minimumAge}+${yrs != null ? ` (${yrs} yrs)` : ''}`
+                        : '⚠️ Age Unverified — check physical ID'}
+                    </Text>
+                  </View>
+                );
+              })() : null}
 
               {Object.keys(result.rsvp.answers || {}).length > 0 ? (
                 <View style={{ marginTop: 10 }}>

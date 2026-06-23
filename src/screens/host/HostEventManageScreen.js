@@ -40,12 +40,19 @@ import {
   broadcast,
   updateEvent,
   deleteEvent,
+  calcAge,
+  meetsAge,
+  getEventPhotos,
+  uploadPhoto,
+  setPhotoStatus,
+  deletePhoto,
 } from '../../data/mock';
 
 const MANAGE_TABS = [
   { key: 'overview', label: 'Overview' },
   { key: 'guests', label: 'Guests' },
   { key: 'invites', label: 'Invitations' },
+  { key: 'photos', label: 'Photos' },
   { key: 'messaging', label: 'Messaging' },
   { key: 'polls', label: 'Polls' },
   { key: 'comments', label: 'Comments' },
@@ -83,6 +90,10 @@ export default function HostEventManageScreen({ navigation, route }) {
   const pending = eventRsvps.filter((r) => r.approvalState === 'UNDER_APPROVAL' && r.status !== 'waitlist');
   const waitlist = eventRsvps.filter((r) => r.status === 'waitlist');
   const rejected = eventRsvps.filter((r) => r.approvalState === 'REJECTED');
+
+  const eventPhotos = getEventPhotos(event.id);
+  const pendingPhotos = eventPhotos.filter((p) => p.status === 'PENDING');
+  const approvedPhotos = eventPhotos.filter((p) => p.status === 'APPROVED');
 
   const alert = (t, m) => Alert.alert(t, m || 'Prototype — not wired.');
 
@@ -351,6 +362,45 @@ export default function HostEventManageScreen({ navigation, route }) {
                         </TouchableOpacity>
                       </Row>
                       <Answers answers={r.answers} />
+
+                      {/* Age verification + party members (US-EVENT-016) */}
+                      {event.ageRestricted ? (
+                        <View style={{ marginTop: spacing.sm }}>
+                          {r.dob ? (
+                            <Badge
+                              tone={meetsAge(r.dob, event.minimumAge) ? 'green' : 'red'}
+                              label={`${meetsAge(r.dob, event.minimumAge) ? '✅' : '❌'} Age ${calcAge(r.dob)} · ${event.minimumAge}+`}
+                            />
+                          ) : r.ageVerified ? (
+                            <Badge tone="green" label={`✅ Age Verified · ${event.minimumAge}+`} />
+                          ) : (
+                            <Badge tone="amber" label="⚠️ Age unverified — check ID" />
+                          )}
+                          {(r.additionalGuests || []).length > 0 ? (
+                            <View style={{ marginTop: 6 }}>
+                              <Text style={[font.tiny, { fontWeight: '700', color: colors.text, marginBottom: 2 }]}>
+                                Party members ({r.additionalGuests.length})
+                              </Text>
+                              {r.additionalGuests.map((g, gi) => {
+                                const ok = g.dob ? meetsAge(g.dob, event.minimumAge) : null;
+                                return (
+                                  <Text key={gi} style={font.tiny}>
+                                    {g.firstName} {g.lastName}
+                                    {g.dob ? (
+                                      <Text style={{ color: ok ? colors.accent : colors.red, fontWeight: '700' }}>
+                                        {`  ${ok ? '✅' : '❌'} ${calcAge(g.dob)} yrs`}
+                                      </Text>
+                                    ) : (
+                                      <Text style={{ color: colors.amber, fontWeight: '700' }}>  ⚠️ No DOB</Text>
+                                    )}
+                                  </Text>
+                                );
+                              })}
+                            </View>
+                          ) : null}
+                        </View>
+                      ) : null}
+
                       <View style={{ marginTop: spacing.sm }}>
                         {r.checkedIn ? (
                           <Badge tone="green" dot label={`Arrived${r.checkedInAt ? ' · ' + new Date(r.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`} />
@@ -406,6 +456,92 @@ export default function HostEventManageScreen({ navigation, route }) {
               ))
             )}
           </Card>
+        </View>
+      )}
+
+      {active === 'photos' && (
+        <View>
+          {!event.enablePhotoAlbum ? (
+            <Card>
+              <Row style={{ marginBottom: spacing.sm }}>
+                <Ionicons name="images-outline" size={18} color={colors.primary} />
+                <Text style={[font.h3, { marginLeft: spacing.sm }]}>Photo album is off</Text>
+              </Row>
+              <Text style={font.small}>
+                Turn on “Guest photo uploads” in Settings to create a shared album for this event.
+              </Text>
+            </Card>
+          ) : (
+            <>
+              <Card style={{ marginBottom: spacing.lg }}>
+                <Row style={[styles.between, { alignItems: 'flex-start' }]}>
+                  <View style={{ flex: 1, paddingRight: spacing.sm }}>
+                    <Text style={font.h3}>Photo Album</Text>
+                    <Text style={[font.tiny, { marginTop: 2 }]}>
+                      Uploads: {event.photoUploadPermission === 'guests' ? 'Host + RSVPed guests' : 'Host only'}
+                      {event.requirePhotoApproval ? ' · approval required' : ''}
+                    </Text>
+                  </View>
+                  <Button
+                    label="Add photo"
+                    icon="camera"
+                    small
+                    onPress={() => { uploadPhoto(event.id, { uploader: 'Alex Rivera', role: 'host' }); }}
+                  />
+                </Row>
+              </Card>
+
+              {pendingPhotos.length > 0 && (
+                <Card style={{ marginBottom: spacing.lg }}>
+                  <Row style={[styles.between, { marginBottom: spacing.md }]}>
+                    <Text style={font.h3}>Pending approval</Text>
+                    <Badge tone="amber" label={String(pendingPhotos.length)} />
+                  </Row>
+                  {pendingPhotos.map((p, i) => (
+                    <View key={p.id}>
+                      {i > 0 ? <Divider /> : null}
+                      <Row style={{ alignItems: 'flex-start' }}>
+                        <Image source={{ uri: p.url }} style={styles.photoThumb} />
+                        <View style={{ flex: 1, marginLeft: spacing.md }}>
+                          <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }}>{p.uploader}</Text>
+                          {p.caption ? <Text style={font.tiny}>“{p.caption}”</Text> : null}
+                          <Row style={{ marginTop: spacing.sm }}>
+                            <Button label="Approve" variant="accent" small onPress={() => setPhotoStatus(p.id, 'APPROVED')} />
+                            <View style={{ width: spacing.sm }} />
+                            <Button label="Reject" variant="danger" small onPress={() => setPhotoStatus(p.id, 'REJECTED')} />
+                          </Row>
+                        </View>
+                      </Row>
+                    </View>
+                  ))}
+                </Card>
+              )}
+
+              <Card>
+                <Row style={[styles.between, { marginBottom: spacing.md }]}>
+                  <Text style={font.h3}>Album</Text>
+                  <Badge tone="green" label={`${approvedPhotos.length} photos`} />
+                </Row>
+                {approvedPhotos.length === 0 ? (
+                  <Text style={font.small}>No photos yet. Tap “Add photo” to start the album.</Text>
+                ) : (
+                  <View style={styles.photoGrid}>
+                    {approvedPhotos.map((p) => (
+                      <View key={p.id} style={styles.photoCell}>
+                        <Image source={{ uri: p.url }} style={styles.photoImg} />
+                        <TouchableOpacity style={styles.photoDel} onPress={() => deletePhoto(p.id)}>
+                          <Ionicons name="trash" size={13} color="#fff" />
+                        </TouchableOpacity>
+                        {p.role === 'guest' ? (
+                          <View style={styles.photoTag}><Text style={styles.photoTagTxt}>Guest</Text></View>
+                        ) : null}
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </Card>
+            </>
+          )}
         </View>
       )}
 
@@ -760,4 +896,11 @@ const styles = StyleSheet.create({
   pollTrack: { height: 8, backgroundColor: colors.surfaceHover, borderRadius: radius.full, marginTop: 4, overflow: 'hidden' },
   pollFill: { height: 8, backgroundColor: colors.primary, borderRadius: radius.full },
   qrTile: { width: 120, height: 120, borderRadius: radius.lg, backgroundColor: colors.primaryTint, alignItems: 'center', justifyContent: 'center' },
+  photoThumb: { width: 60, height: 60, borderRadius: radius.sm, backgroundColor: colors.surfaceHover },
+  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },
+  photoCell: { width: '33.33%', aspectRatio: 1, padding: 4, position: 'relative' },
+  photoImg: { width: '100%', height: '100%', borderRadius: radius.sm, backgroundColor: colors.surfaceHover },
+  photoDel: { position: 'absolute', top: 8, right: 8, width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
+  photoTag: { position: 'absolute', bottom: 8, left: 8, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 },
+  photoTagTxt: { color: '#fff', fontSize: 9, fontWeight: '700' },
 });

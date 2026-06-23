@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, Platform }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font, shadow } from '../../theme/theme';
-import { Badge, Button } from '../../components/ui';
+import { Badge, Button, BrandLockup } from '../../components/ui';
 import { events } from '../../data/mock';
 import { useAuth, gateAction } from '../../auth/AuthContext';
 
@@ -20,10 +20,7 @@ export default function DiscoverScreen({ navigation }) {
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
         {/* Top bar */}
         <View style={styles.topbar}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Image source={require('../../../assets/logo-mark.png')} style={styles.logo} resizeMode="contain" />
-            <Text style={{ fontWeight: '800', fontSize: 18, color: colors.text }}>SafalEvents</Text>
-          </View>
+          <BrandLockup size={32} />
           {auth.isAuthed ? (
             <TouchableOpacity onPress={() => navigation.navigate('GuestTabs')} style={styles.loginPill}>
               <Ionicons name="person-circle" size={16} color={colors.primary} />

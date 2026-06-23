@@ -36,6 +36,8 @@ export default function HostCreateEventScreen({ navigation }) {
     privacy: 'Public', rsvpStatus: 'Open', capacity: '', maxGuestsPerRsvp: '1', rsvpDeadline: '',
     approvalRequired: false, messagingEnabled: true, allowSelfEdit: false, allowSelfCancellation: false,
     cancellationCutoff: '', requireCancellationReason: false, allowComments: false,
+    ageRestricted: false, minimumAge: '18',
+    enablePhotoAlbum: false, photoUploadPermission: 'host_only', requirePhotoApproval: false,
     sendRsvpConfirmationEmail: true, sendRsvpConfirmationSms: false, sendPreEventReminders: true, sendPostEventFeedbackEmail: false,
     enablePayments: false, ticketPrice: '', bankName: '', holderName: '', routing: '', account: '',
     questions: [''],
@@ -170,6 +172,37 @@ export default function HostCreateEventScreen({ navigation }) {
               </>
             ) : null}
             <Toggle label="Allow comments" desc="Public comments on the event" value={form.allowComments} onValueChange={(v) => set('allowComments', v)} icon="chatbox-outline" />
+          </Card>
+
+          {/* Attendance rules — age restriction (US-EVENT-013) */}
+          <SectionTitle>Attendance rules</SectionTitle>
+          <Card style={{ marginBottom: spacing.lg }}>
+            <Toggle label="Age restriction" desc="Collect a date of birth at RSVP; block guests under the minimum age" value={form.ageRestricted} onValueChange={(v) => set('ageRestricted', v)} icon="lock-closed-outline" />
+            {form.ageRestricted ? (
+              <>
+                <TextField label="Minimum age" value={form.minimumAge} onChangeText={(t) => set('minimumAge', t)} placeholder="18" keyboardType="numeric" />
+                <Chips options={['13', '16', '18', '21']} value={form.minimumAge} onChange={(v) => set('minimumAge', v)} />
+              </>
+            ) : null}
+          </Card>
+
+          {/* Engagement & album (US-UI-004 / EP-001) */}
+          <SectionTitle>Photo album</SectionTitle>
+          <Card style={{ marginBottom: spacing.lg }}>
+            <Toggle label="Guest photo uploads" desc="Create a shared album for the event" value={form.enablePhotoAlbum} onValueChange={(v) => set('enablePhotoAlbum', v)} icon="images-outline" />
+            {form.enablePhotoAlbum ? (
+              <>
+                <Text style={[font.small, { fontWeight: '700', marginTop: spacing.sm, marginBottom: 6, color: colors.text }]}>Who can upload?</Text>
+                <Chips
+                  options={['Host only', 'RSVPed guests']}
+                  value={form.photoUploadPermission === 'guests' ? 'RSVPed guests' : 'Host only'}
+                  onChange={(v) => set('photoUploadPermission', v === 'RSVPed guests' ? 'guests' : 'host_only')}
+                />
+                {form.photoUploadPermission === 'guests' ? (
+                  <Toggle label="Require approval for guest uploads" desc="Review photos before they appear" value={form.requirePhotoApproval} onValueChange={(v) => set('requirePhotoApproval', v)} icon="checkmark-done-outline" />
+                ) : null}
+              </>
+            ) : null}
           </Card>
 
           <SectionTitle>Notifications</SectionTitle>

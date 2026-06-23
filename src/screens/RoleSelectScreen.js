@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius } from '../theme/theme';
+import { BrandLockup } from '../components/ui';
 import { loginAsStaff, useIndividualHost, useOrgHost } from '../data/mock';
 
 function RoleCard({ icon, title, desc, onPress, tint = 'rgba(242,84,27,0.10)' }) {
@@ -39,10 +40,9 @@ export default function RoleSelectScreen({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.primary }}>
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
-        <View style={styles.logoBadge}>
-          <Image source={require('../../assets/logo-mark.png')} style={{ width: 40, height: 40 }} resizeMode="contain" />
+        <View style={{ marginBottom: 16 }}>
+          <BrandLockup size={48} onLight={false} tile />
         </View>
-        <Text style={styles.brand}>SafalEvents</Text>
         <Text style={styles.tagline}>
           {staffMode
             ? 'Team member sign-in — enter the Invite ID your host shared with you.'

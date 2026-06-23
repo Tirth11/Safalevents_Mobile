@@ -12,12 +12,15 @@ import {
   Row,
   Divider,
 } from '../../components/ui';
-import { events, getEvent } from '../../data/mock';
+import { events, getEvent, getEventPhotos, uploadPhoto, useStore } from '../../data/mock';
 import { useAuth, gateAction } from '../../auth/AuthContext';
 
 export default function GuestEventDetailScreen({ navigation, route }) {
   const auth = useAuth();
+  useStore(); // reflect new/approved album photos live
   const event = getEvent(route.params?.eventId) || events[0];
+  const albumPhotos = event.enablePhotoAlbum ? getEventPhotos(event.id).filter((p) => p.status === 'APPROVED') : [];
+  const canUploadPhotos = event.enablePhotoAlbum && event.photoUploadPermission === 'guests' && auth.isAuthed;
 
   return (
     <Screen contentStyle={{ padding: 0 }}>
@@ -32,7 +35,10 @@ export default function GuestEventDetailScreen({ navigation, route }) {
           <Ionicons name="chevron-back" size={24} color={colors.white} />
         </TouchableOpacity>
         <View style={styles.coverText}>
-          <Badge tone="primary" label={event.eventType} />
+          <Row style={{ gap: 8 }}>
+            <Badge tone="primary" label={event.eventType} />
+            {event.ageRestricted ? <Badge tone="red" label={`🔒 ${event.minimumAge}+ Event`} /> : null}
+          </Row>
           <Text style={[font.h1, { color: colors.white, marginTop: 6 }]}>{event.title}</Text>
         </View>
       </View>
@@ -84,6 +90,40 @@ export default function GuestEventDetailScreen({ navigation, route }) {
           </>
         ) : null}
 
+        {event.enablePhotoAlbum ? (
+          <>
+            <SectionTitle
+              right={canUploadPhotos ? (
+                <TouchableOpacity onPress={() => uploadPhoto(event.id, { uploader: 'Alice Vance', role: 'guest' })}>
+                  <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>+ Add photos</Text>
+                </TouchableOpacity>
+              ) : null}
+            >
+              Photo album
+            </SectionTitle>
+            <Card style={{ marginBottom: spacing.lg }}>
+              {albumPhotos.length === 0 ? (
+                <Text style={font.small}>No photos yet — check back around the event.</Text>
+              ) : (
+                <View style={styles.photoGrid}>
+                  {albumPhotos.map((p) => (
+                    <View key={p.id} style={styles.photoCell}>
+                      <Image source={{ uri: p.url }} style={styles.photoImg} />
+                    </View>
+                  ))}
+                </View>
+              )}
+              {event.photoUploadPermission === 'guests' && event.requirePhotoApproval ? (
+                <Text style={[font.tiny, { marginTop: 8 }]}>Guest uploads are reviewed by the host before they appear.</Text>
+              ) : event.photoUploadPermission !== 'guests' ? (
+                <Text style={[font.tiny, { marginTop: 8 }]}>Only the host can add photos to this album.</Text>
+              ) : !auth.isAuthed ? (
+                <Text style={[font.tiny, { marginTop: 8 }]}>RSVP to add your own photos.</Text>
+              ) : null}
+            </Card>
+          </>
+        ) : null}
+
         <Card style={{ marginBottom: spacing.lg, borderColor: colors.primary }}>
           <Text style={font.h2}>
             {event.approvalRequired ? 'Request your spot' : 'Reserve your spot'}
@@ -93,6 +133,15 @@ export default function GuestEventDetailScreen({ navigation, route }) {
               ? 'This event requires organizer approval.'
               : 'RSVP now — capacity is limited.'}
           </Text>
+
+          {event.ageRestricted ? (
+            <Row style={{ marginTop: spacing.sm }}>
+              <Ionicons name="lock-closed" size={16} color={colors.red} />
+              <Text style={[font.small, { marginLeft: 6, color: colors.red, fontWeight: '700' }]}>
+                {event.minimumAge}+ only · age verified at RSVP
+              </Text>
+            </Row>
+          ) : null}
 
           {event.enablePayments ? (
             <Row style={{ marginTop: spacing.md }}>
@@ -152,4 +201,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   coverText: { position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: spacing.lg },
+  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },
+  photoCell: { width: '33.33%', aspectRatio: 1, padding: 4 },
+  photoImg: { width: '100%', height: '100%', borderRadius: radius.sm, backgroundColor: colors.surfaceHover },
 });
