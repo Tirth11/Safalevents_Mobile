@@ -134,7 +134,7 @@ export function BrandLockup({ size = 38, onLight = true, subtitle = true, tile =
           <Text style={{ color: eventsColor }}>Events</Text>
         </Text>
         {subtitle ? (
-          <Text style={{ fontSize: Math.max(8, Math.round(size * 0.23)), fontWeight: '700', letterSpacing: 1.3, color: subColor, textTransform: 'uppercase', marginTop: 2 }}>
+          <Text style={{ fontSize: Math.max(9, Math.round(size * 0.24)), fontWeight: '600', letterSpacing: 0.2, color: subColor, marginTop: 2 }}>
             Creating Successful Moments
           </Text>
         ) : null}
