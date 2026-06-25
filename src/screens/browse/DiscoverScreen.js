@@ -36,11 +36,11 @@ export default function DiscoverScreen({ navigation }) {
         {/* Hero */}
         <View style={styles.hero}>
           <Image source={{ uri: featured.cover }} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255, 255, 255, 0.72)' }]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.35)' }]} />
           <View style={{ padding: spacing.lg }}>
             <Badge tone="primary" label="Browse freely · no account needed" />
-            <Text style={styles.heroTitle}>Discover events worth showing up for</Text>
-            <Text style={styles.heroSub}>Explore everything as a guest. Create an account only when you RSVP.</Text>
+            <Text style={[styles.heroTitle, { color: '#fff' }]}>Discover events worth showing up for</Text>
+            <Text style={[styles.heroSub, { color: 'rgba(255,255,255,0.9)' }]}>Explore everything as a guest. Create an account only when you RSVP.</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
               <Button label="Explore events" icon="compass" onPress={() => navigation.navigate('Explore')} style={{ flex: 1 }} />
               {!auth.isAuthed && (

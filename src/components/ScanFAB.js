@@ -3,7 +3,7 @@
 // lets the host pick an event, simulate scanning a guest (demo, no camera),
 // and view the complete post-scan guest detail panel + partial check-in.
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font } from '../theme/theme';
 import { Card, Button, Avatar, Row, Badge } from './ui';
@@ -53,7 +53,8 @@ export default function ScanFAB() {
       </TouchableOpacity>
 
       {/* ── Full-screen scanner modal ── */}
-      <Modal visible={open} animationType="slide" onRequestClose={close}>
+      {open && (
+        <View style={[StyleSheet.absoluteFill, { zIndex: 9999 }]}>
         <View style={styles.screen}>
           {/* Header */}
           <Row style={styles.header}>
@@ -189,7 +190,8 @@ export default function ScanFAB() {
             )}
           </ScrollView>
         </View>
-      </Modal>
+        </View>
+      )}
     </>
   );
 }

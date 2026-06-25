@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Alert, Modal, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Alert, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font } from '../../theme/theme';
 import { Screen, Card, Badge, Button, SectionTitle, Avatar, Row, ApprovalBadge, EmptyState } from '../../components/ui';
@@ -124,7 +124,8 @@ export default function StaffGuestsScreen() {
       )}
 
       {/* ── Full guest detail sheet (history + check-in, permission-gated) ── */}
-      <Modal visible={!!selected} animationType="slide" onRequestClose={() => setSelected(null)}>
+      {!!selected && (
+        <View style={[StyleSheet.absoluteFill, { zIndex: 9999, backgroundColor: colors.bg }]}>
         <Screen scroll={false}>
           <Row style={{ justifyContent: 'space-between', marginBottom: spacing.md }}>
             <Text style={font.h2}>Guest Details</Text>
@@ -147,7 +148,8 @@ export default function StaffGuestsScreen() {
             ) : null}
           </ScrollView>
         </Screen>
-      </Modal>
+        </View>
+      )}
     </Screen>
   );
 }
