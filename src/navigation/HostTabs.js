@@ -1,7 +1,9 @@
 import React from 'react';
+import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/theme';
+import ScanFAB from '../components/ScanFAB';
 
 import HostDashboardScreen from '../screens/host/HostDashboardScreen';
 import HostEventsScreen from '../screens/host/HostEventsScreen';
@@ -21,6 +23,7 @@ const ICONS = {
 
 export default function HostTabs() {
   return (
+    <View style={{ flex: 1 }}>
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
@@ -37,5 +40,7 @@ export default function HostTabs() {
       <Tab.Screen name="Messages" component={HostMessagesScreen} />
       <Tab.Screen name="Account" component={HostAccountScreen} />
     </Tab.Navigator>
+    <ScanFAB />
+    </View>
   );
 }

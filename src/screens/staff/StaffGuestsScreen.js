@@ -1,15 +1,25 @@
-import React from 'react';
-import { View, Text, Alert, StyleSheet } from 'react-native';
-import { colors, spacing, font } from '../../theme/theme';
+import React, { useState } from 'react';
+import { View, Text, Alert, Modal, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, radius, font } from '../../theme/theme';
 import { Screen, Card, Badge, Button, SectionTitle, Avatar, Row, ApprovalBadge, EmptyState } from '../../components/ui';
-import { useStore, getCurrentStaff, getEvent, getRsvps, checkInGuest, staffCan, getCheckinState, getCheckedInCount, recordArrival, resetArrival, getPartyMembers } from '../../data/mock';
+import GuestCheckinDetail from '../../components/GuestCheckinDetail';
+import {
+  useStore, getCurrentStaff, getEvent, getRsvps, staffCan,
+  getCheckinState, getCheckedInCount, recordArrival, resetArrival, getPartyMembers,
+} from '../../data/mock';
 
 export default function StaffGuestsScreen() {
   useStore();
   const staff = getCurrentStaff();
   const event = getEvent(staff?.eventId) || getEvent('1');
   const eventRsvps = getRsvps(event.id);
-  const canEdit = staffCan('checkin') || staffCan('guests_edit');
+
+  // Permissions
+  const canCheckin = staffCan('checkin') || staffCan('guests_edit');
+  const canViewHistory = staffCan('history_view') || staffCan('guests_view');
+
+  const [selected, setSelected] = useState(null); // rsvp opened in the detail sheet
 
   const confirmed = eventRsvps.filter((r) => r.status === 'going' && r.approvalState === 'APPROVED');
   const other = eventRsvps.filter((r) => !(r.status === 'going' && r.approvalState === 'APPROVED'));
@@ -37,40 +47,44 @@ export default function StaffGuestsScreen() {
 
     return (
       <View key={r.id} style={styles.row}>
-        <Row>
-          <Avatar seed={r.name} size={34} />
-          <View style={{ flex: 1, marginLeft: 10 }}>
-            <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>
-              {r.name}{isParty ? ` · party of ${total}` : ''}
-            </Text>
-            <Text style={font.tiny}>{r.email}</Text>
-            <Row style={{ marginTop: 4 }}>
-              <ApprovalBadge rsvp={r} />
-              {isConfirmed && (
-                <View style={[styles.statusBadge, { backgroundColor: ci.bg }]}>
-                  <Text style={[styles.statusBadgeText, { color: ci.color }]}>{ci.label}</Text>
-                </View>
-              )}
-            </Row>
-          </View>
-          {canEdit && isConfirmed && (
-            <View style={{ alignItems: 'flex-end' }}>
-              {ci.state === 'full' ? (
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Badge tone="green" dot label={`All ${total} in`} />
-                  <Text style={styles.undo} onPress={() => resetArrival(r.id)}>Undo</Text>
-                </View>
-              ) : (
-                <Row>
-                  <Button label="+1" small variant="accent" onPress={() => arrive(1)} />
-                  {remaining > 1 && (
-                    <Button label={`All ${remaining}`} small style={{ marginLeft: 6 }} onPress={() => arrive(remaining)} />
-                  )}
-                </Row>
-              )}
+        <TouchableOpacity activeOpacity={0.7} onPress={() => setSelected(r)}>
+          <Row>
+            <Avatar seed={r.name} size={34} />
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>
+                {r.name}{isParty ? ` · party of ${total}` : ''}
+              </Text>
+              <Text style={font.tiny}>{r.email}</Text>
+              <Row style={{ marginTop: 4 }}>
+                <ApprovalBadge rsvp={r} />
+                {isConfirmed && (
+                  <View style={[styles.statusBadge, { backgroundColor: ci.bg }]}>
+                    <Text style={[styles.statusBadgeText, { color: ci.color }]}>{ci.label}</Text>
+                  </View>
+                )}
+              </Row>
             </View>
-          )}
-        </Row>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </Row>
+        </TouchableOpacity>
+
+        {/* Quick door controls */}
+        {canCheckin && isConfirmed && (
+          <Row style={{ marginTop: 8, justifyContent: 'flex-end' }}>
+            {ci.state === 'full' ? (
+              <Row>
+                <Badge tone="green" dot label={`All ${total} in`} />
+                <Text style={styles.undo} onPress={() => resetArrival(r.id)}>Undo</Text>
+              </Row>
+            ) : (
+              <Row>
+                <Button label="View details" small variant="outline" onPress={() => setSelected(r)} style={{ marginRight: 6 }} />
+                <Button label="+1" small variant="accent" onPress={() => arrive(1)} />
+                {remaining > 1 && <Button label={`All ${remaining}`} small style={{ marginLeft: 6 }} onPress={() => arrive(remaining)} />}
+              </Row>
+            )}
+          </Row>
+        )}
 
         {isConfirmed && isParty && (
           <View style={styles.members}>
@@ -80,9 +94,7 @@ export default function StaffGuestsScreen() {
                 <Row key={i} style={{ marginTop: 4 }}>
                   <View style={[styles.memberDot, { backgroundColor: arrived ? '#16a34a' : colors.border }]} />
                   <Text style={[font.tiny, { flex: 1, color: arrived ? colors.text : colors.textMuted }]}>{m}</Text>
-                  <Text style={[font.tiny, { color: arrived ? '#16a34a' : colors.textMuted, fontWeight: '700' }]}>
-                    {arrived ? 'IN' : 'PENDING'}
-                  </Text>
+                  <Text style={[font.tiny, { color: arrived ? '#16a34a' : colors.textMuted, fontWeight: '700' }]}>{arrived ? 'IN' : 'PENDING'}</Text>
                 </Row>
               );
             })}
@@ -96,7 +108,7 @@ export default function StaffGuestsScreen() {
     <Screen>
       <SectionTitle>Guests</SectionTitle>
       <Text style={[font.small, { marginTop: -6, marginBottom: spacing.md }]}>
-        {event.title} · {canEdit ? 'You can check guests in' : 'Read-only (your role)'}
+        {event.title} · {canCheckin ? 'Tap a guest for full history & check-in' : 'Tap a guest to view details'}
       </Text>
 
       <Card padded={false} style={{ padding: 6, marginBottom: spacing.lg }}>
@@ -110,6 +122,32 @@ export default function StaffGuestsScreen() {
           {other.map(renderRow)}
         </Card>
       )}
+
+      {/* ── Full guest detail sheet (history + check-in, permission-gated) ── */}
+      <Modal visible={!!selected} animationType="slide" onRequestClose={() => setSelected(null)}>
+        <Screen scroll={false}>
+          <Row style={{ justifyContent: 'space-between', marginBottom: spacing.md }}>
+            <Text style={font.h2}>Guest Details</Text>
+            <TouchableOpacity onPress={() => setSelected(null)} hitSlop={10} style={styles.close}>
+              <Ionicons name="close" size={22} color={colors.text} />
+            </TouchableOpacity>
+          </Row>
+          {!canViewHistory ? (
+            <Text style={[font.small, { marginBottom: spacing.md }]}>Your role can check guests in but full attendance history is hidden.</Text>
+          ) : null}
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+            {selected ? (
+              <GuestCheckinDetail
+                rsvp={selected}
+                event={event}
+                scannerName={scannerName}
+                canCheckin={canCheckin}
+                canViewHistory={canViewHistory}
+              />
+            ) : null}
+          </ScrollView>
+        </Screen>
+      </Modal>
     </Screen>
   );
 }
@@ -118,7 +156,8 @@ const styles = StyleSheet.create({
   row: { padding: 8, borderTopWidth: 1, borderTopColor: colors.border },
   statusBadge: { marginLeft: 6, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
   statusBadgeText: { fontSize: 11, fontWeight: '700' },
-  undo: { marginTop: 4, fontSize: 11, fontWeight: '700', color: colors.red },
+  undo: { marginLeft: 10, fontSize: 11, fontWeight: '700', color: colors.red },
   members: { marginTop: 8, marginLeft: 44, paddingLeft: 10, borderLeftWidth: 2, borderLeftColor: colors.border },
   memberDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
+  close: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover },
 });

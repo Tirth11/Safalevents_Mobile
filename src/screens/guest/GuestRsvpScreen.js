@@ -1,25 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, radius, font, shadow, avatarUrl } from '../../theme/theme';
-import {
-  Screen,
-  Card,
-  Badge,
-  Button,
-  SectionTitle,
-  Row,
-  Divider,
-  Field,
-  ScreenHeader,
-} from '../../components/ui';
-import { events, getEvent, GUEST, meetsAge, createGuestRsvp } from '../../data/mock';
+import { colors, spacing, radius, font } from '../../theme/theme';
+import { Screen, Card, Badge, Button, SectionTitle, Row, Divider, ScreenHeader } from '../../components/ui';
+import { events, getEvent, GUEST, meetsAge, calcAge, createGuestRsvp } from '../../data/mock';
 
-// Small controlled input that matches the shared Field styling.
-function LInput({ label, value, onChangeText, placeholder, keyboardType }) {
+// Controlled text input matching the app's field styling.
+function LInput({ label, value, onChangeText, placeholder, keyboardType, required }) {
   return (
     <View style={{ marginBottom: spacing.md }}>
-      {label ? <Text style={[font.small, { fontWeight: '700', marginBottom: 4, color: colors.text }]}>{label}</Text> : null}
+      {label ? (
+        <Text style={[font.small, { fontWeight: '700', marginBottom: 4, color: colors.text }]}>
+          {label} {required ? <Text style={{ color: colors.red }}>*</Text> : null}
+        </Text>
+      ) : null}
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -32,14 +26,27 @@ function LInput({ label, value, onChangeText, placeholder, keyboardType }) {
   );
 }
 
+const RESPONSES = [
+  { key: 'going', label: "I'm Going", icon: 'checkmark-circle', color: colors.accent },
+  { key: 'maybe', label: 'Maybe', icon: 'help-circle', color: colors.amber },
+  { key: 'no', label: "Can't Go", icon: 'close-circle', color: colors.red },
+];
+
 export default function GuestRsvpScreen({ navigation, route }) {
   const event = getEvent(route.params?.eventId) || events[0];
   const restricted = !!event.ageRestricted;
   const minAge = event.minimumAge || 18;
 
+  const [response, setResponse] = useState('going');
+  const [name, setName] = useState(GUEST.name);
+  const [email, setEmail] = useState(GUEST.email);
+  const [phone, setPhone] = useState(GUEST.phone);
   const [guestCount, setGuestCount] = useState(1);
   const [dob, setDob] = useState('');
   const [extras, setExtras] = useState([]); // [{ firstName, lastName, dob }]
+  const [answers, setAnswers] = useState({}); // { [question]: value }
+  const [errorMsg, setErrorMsg] = useState('');
+  const [submitted, setSubmitted] = useState(null); // result of createGuestRsvp
 
   const setCount = (n) => {
     const c = Math.max(1, Math.min(10, n));
@@ -51,65 +58,137 @@ export default function GuestRsvpScreen({ navigation, route }) {
       return arr;
     });
   };
-  const updateExtra = (i, field, v) =>
-    setExtras((prev) => prev.map((g, idx) => (idx === i ? { ...g, [field]: v } : g)));
+  const updateExtra = (i, field, v) => setExtras((prev) => prev.map((g, idx) => (idx === i ? { ...g, [field]: v } : g)));
 
   const onSubmit = () => {
+    setErrorMsg('');
+
+    // Maybe / Can't-go: just record the response, no full RSVP.
+    if (response !== 'going') {
+      setSubmitted({ response });
+      return;
+    }
+
     if (restricted) {
-      if (!dob) return Alert.alert('Date of birth required', 'Please enter your date of birth to verify your age.');
-      if (!meetsAge(dob, minAge))
-        return Alert.alert('Age requirement not met', `Sorry, you must be at least ${minAge} years old to attend this event.`);
+      if (!dob) return setErrorMsg('Please enter your date of birth — this is an age-restricted event.');
+      if (!meetsAge(dob, minAge)) return setErrorMsg(`You must be at least ${minAge} to attend this event.`);
     }
     for (let i = 0; i < extras.length; i++) {
       const g = extras[i];
-      if (!g.firstName.trim() || !g.lastName.trim())
-        return Alert.alert('Guest details needed', `Please enter the first and last name for Guest ${i + 2}.`);
+      if (!g.firstName.trim() || !g.lastName.trim()) return setErrorMsg(`Enter the first and last name for Guest ${i + 2}.`);
       if (restricted) {
-        if (!g.dob) return Alert.alert('Date of birth required', `Please enter the date of birth for Guest ${i + 2}.`);
-        if (!meetsAge(g.dob, minAge))
-          return Alert.alert('Age requirement not met', `Guest ${i + 2} doesn't meet the ${minAge}+ requirement. Correct the date of birth or reduce your guest count.`);
+        if (!g.dob) return setErrorMsg(`Enter the date of birth for Guest ${i + 2}.`);
+        if (!meetsAge(g.dob, minAge)) return setErrorMsg(`Guest ${i + 2} doesn't meet the ${minAge}+ requirement.`);
       }
     }
-    const data = {
-      name: GUEST.name,
-      email: GUEST.email,
-      phone: GUEST.phone,
-      guestCount,
-      dob,
+
+    const res = createGuestRsvp(event.id, {
+      name, email, phone, guestCount, dob,
       additionalGuests: extras,
-      answers: [],
-    };
-    const res = createGuestRsvp(event.id, data);
-
-    const message = res.pending
-      ? 'Request submitted — pending host approval.'
-      : res.waitlisted
-      ? "You're on the waitlist — we'll notify you if a spot opens."
-      : 'RSVP confirmed! Your pass is ready in My Tickets.';
-
-    Alert.alert(
-      res.pending ? 'Request submitted' : res.waitlisted ? 'Waitlisted' : 'Success',
-      message,
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            try {
-              navigation.navigate('GuestTabs', { screen: 'Tickets' });
-            } catch (e) {
-              navigation.goBack();
-            }
-          },
-        },
-      ]
-    );
+      answers,
+    });
+    setSubmitted({ ...res, response: 'going' });
   };
+
+  // ─── SUCCESS / CONFIRMATION VIEW ───────────────────────────────────────────
+  if (submitted) {
+    const declined = submitted.response === 'no';
+    const maybe = submitted.response === 'maybe';
+    const pending = submitted.pending;
+    const waitlisted = submitted.waitlisted;
+
+    const tone = declined ? colors.textMuted : maybe ? colors.amber : pending ? colors.amber : waitlisted ? colors.blue : colors.accent;
+    const icon = declined ? 'close-circle' : maybe ? 'help-circle' : pending ? 'time' : waitlisted ? 'people' : 'checkmark-circle';
+    const title = declined
+      ? "Thanks for letting us know"
+      : maybe
+      ? "We'll keep you posted"
+      : pending
+      ? 'Request submitted'
+      : waitlisted
+      ? "You're on the waitlist"
+      : "You're confirmed!";
+    const sub = declined
+      ? `We've told the host you can't make ${event.title}.`
+      : maybe
+      ? `We've noted you might attend ${event.title}. RSVP anytime to lock your spot.`
+      : pending
+      ? 'The host will review your request — you\'ll get an email once approved.'
+      : waitlisted
+      ? "We'll notify you the moment a spot opens up."
+      : `Your pass for ${event.title} is ready in My Tickets.`;
+
+    return (
+      <Screen>
+        <ScreenHeader title="RSVP" subtitle={event.title} onBack={() => navigation.goBack()} />
+        <View style={{ alignItems: 'center', paddingVertical: spacing.xl }}>
+          <View style={[styles.successRing, { backgroundColor: tone + '18' }]}>
+            <Ionicons name={icon} size={56} color={tone} />
+          </View>
+          <Text style={[font.h1, { marginTop: spacing.lg, textAlign: 'center' }]}>{title}</Text>
+          <Text style={[font.body, { color: colors.textMuted, textAlign: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.lg }]}>{sub}</Text>
+        </View>
+
+        {!declined && !maybe ? (
+          <Card style={{ marginBottom: spacing.lg }}>
+            <Row style={{ marginBottom: spacing.md }}>
+              <Image source={{ uri: event.cover }} style={styles.summaryCover} />
+              <View style={{ flex: 1, marginLeft: spacing.md }}>
+                <Text style={[font.h3]} numberOfLines={2}>{event.title}</Text>
+                <Row style={{ marginTop: 4 }}>
+                  <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
+                  <Text style={[font.small, { marginLeft: 4 }]}>{event.date} • {event.time}</Text>
+                </Row>
+                <Row style={{ marginTop: 2 }}>
+                  <Ionicons name="people-outline" size={13} color={colors.textMuted} />
+                  <Text style={[font.small, { marginLeft: 4 }]}>{guestCount} attendee{guestCount > 1 ? 's' : ''}</Text>
+                </Row>
+              </View>
+            </Row>
+            <Divider />
+            <Row style={{ justifyContent: 'space-between' }}>
+              <Text style={font.small}>Status</Text>
+              <Badge tone={pending ? 'amber' : waitlisted ? 'blue' : 'green'} dot label={pending ? 'Pending approval' : waitlisted ? 'Waitlisted' : 'Confirmed'} />
+            </Row>
+          </Card>
+        ) : null}
+
+        {!declined && !maybe && !pending && !waitlisted ? (
+          <Button label="View My Pass" variant="primary" icon="qr-code-outline" onPress={() => navigation.navigate('GuestTicketPass', { eventId: event.id })} style={{ marginBottom: spacing.md }} />
+        ) : null}
+        <Button label="Go to My Tickets" variant={declined || maybe ? 'primary' : 'outline'} icon="ticket-outline" onPress={() => navigation.navigate('GuestTabs', { screen: 'Tickets' })} />
+        <Button label="Back to event" variant="ghost" onPress={() => navigation.goBack()} style={{ marginTop: spacing.sm }} />
+      </Screen>
+    );
+  }
+
+  // ─── RSVP FORM ─────────────────────────────────────────────────────────────
+  const goingFlow = response === 'going';
 
   return (
     <Screen>
       <ScreenHeader title="RSVP" subtitle={event.title} onBack={() => navigation.goBack()} />
 
-      {restricted ? (
+      {/* Response selector — Going / Maybe / Can't go */}
+      <SectionTitle>Will you attend?</SectionTitle>
+      <Row style={{ gap: 8, marginBottom: spacing.lg }}>
+        {RESPONSES.map((r) => {
+          const on = response === r.key;
+          return (
+            <TouchableOpacity
+              key={r.key}
+              activeOpacity={0.85}
+              onPress={() => setResponse(r.key)}
+              style={[styles.respBtn, on && { borderColor: r.color, backgroundColor: r.color + '14' }]}
+            >
+              <Ionicons name={r.icon} size={22} color={on ? r.color : colors.textMuted} />
+              <Text style={{ marginTop: 6, fontWeight: '700', fontSize: 12.5, color: on ? r.color : colors.textMuted }}>{r.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </Row>
+
+      {restricted && goingFlow ? (
         <Card style={{ marginBottom: spacing.lg, backgroundColor: colors.redTint, borderColor: colors.red }}>
           <Row>
             <Ionicons name="lock-closed" size={18} color={colors.red} />
@@ -120,7 +199,7 @@ export default function GuestRsvpScreen({ navigation, route }) {
         </Card>
       ) : null}
 
-      {event.approvalRequired ? (
+      {event.approvalRequired && goingFlow ? (
         <Card style={{ marginBottom: spacing.lg, backgroundColor: colors.amberTint, borderColor: colors.amber }}>
           <Row>
             <Ionicons name="time-outline" size={18} color={colors.amber} />
@@ -131,86 +210,114 @@ export default function GuestRsvpScreen({ navigation, route }) {
         </Card>
       ) : null}
 
+      {/* Your details — always shown */}
       <SectionTitle>Your details</SectionTitle>
       <Card style={{ marginBottom: spacing.lg }}>
-        <Field label="Full name" value={GUEST.name} />
-        <Field label="Email" value={GUEST.email} keyboardType="email-address" />
-        <Field label="Phone" value={GUEST.phone} keyboardType="phone-pad" />
-        {restricted ? (
-          <LInput label={`Date of birth * (${minAge}+ event)`} value={dob} onChangeText={setDob} placeholder="YYYY-MM-DD" />
+        <LInput label="Full name" value={name} onChangeText={setName} placeholder="Your name" required />
+        <LInput label="Email" value={email} onChangeText={setEmail} placeholder="you@email.com" keyboardType="email-address" required />
+        <LInput label="Phone" value={phone} onChangeText={setPhone} placeholder="+1 (555) 000-0000" keyboardType="phone-pad" />
+        {restricted && goingFlow ? (
+          <>
+            <LInput label={`Date of birth (${minAge}+ event)`} value={dob} onChangeText={setDob} placeholder="YYYY-MM-DD" required />
+            {dob ? (
+              <Badge
+                tone={meetsAge(dob, minAge) ? 'green' : 'red'}
+                label={meetsAge(dob, minAge) ? `✓ Age ${calcAge(dob)} — eligible` : `✕ Under ${minAge}`}
+              />
+            ) : null}
+          </>
         ) : null}
       </Card>
 
-      <SectionTitle>Attendance</SectionTitle>
-      <Card style={{ marginBottom: spacing.lg }}>
-        <Text style={[font.small, { fontWeight: '700', marginBottom: 6, color: colors.text }]}>
-          Number of guests (including you)
-        </Text>
-        <Row style={{ marginBottom: extras.length ? spacing.md : 0 }}>
-          <TouchableOpacity onPress={() => setCount(guestCount - 1)} style={styles.stepBtn} activeOpacity={0.8}>
-            <Ionicons name="remove" size={18} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={{ width: 44, textAlign: 'center', fontWeight: '800', fontSize: 16, color: colors.text }}>{guestCount}</Text>
-          <TouchableOpacity onPress={() => setCount(guestCount + 1)} style={styles.stepBtn} activeOpacity={0.8}>
-            <Ionicons name="add" size={18} color={colors.text} />
-          </TouchableOpacity>
-        </Row>
-
-        {extras.map((g, i) => (
-          <View key={i} style={styles.extraBox}>
-            <Text style={{ fontWeight: '700', fontSize: 13, color: colors.text, marginBottom: 8 }}>
-              Guest {i + 2} <Text style={{ color: colors.textMuted, fontWeight: '500' }}>(+{i + 1})</Text>
-            </Text>
-            <Row style={{ gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <LInput label="First name" value={g.firstName} onChangeText={(v) => updateExtra(i, 'firstName', v)} placeholder="Jane" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <LInput label="Last name" value={g.lastName} onChangeText={(v) => updateExtra(i, 'lastName', v)} placeholder="Doe" />
-              </View>
-            </Row>
-            {restricted ? (
-              <LInput label="Date of birth *" value={g.dob} onChangeText={(v) => updateExtra(i, 'dob', v)} placeholder="YYYY-MM-DD" />
-            ) : null}
-          </View>
-        ))}
-      </Card>
-
-      {event.questions.length > 0 ? (
+      {goingFlow ? (
         <>
-          <SectionTitle>Host questions</SectionTitle>
+          {/* Attendance count + additional guests */}
+          <SectionTitle>How many attending?</SectionTitle>
           <Card style={{ marginBottom: spacing.lg }}>
-            {event.questions.map((q, idx) => (
-              <Field key={idx} label={q} placeholder="Your answer" />
+            <Text style={[font.small, { fontWeight: '700', marginBottom: 6, color: colors.text }]}>Number of guests (including you)</Text>
+            <Row style={{ marginBottom: extras.length ? spacing.md : 0 }}>
+              <TouchableOpacity onPress={() => setCount(guestCount - 1)} style={styles.stepBtn} activeOpacity={0.8}>
+                <Ionicons name="remove" size={18} color={colors.text} />
+              </TouchableOpacity>
+              <Text style={{ width: 44, textAlign: 'center', fontWeight: '800', fontSize: 16, color: colors.text }}>{guestCount}</Text>
+              <TouchableOpacity onPress={() => setCount(guestCount + 1)} style={styles.stepBtn} activeOpacity={0.8}>
+                <Ionicons name="add" size={18} color={colors.text} />
+              </TouchableOpacity>
+            </Row>
+
+            {extras.map((g, i) => (
+              <View key={i} style={styles.extraBox}>
+                <Text style={{ fontWeight: '700', fontSize: 13, color: colors.text, marginBottom: 8 }}>
+                  Guest {i + 2} <Text style={{ color: colors.textMuted, fontWeight: '500' }}>(+{i + 1})</Text>
+                </Text>
+                <Row style={{ gap: 8 }}>
+                  <View style={{ flex: 1 }}>
+                    <LInput label="First name" value={g.firstName} onChangeText={(v) => updateExtra(i, 'firstName', v)} placeholder="Jane" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <LInput label="Last name" value={g.lastName} onChangeText={(v) => updateExtra(i, 'lastName', v)} placeholder="Doe" />
+                  </View>
+                </Row>
+                {restricted ? (
+                  <LInput label="Date of birth" value={g.dob} onChangeText={(v) => updateExtra(i, 'dob', v)} placeholder="YYYY-MM-DD" required />
+                ) : null}
+              </View>
             ))}
           </Card>
-        </>
-      ) : null}
 
-      {event.enablePayments ? (
-        <>
-          <SectionTitle>Payment</SectionTitle>
-          <Card style={{ marginBottom: spacing.lg }}>
-            <Row style={[styles.between, { marginBottom: spacing.md }]}>
-              <Text style={[font.body, { fontWeight: '700' }]}>Ticket price</Text>
-              <Text style={[font.h3, { color: colors.primary }]}>${event.ticketPrice}</Text>
-            </Row>
-            <Field label="Card number" placeholder="1234 5678 9012 3456" keyboardType="numeric" />
-            <Row>
-              <View style={{ flex: 1, marginRight: spacing.sm }}>
-                <Field label="Expiry" placeholder="MM/YY" keyboardType="numeric" />
-              </View>
-              <View style={{ flex: 1, marginLeft: spacing.sm }}>
-                <Field label="CVC" placeholder="123" keyboardType="numeric" />
-              </View>
-            </Row>
-          </Card>
+          {/* Host questions */}
+          {event.questions && event.questions.length > 0 ? (
+            <>
+              <SectionTitle>Host questions</SectionTitle>
+              <Card style={{ marginBottom: spacing.lg }}>
+                {event.questions.map((q, idx) => (
+                  <LInput key={idx} label={q} value={answers[q] || ''} onChangeText={(v) => setAnswers((a) => ({ ...a, [q]: v }))} placeholder="Your answer" />
+                ))}
+              </Card>
+            </>
+          ) : null}
+
+          {/* Payment */}
+          {event.enablePayments ? (
+            <>
+              <SectionTitle>Payment</SectionTitle>
+              <Card style={{ marginBottom: spacing.lg }}>
+                <Row style={[styles.between, { marginBottom: spacing.md }]}>
+                  <Text style={[font.body, { fontWeight: '700' }]}>Ticket price</Text>
+                  <Text style={[font.h3, { color: colors.primary }]}>${event.ticketPrice}</Text>
+                </Row>
+                <LInput label="Card number" placeholder="1234 5678 9012 3456" keyboardType="numeric" />
+                <Row style={{ gap: 12 }}>
+                  <View style={{ flex: 1 }}><LInput label="Expiry" placeholder="MM/YY" keyboardType="numeric" /></View>
+                  <View style={{ flex: 1 }}><LInput label="CVC" placeholder="123" keyboardType="numeric" /></View>
+                </Row>
+              </Card>
+            </>
+          ) : null}
         </>
+      ) : (
+        <Card style={{ marginBottom: spacing.lg }}>
+          <Text style={[font.small, { color: colors.text }]}>
+            {response === 'maybe'
+              ? "We'll let the host know you might attend. You can come back and confirm anytime before the event."
+              : "We'll let the host know you can't make it this time. No pass will be issued."}
+          </Text>
+        </Card>
+      )}
+
+      {errorMsg ? (
+        <Card style={{ marginBottom: spacing.md, backgroundColor: colors.redTint, borderColor: colors.red }}>
+          <Row>
+            <Ionicons name="alert-circle" size={18} color={colors.red} />
+            <Text style={[font.small, { marginLeft: 8, flex: 1, color: colors.red, fontWeight: '700' }]}>{errorMsg}</Text>
+          </Row>
+        </Card>
       ) : null}
 
       <Button
-        label={event.approvalRequired ? 'Submit request' : 'Confirm RSVP'}
+        label={response === 'no' ? "Send response" : response === 'maybe' ? 'Save as Maybe' : event.approvalRequired ? 'Submit request' : 'Confirm RSVP'}
         variant="primary"
+        icon={response === 'going' ? 'checkmark-circle' : undefined}
         onPress={onSubmit}
       />
     </Screen>
@@ -231,6 +338,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text,
   },
+  respBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
   stepBtn: {
     width: 40,
     height: 40,
@@ -249,4 +365,6 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 10,
   },
+  successRing: { width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center' },
+  summaryCover: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.surfaceHover },
 });

@@ -24,11 +24,8 @@ import GuestCheckinDetail from '../../components/GuestCheckinDetail';
 import {
   events,
   conversations,
-  roles,
-  staff,
   auditTrail,
   outbox,
-  PERMISSION_LABELS,
   getEvent,
   getRsvps,
   getPolls,
@@ -62,10 +59,6 @@ import {
   reopenRsvp,
   removeRsvp,
   approveAllPending,
-  inviteStaff,
-  removeStaff,
-  updateStaffRole,
-  getRoleById,
 } from '../../data/mock';
 
 const MANAGE_TABS = [
@@ -76,7 +69,6 @@ const MANAGE_TABS = [
   { key: 'messaging', label: 'Messaging' },
   { key: 'polls', label: 'Polls' },
   { key: 'comments', label: 'Comments' },
-  { key: 'staff', label: 'Staff & Roles' },
   { key: 'payments', label: 'Payments' },
   { key: 'logs', label: 'Notification Logs' },
   { key: 'settings', label: 'Settings' },
@@ -128,10 +120,6 @@ export default function HostEventManageScreen({ navigation, route }) {
   const event = getEvent(route.params?.eventId) || events[0];
   const eventRsvps = getRsvps(event.id);
   const [active, setActive] = useState('overview');
-  const [showPerms, setShowPerms] = useState(false);
-  const [inviteRole, setInviteRole] = useState(roles[0]?.name);
-  const [inviteName, setInviteName] = useState('');
-  const [inviteEmail, setInviteEmail] = useState('');
   const [scanResult, setScanResult] = useState(null); // result of QR validate
   const [arriving, setArriving] = useState(1);         // stepper for arrivals
   const [passInput, setPassInput] = useState('');      // manual pass id entry
@@ -731,113 +719,6 @@ export default function HostEventManageScreen({ navigation, route }) {
                 </View>
               ))
             )}
-          </Card>
-        </View>
-      )}
-
-      {active === 'staff' && (
-        <View>
-          <Card style={{ marginBottom: spacing.lg }}>
-            <Text style={[font.h3, { marginBottom: spacing.md }]}>Team members</Text>
-            {staff.filter((s) => s.eventId === event.id).length === 0 ? (
-              <Text style={[font.small, { marginBottom: spacing.md }]}>No team members yet.</Text>
-            ) : (
-              staff
-                .filter((s) => s.eventId === event.id)
-                .map((s, i) => (
-                  <View key={s.id}>
-                    {i > 0 ? <Divider /> : null}
-                    <Row style={styles.between}>
-                      <Row style={{ flex: 1 }}>
-                        <Avatar seed={s.name} size={40} />
-                        <View style={{ marginLeft: spacing.md, flex: 1 }}>
-                          <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{s.name}</Text>
-                          <Text style={font.tiny}>{s.roleName}</Text>
-                        </View>
-                      </Row>
-                      <Badge tone={s.status === 'ACTIVE' ? 'green' : 'amber'} label={s.status} />
-                      <TouchableOpacity style={{ marginLeft: spacing.md }} onPress={() => Alert.alert('Remove staff', `Remove ${s.name} from the team?`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => removeStaff(s.id) }])}>
-                        <Ionicons name="trash-outline" size={18} color={colors.red} />
-                      </TouchableOpacity>
-                    </Row>
-                    <Row style={{ flexWrap: 'wrap', gap: 6, marginTop: 6, marginLeft: 52 }}>
-                      {roles.map((role) => {
-                        const selected = role.id === s.roleId;
-                        return (
-                          <TouchableOpacity
-                            key={role.id}
-                            activeOpacity={0.8}
-                            onPress={() => updateStaffRole(s.id, role.id)}
-                            style={[styles.roleChip, selected ? styles.roleChipOn : null]}
-                          >
-                            <Text style={[styles.roleChipTxt, selected ? styles.roleChipTxtOn : null]}>{role.name}</Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </Row>
-                  </View>
-                ))
-            )}
-            <Divider />
-            <Text style={[font.small, { fontWeight: '700', color: colors.text, marginBottom: spacing.sm }]}>Invite a team member</Text>
-            <TextField label="Name" value={inviteName} onChangeText={setInviteName} placeholder="Full name" />
-            <TextField label="Email" value={inviteEmail} onChangeText={setInviteEmail} placeholder="name@email.com" keyboardType="email-address" />
-            <Text style={[font.tiny, { fontWeight: '700', color: colors.text, marginBottom: 6 }]}>Role</Text>
-            <Tabs tabs={roles.map((r) => ({ key: r.name, label: r.name }))} active={inviteRole} onChange={setInviteRole} />
-            <Button
-              label="Send invite"
-              variant="primary"
-              icon="mail-outline"
-              onPress={() => {
-                if (!inviteName.trim() || !inviteEmail.trim()) {
-                  Alert.alert('Missing details', 'Enter a name and email to send an invite.');
-                  return;
-                }
-                const role = roles.find((r) => r.name === inviteRole) || roles[0];
-                const rec = inviteStaff(event.id, { name: inviteName.trim(), email: inviteEmail.trim(), roleId: role.id });
-                Alert.alert('Invite sent', `Invite sent to ${inviteEmail.trim()}. Invite ID: ${rec.inviteId}`);
-                setInviteName('');
-                setInviteEmail('');
-              }}
-            />
-          </Card>
-
-          <Card>
-            <Text style={[font.h3, { marginBottom: spacing.md }]}>Roles & permissions</Text>
-            {roles.map((r, i) => {
-              const permCount = Object.values(r.permissions).filter(Boolean).length;
-              return (
-                <View key={r.id}>
-                  {i > 0 ? <Divider /> : null}
-                  <Row style={[styles.between, { alignItems: 'flex-start' }]}>
-                    <View style={{ flex: 1, paddingRight: spacing.md }}>
-                      <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{r.name}</Text>
-                      <Text style={font.tiny}>{r.description}</Text>
-                      <Text style={[font.tiny, { marginTop: 2, color: colors.primary, fontWeight: '700' }]}>{permCount} perms</Text>
-                    </View>
-                    <Button label="Edit" variant="outline" small onPress={() => Alert.alert(r.name, r.description)} />
-                  </Row>
-                </View>
-              );
-            })}
-            <Button label="New role" variant="outline" icon="add" style={{ marginTop: spacing.md }} onPress={() => navigation.navigate('StaffRoles')} />
-            <Divider />
-            <TouchableOpacity onPress={() => setShowPerms((v) => !v)} activeOpacity={0.8}>
-              <Row style={styles.between}>
-                <Text style={[font.small, { fontWeight: '700', color: colors.text }]}>Example permission checklist</Text>
-                <Ionicons name={showPerms ? 'chevron-down' : 'chevron-forward'} size={16} color={colors.textMuted} />
-              </Row>
-            </TouchableOpacity>
-            {showPerms &&
-              PERMISSION_LABELS.map((p) => {
-                const on = roles[0].permissions[p.key];
-                return (
-                  <Row key={p.key} style={{ marginTop: spacing.sm }}>
-                    <Ionicons name={on ? 'checkmark-circle' : 'ellipse'} size={15} color={on ? colors.accent : colors.border} />
-                    <Text style={[font.small, { marginLeft: 6, color: colors.text }]}>{p.label}</Text>
-                  </Row>
-                );
-              })}
           </Card>
         </View>
       )}

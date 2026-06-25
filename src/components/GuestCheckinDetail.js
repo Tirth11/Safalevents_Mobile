@@ -123,11 +123,11 @@ export default function GuestCheckinDetail({
             <Badge label={state.state === 'full' ? 'Complete' : state.state === 'partial' ? 'Partial' : 'Not in'} tone={state.state === 'full' ? 'green' : state.state === 'partial' ? 'amber' : 'gray'} />
           </Row>
 
-          <Row style={{ gap: 10 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             <Stat label="RSVP Total" value={total} color={colors.text} />
             <Stat label="Checked-In" value={checked} color={GREEN} />
             <Stat label="Remaining" value={remaining} color={remaining > 0 ? AMBER : colors.textMuted} />
-          </Row>
+          </View>
 
           {/* progress */}
           <View style={{ marginTop: spacing.md }}>
@@ -269,12 +269,12 @@ export default function GuestCheckinDetail({
               )}
 
               {/* summary stats */}
-              <Row style={{ gap: 8, marginTop: spacing.md }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: spacing.md }}>
                 <Stat label="Events" value={hist.totalEventsRsvpd} color={colors.text} small />
                 <Stat label="Accuracy" value={`${hist.accuracy}%`} color={hist.accuracy >= 80 ? GREEN : hist.accuracy >= 50 ? AMBER : RED} small />
                 <Stat label="No-Shows" value={hist.noShow} color={hist.noShow > 0 ? RED : colors.text} small />
                 <Stat label="Partials" value={hist.partial} color={hist.partial > 0 ? AMBER : colors.text} small />
-              </Row>
+              </View>
 
               {/* recent table */}
               {hist.recent.length > 0 ? (
@@ -313,9 +313,9 @@ export default function GuestCheckinDetail({
 
 function Stat({ label, value, color, small }) {
   return (
-    <View style={[styles.stat, small && { padding: 10 }]}>
-      <Text style={{ fontSize: small ? 18 : 24, fontWeight: '800', color, fontFamily: 'Inter_800ExtraBold' }}>{value}</Text>
-      <Text style={[font.tiny, { marginTop: 3, textAlign: 'center' }]}>{label}</Text>
+    <View style={[styles.stat, small && { padding: 8 }, { minWidth: small ? '45%' : '28%', flexGrow: 1, flexShrink: 1 }]}>
+      <Text style={{ fontSize: small ? 17 : 21, fontWeight: '800', color, fontFamily: 'Inter_800ExtraBold' }}>{value}</Text>
+      <Text style={[font.tiny, { marginTop: 3, textAlign: 'center' }]} numberOfLines={1}>{label}</Text>
     </View>
   );
 }
