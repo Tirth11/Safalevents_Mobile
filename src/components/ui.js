@@ -60,7 +60,7 @@ export function Badge({ label, tone = 'gray', dot = false, style }) {
   const t = TONES[tone] || TONES.gray;
   return (
     <View style={[styles.badge, { backgroundColor: t.bg }, style]}>
-      <Text style={{ color: t.fg, fontSize: 11, fontWeight: '700' }}>
+      <Text style={{ color: t.fg, fontSize: 11, fontWeight: '700', fontFamily: 'Inter_700Bold' }}>
         {dot ? '● ' : ''}
         {label}
       </Text>
@@ -90,7 +90,7 @@ export function Button({ label, onPress, variant = 'primary', icon, style, disab
       ]}
     >
       {icon ? <Ionicons name={icon} size={small ? 15 : 17} color={v.fg} style={{ marginRight: 6 }} /> : null}
-      <Text style={{ color: v.fg, fontWeight: '700', fontSize: small ? 13 : 15 }}>{label}</Text>
+      <Text style={{ color: v.fg, fontWeight: '700', fontSize: small ? 13 : 15, fontFamily: 'Inter_700Bold' }}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -129,12 +129,12 @@ export function BrandLockup({ size = 38, onLight = true, subtitle = true, tile =
         <View style={{ backgroundColor: '#fff', borderRadius: Math.round(size * 0.28), padding: Math.round(size * 0.14) }}>{mark}</View>
       ) : mark}
       <View style={{ marginLeft: 10 }}>
-        <Text style={{ fontSize: Math.round(size * 0.52), fontWeight: '800', letterSpacing: -0.3 }}>
+        <Text style={{ fontSize: Math.round(size * 0.52), fontWeight: '800', letterSpacing: -0.3, fontFamily: 'Inter_800ExtraBold' }}>
           <Text style={{ color: safalColor }}>Safal</Text>
           <Text style={{ color: eventsColor }}>Events</Text>
         </Text>
         {subtitle ? (
-          <Text style={{ fontSize: Math.max(9, Math.round(size * 0.24)), fontWeight: '600', letterSpacing: 0.2, color: subColor, marginTop: 2 }}>
+          <Text style={{ fontSize: Math.max(9, Math.round(size * 0.24)), fontWeight: '600', letterSpacing: 0.2, color: subColor, marginTop: 2, fontFamily: 'Inter_700Bold' }}>
             Creating Successful Moments
           </Text>
         ) : null}
@@ -149,7 +149,7 @@ export function StatCard({ label, value, icon, color = colors.primary, style }) 
       <View style={[styles.iconTile, { backgroundColor: color + '22' }]}>
         <Ionicons name={icon} size={18} color={color} />
       </View>
-      <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 8 }}>{value}</Text>
+      <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 8, fontFamily: 'Inter_800ExtraBold' }}>{value}</Text>
       <Text style={font.small}>{label}</Text>
     </View>
   );
@@ -170,7 +170,7 @@ export function ListItemIcon({ name, color = colors.primary }) {
 export function Field({ label, value, placeholder, multiline, keyboardType }) {
   return (
     <View style={{ marginBottom: spacing.md }}>
-      {label ? <Text style={[font.small, { fontWeight: '700', marginBottom: 4, color: colors.text }]}>{label}</Text> : null}
+      {label ? <Text style={[font.small, { fontFamily: 'Inter_700Bold', fontWeight: '700', marginBottom: 4, color: colors.text }]}>{label}</Text> : null}
       <TextInput
         defaultValue={value}
         placeholder={placeholder}
@@ -191,7 +191,7 @@ export function ToggleRow({ label, desc, value, icon, onChange }) {
       <View style={{ flex: 1, paddingRight: 12 }}>
         <Row>
           {icon ? <ListItemIcon name={icon} /> : null}
-          <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{label}</Text>
+          <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text, fontFamily: 'Inter_700Bold' }}>{label}</Text>
         </Row>
         {desc ? <Text style={[font.tiny, { marginTop: 2 }]}>{desc}</Text> : null}
       </View>
@@ -205,24 +205,44 @@ export function ToggleRow({ label, desc, value, icon, onChange }) {
   );
 }
 
-// Simple in-screen segmented tab control.
-export function Tabs({ tabs, active, onChange }) {
+// In-screen tab control. Scrolls horizontally so many tabs stay on one tidy
+// row (no cramped wrapping) and the active tab is a filled pill — obvious at a
+// glance and easy to tap on a phone.
+export function Tabs({ tabs, active, onChange, pill = true }) {
+  const items = tabs.map((t) => (typeof t === 'string' ? { key: t, label: t } : t));
   return (
-    <View style={styles.tabsWrap}>
-      {tabs.map((t) => {
-        const key = typeof t === 'string' ? t : t.key;
-        const label = typeof t === 'string' ? t : t.label;
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.tabsScroll}
+      contentContainerStyle={{ paddingRight: spacing.lg, alignItems: 'center' }}
+    >
+      {items.map(({ key, label }) => {
         const isActive = active === key;
+        if (pill) {
+          return (
+            <TouchableOpacity
+              key={key}
+              onPress={() => onChange(key)}
+              activeOpacity={0.8}
+              style={[styles.tabPill, isActive && styles.tabPillActive]}
+            >
+              <Text style={{ color: isActive ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 13, fontFamily: 'Inter_700Bold' }}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          );
+        }
         return (
-          <TouchableOpacity key={key} onPress={() => onChange(key)} style={styles.tabBtn}>
-            <Text style={{ color: isActive ? colors.primary : colors.textMuted, fontWeight: '700', fontSize: 13 }}>
+          <TouchableOpacity key={key} onPress={() => onChange(key)} style={styles.tabBtn} activeOpacity={0.8}>
+            <Text style={{ color: isActive ? colors.primary : colors.textMuted, fontWeight: '700', fontSize: 13, fontFamily: 'Inter_700Bold' }}>
               {label}
             </Text>
             <View style={{ height: 2, marginTop: 6, backgroundColor: isActive ? colors.primary : 'transparent', borderRadius: 2 }} />
           </TouchableOpacity>
         );
       })}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -264,7 +284,7 @@ export function ScreenHeader({ title, subtitle, onBack, right }) {
 export function TextField({ label, value, onChangeText, placeholder, multiline, keyboardType, half }) {
   return (
     <View style={{ marginBottom: spacing.md, flex: half ? 1 : undefined }}>
-      {label ? <Text style={[font.small, { fontWeight: '700', marginBottom: 4, color: colors.text }]}>{label}</Text> : null}
+      {label ? <Text style={[font.small, { fontFamily: 'Inter_700Bold', fontWeight: '700', marginBottom: 4, color: colors.text }]}>{label}</Text> : null}
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -285,7 +305,7 @@ export function Toggle({ label, desc, value, onValueChange, icon }) {
       <View style={{ flex: 1, paddingRight: 12 }}>
         <Row>
           {icon ? <ListItemIcon name={icon} /> : null}
-          <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{label}</Text>
+          <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text, fontFamily: 'Inter_700Bold' }}>{label}</Text>
         </Row>
         {desc ? <Text style={[font.tiny, { marginTop: 2 }]}>{desc}</Text> : null}
       </View>
@@ -311,7 +331,7 @@ export function Chips({ options, value, onChange, multi = false }) {
             style={[styles.chip, on && styles.chipActive]}
             activeOpacity={0.85}
           >
-            <Text style={{ color: on ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>{label}</Text>
+            <Text style={{ color: on ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 12.5, fontFamily: 'Inter_700Bold' }}>{label}</Text>
           </TouchableOpacity>
         );
       })}
@@ -333,10 +353,10 @@ export function StepIndicator({ steps, current }) {
                 {done ? (
                   <Ionicons name="checkmark" size={13} color="#fff" />
                 ) : (
-                  <Text style={{ color: active ? '#fff' : colors.textMuted, fontWeight: '800', fontSize: 12 }}>{i + 1}</Text>
+                  <Text style={{ color: active ? '#fff' : colors.textMuted, fontWeight: '800', fontSize: 12, fontFamily: 'Inter_800ExtraBold' }}>{i + 1}</Text>
                 )}
               </View>
-              <Text numberOfLines={1} style={{ fontSize: 9.5, marginTop: 4, fontWeight: '700', color: active ? colors.primary : colors.textMuted }}>
+              <Text numberOfLines={1} style={{ fontSize: 9.5, marginTop: 4, fontWeight: '700', color: active ? colors.primary : colors.textMuted, fontFamily: 'Inter_700Bold' }}>
                 {label}
               </Text>
             </View>
@@ -413,6 +433,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 14,
     color: colors.text,
+    fontFamily: 'Inter_400Regular',
   },
   toggleRow: {
     backgroundColor: colors.surfaceHover,
@@ -424,6 +445,9 @@ const styles = StyleSheet.create({
   },
   tabsWrap: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 4, columnGap: 4, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: spacing.lg },
   tabBtn: { marginRight: 14, paddingBottom: 6 },
+  tabsScroll: { marginBottom: spacing.lg, marginHorizontal: -spacing.lg, paddingHorizontal: spacing.lg, flexGrow: 0 },
+  tabPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, marginRight: 8 },
+  tabPillActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   header: { marginBottom: spacing.lg },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },

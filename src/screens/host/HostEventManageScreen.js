@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, StyleSheet, Linking, Share, Platform } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, TouchableOpacity, Alert, StyleSheet, Linking, Share, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font } from '../../theme/theme';
 import {
@@ -18,6 +18,7 @@ import {
   ToggleRow,
   Tabs,
   Chips,
+  ApprovalBadge,
 } from '../../components/ui';
 import {
   events,
@@ -46,6 +47,14 @@ import {
   uploadPhoto,
   setPhotoStatus,
   deletePhoto,
+  MOCK_GUESTS,
+  validateScan,
+  getCheckinState,
+  getCheckedInCount,
+  recordArrival,
+  resetArrival,
+  getPartyMembers,
+  getGuestHistorySummary,
 } from '../../data/mock';
 
 const MANAGE_TABS = [
@@ -78,6 +87,31 @@ function Answers({ answers }) {
   );
 }
 
+// Attendee-level inline check-in controls (used in Guests tab + Check-in going list)
+function AttendeeCheckinControls({ r }) {
+  const cs = getCheckinState(r);
+  const remaining = cs.total - cs.inCount;
+  return (
+    <Row style={{ flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+      <View style={[styles.csBadge, { backgroundColor: cs.bg }]}>
+        <Text style={{ color: cs.color, fontSize: 11, fontWeight: '700', fontFamily: 'Inter_700Bold' }}>{cs.label}</Text>
+      </View>
+      {remaining > 0 ? (
+        <>
+          <Button label="+1" small variant="accent" onPress={() => recordArrival(r.id, 1, 'Host')} />
+          {remaining > 1 ? (
+            <Button label={`All ${remaining}`} small variant="outline" onPress={() => recordArrival(r.id, remaining, 'Host')} />
+          ) : null}
+        </>
+      ) : (
+        <TouchableOpacity onPress={() => resetArrival(r.id)} hitSlop={6}>
+          <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' }}>Undo</Text>
+        </TouchableOpacity>
+      )}
+    </Row>
+  );
+}
+
 export default function HostEventManageScreen({ navigation, route }) {
   useStore(); // reflect live check-ins / mutations
   const event = getEvent(route.params?.eventId) || events[0];
@@ -85,8 +119,43 @@ export default function HostEventManageScreen({ navigation, route }) {
   const [active, setActive] = useState('overview');
   const [showPerms, setShowPerms] = useState(false);
   const [inviteRole, setInviteRole] = useState(roles[0]?.name);
+  const [selectedEvents, setSelectedEvents] = useState([]);
+  const [scanResult, setScanResult] = useState(null); // result of QR validate
+  const [arriving, setArriving] = useState(1);         // stepper for arrivals
+  const [passInput, setPassInput] = useState('');      // manual pass id entry
+  const [scanning, setScanning] = useState(false);     // scan simulation panel
 
   const goingApproved = eventRsvps.filter((r) => r.status === 'going' && r.approvalState === 'APPROVED');
+
+  const filteredGoingApproved = useMemo(() => {
+    if (selectedEvents.length === 0) return goingApproved;
+    return goingApproved.filter((r) => {
+      let matchesSelectedEvent = false;
+      for (const evtId of selectedEvents) {
+        // Check if guest has RSVP in this event
+        const otherEventRsvps = getRsvps(evtId) || [];
+        if (otherEventRsvps.some(ox => ox.email.toLowerCase() === r.email.toLowerCase() && ox.status === 'going')) {
+          matchesSelectedEvent = true;
+          break;
+        }
+        // Also check fuzzy history
+        const existingGuest = MOCK_GUESTS.find(g => g.email.toLowerCase() === r.email.toLowerCase());
+        const targetEvt = events.find(e => e.id === evtId);
+        if (targetEvt && existingGuest && existingGuest.history) {
+          const titleNorm = targetEvt.title.toLowerCase();
+          if (existingGuest.history.some(h => {
+            const histNorm = h.event.toLowerCase();
+            return titleNorm.includes(histNorm) || histNorm.includes(titleNorm);
+          })) {
+            matchesSelectedEvent = true;
+            break;
+          }
+        }
+      }
+      return matchesSelectedEvent;
+    });
+  }, [goingApproved, selectedEvents]);
+
   const pending = eventRsvps.filter((r) => r.approvalState === 'UNDER_APPROVAL' && r.status !== 'waitlist');
   const waitlist = eventRsvps.filter((r) => r.status === 'waitlist');
   const rejected = eventRsvps.filter((r) => r.approvalState === 'REJECTED');
@@ -187,8 +256,13 @@ export default function HostEventManageScreen({ navigation, route }) {
 
   // ── Export ──
   const exportGuests = () => {
-    const header = 'Name,Email,Phone,Status,Guests,CheckedIn';
-    const rows = eventRsvps.map((r) => `${r.name},${r.email},${r.phone || ''},${r.status},${r.guestCount || 1},${r.checkedIn ? 'Yes' : 'No'}`);
+    const header = 'Name,Email,Phone,Status,RSVP Count,Checked-In Count,Attendance';
+    const rows = eventRsvps.map((r) => {
+      const total = r.guestCount || 1;
+      const inCount = getCheckedInCount(r);
+      const attendance = inCount >= total ? 'Full' : inCount > 0 ? `Partial (${inCount}/${total})` : 'None';
+      return `${r.name},${r.email},${r.phone || ''},${r.status},${total},${inCount},${attendance}`;
+    });
     const csv = [header, ...rows].join('\n');
     Alert.alert('Export guest list (demo)', `${eventRsvps.length} rows would download as CSV:\n\n${csv.slice(0, 200)}${csv.length > 200 ? '…' : ''}`);
   };
@@ -345,10 +419,56 @@ export default function HostEventManageScreen({ navigation, route }) {
               <Button label="Export" variant="ghost" icon="download-outline" small onPress={exportGuests} />
             </Row>
             <Field placeholder="Search attendees…" />
-            {goingApproved.length === 0 ? (
-              <Text style={font.small}>No confirmed attendees yet.</Text>
+            
+            {/* Multi-select Event Filter */}
+            {events.filter(e => e.id !== event.id).length > 0 && (
+              <View style={{ marginBottom: spacing.sm, marginTop: spacing.sm }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, marginBottom: 6 }}>Filter by Other Events (Multi-select)</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }}>
+                  <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 4 }}>
+                    {events.filter(e => e.id !== event.id).map((evt) => {
+                      const isSelected = selectedEvents.includes(evt.id);
+                      return (
+                        <TouchableOpacity
+                          key={evt.id}
+                          onPress={() => {
+                            if (isSelected) {
+                              setSelectedEvents(selectedEvents.filter(id => id !== evt.id));
+                            } else {
+                              setSelectedEvents([...selectedEvents, evt.id]);
+                            }
+                          }}
+                          activeOpacity={0.85}
+                          style={{
+                            paddingHorizontal: 12,
+                            paddingVertical: 6,
+                            borderRadius: radius.md,
+                            borderWidth: 1,
+                            borderColor: isSelected ? colors.primary : colors.border,
+                            backgroundColor: isSelected ? colors.primaryTint : colors.surface,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text style={{ color: isSelected ? colors.primary : colors.textMuted, fontWeight: '700', fontSize: 11.5 }}>{evt.title}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+              </View>
+            )}
+
+            {selectedEvents.length > 0 && (
+              <TouchableOpacity onPress={() => setSelectedEvents([])} style={{ alignSelf: 'flex-start', marginBottom: spacing.md }}>
+                <Badge tone="primary" label="Reset Event Filters" />
+              </TouchableOpacity>
+            )}
+
+            {filteredGoingApproved.length === 0 ? (
+              <Text style={font.small}>No confirmed attendees match your filter.</Text>
             ) : (
-              goingApproved.map((r, i) => (
+              filteredGoingApproved.map((r, i) => (
                 <View key={r.id}>
                   {i > 0 ? <Divider /> : null}
                   <Row style={{ alignItems: 'flex-start' }}>
@@ -404,11 +524,7 @@ export default function HostEventManageScreen({ navigation, route }) {
                       ) : null}
 
                       <View style={{ marginTop: spacing.sm }}>
-                        {r.checkedIn ? (
-                          <Badge tone="green" dot label={`Arrived${r.checkedInAt ? ' · ' + new Date(r.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`} />
-                        ) : (
-                          <Button label="Check in" small variant="accent" onPress={() => checkInGuest(r.id, 'Host')} />
-                        )}
+                        <AttendeeCheckinControls r={r} />
                       </View>
                     </View>
                   </Row>
@@ -852,18 +968,263 @@ export default function HostEventManageScreen({ navigation, route }) {
 
       {active === 'checkin' && (
         <View>
+          {/* A. Scan / Verify card */}
           <Card style={{ marginBottom: spacing.lg, alignItems: 'center' }}>
             <View style={[styles.qrTile]}>
               <Ionicons name="qr-code-outline" size={64} color={colors.primary} />
             </View>
-            <Button label="Scan QR code" variant="primary" icon="qr-code-outline" style={{ marginTop: spacing.md }} onPress={() => Alert.alert('Scan QR code', 'Camera unavailable in prototype')} />
+            <Button
+              label={scanning ? 'Scanning…' : 'Scan QR code'}
+              variant="primary"
+              icon="qr-code-outline"
+              style={{ marginTop: spacing.md }}
+              onPress={() => { setScanning(true); setScanResult(null); }}
+            />
+
+            {scanning ? (
+              <View style={{ width: '100%', marginTop: spacing.md }}>
+                <View style={styles.viewfinder}>
+                  <Ionicons name="qr-code-outline" size={88} color={colors.primary} />
+                  <View style={[styles.corner, styles.tl]} /><View style={[styles.corner, styles.tr]} />
+                  <View style={[styles.corner, styles.bl]} /><View style={[styles.corner, styles.br]} />
+                </View>
+                <Text style={[font.tiny, { marginTop: spacing.md, marginBottom: 6, fontWeight: '700', color: colors.text }]}>
+                  Demo (no camera): tap a guest to simulate scanning their QR pass
+                </Text>
+                {eventRsvps.filter((r) => r.status === 'going').map((r) => {
+                  const rcs = getCheckinState(r);
+                  return (
+                    <TouchableOpacity
+                      key={r.id}
+                      activeOpacity={0.8}
+                      style={styles.scanPassRow}
+                      onPress={() => { setScanResult(validateScan(event.id, r.id)); setScanning(false); setArriving(1); }}
+                    >
+                      <Avatar seed={r.name} size={32} />
+                      <View style={{ flex: 1, marginLeft: 10 }}>
+                        <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{r.name}</Text>
+                        <Text style={font.tiny}>Pass {r.id} · {rcs.label}</Text>
+                      </View>
+                      <Ionicons name="scan-outline" size={20} color={colors.primary} />
+                    </TouchableOpacity>
+                  );
+                })}
+                <TouchableOpacity onPress={() => setScanning(false)} style={{ alignSelf: 'center', marginTop: 14 }}>
+                  <Text style={{ color: colors.textMuted, fontWeight: '600' }}>Close scanner</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+
             <Divider />
             <View style={{ width: '100%' }}>
-              <Field label="Enter pass ID manually" placeholder="e.g. PASS-1024" />
-              <Button label="Verify" variant="outline" icon="checkmark-circle" onPress={() => alert('Verify')} />
+              <TextField label="Enter pass ID manually" value={passInput} onChangeText={setPassInput} placeholder="e.g. r1024" />
+              <Button
+                label="Verify"
+                variant="outline"
+                icon="checkmark-circle"
+                onPress={() => {
+                  const res = validateScan(event.id, passInput);
+                  setScanResult(res);
+                  setArriving(1);
+                }}
+              />
             </View>
           </Card>
 
+          {/* B. Scan result */}
+          {scanResult && !scanResult.ok && (
+            <Card style={[
+              styles.scanResultCard,
+              {
+                marginBottom: spacing.lg,
+                borderColor: (scanResult.code === 'invalid' || scanResult.code === 'rejected' || scanResult.code === 'notgoing') ? colors.red : colors.amber,
+                backgroundColor: (scanResult.code === 'invalid' || scanResult.code === 'rejected' || scanResult.code === 'notgoing') ? colors.redTint : colors.amberTint,
+              },
+            ]}>
+              <Row style={{ marginBottom: spacing.sm }}>
+                <Ionicons
+                  name={(scanResult.code === 'invalid' || scanResult.code === 'rejected' || scanResult.code === 'notgoing') ? 'close-circle' : 'alert-circle'}
+                  size={22}
+                  color={(scanResult.code === 'invalid' || scanResult.code === 'rejected' || scanResult.code === 'notgoing') ? colors.red : colors.amber}
+                />
+                <Text style={[font.h3, { marginLeft: spacing.sm, color: colors.text }]}>
+                  {scanResult.code === 'duplicate' ? 'Already checked in' : scanResult.code === 'pending' ? 'Not admitted' : 'Entry denied'}
+                </Text>
+              </Row>
+              {scanResult.rsvp ? (
+                <Text style={[font.small, { color: colors.text, fontWeight: '700', marginBottom: 2 }]}>{scanResult.rsvp.name}</Text>
+              ) : null}
+              <Text style={[font.small, { color: colors.text }]}>{scanResult.message}</Text>
+              <Button label="Scan another" variant="outline" small style={{ marginTop: spacing.md, alignSelf: 'flex-start' }} onPress={() => { setScanResult(null); setPassInput(''); }} />
+            </Card>
+          )}
+
+          {scanResult && scanResult.ok && scanResult.rsvp && (() => {
+            const rsvp = scanResult.rsvp;
+            const cs = getCheckinState(rsvp);
+            const remaining = cs.total - cs.inCount;
+            const pct = cs.total ? Math.round((cs.inCount / cs.total) * 100) : 0;
+            const members = getPartyMembers(rsvp.name, rsvp.guestCount || 1);
+            const history = getGuestHistorySummary(rsvp.email);
+            return (
+              <View>
+                {/* Guest header */}
+                <Card style={{ marginBottom: spacing.lg }}>
+                  <Row style={{ alignItems: 'flex-start' }}>
+                    <Avatar seed={rsvp.name} size={48} />
+                    <View style={{ flex: 1, marginLeft: spacing.md }}>
+                      <Text style={{ fontWeight: '700', fontSize: 16, color: colors.text }}>{rsvp.name}</Text>
+                      <Text style={font.tiny}>{rsvp.email}</Text>
+                      {rsvp.phone ? <Text style={font.tiny}>{rsvp.phone}</Text> : null}
+                      <View style={{ marginTop: 6, alignSelf: 'flex-start' }}>
+                        <ApprovalBadge rsvp={rsvp} />
+                      </View>
+                    </View>
+                  </Row>
+                </Card>
+
+                {/* Current attendance */}
+                <Card style={{ marginBottom: spacing.lg }}>
+                  <Row style={[styles.between, { marginBottom: spacing.md }]}>
+                    <Text style={font.h3}>Current attendance</Text>
+                    <View style={[styles.csBadge, { backgroundColor: cs.bg }]}>
+                      <Text style={{ color: cs.color, fontSize: 11, fontWeight: '700', fontFamily: 'Inter_700Bold' }}>{cs.label}</Text>
+                    </View>
+                  </Row>
+                  <Row style={{ gap: 10, marginBottom: spacing.md }}>
+                    <View style={styles.checkinStat}><Text style={styles.checkinStatNum}>{rsvp.guestCount || 1}</Text><Text style={font.tiny}>RSVP Total</Text></View>
+                    <View style={styles.checkinStat}><Text style={[styles.checkinStatNum, { color: colors.accent }]}>{cs.inCount}</Text><Text style={font.tiny}>Checked-In</Text></View>
+                    <View style={styles.checkinStat}><Text style={[styles.checkinStatNum, { color: colors.amber }]}>{remaining}</Text><Text style={font.tiny}>Remaining</Text></View>
+                  </Row>
+                  <View style={styles.capTrack}>
+                    <View style={[styles.capFill, { width: `${pct}%`, backgroundColor: colors.accent }]} />
+                  </View>
+                </Card>
+
+                {/* Party members */}
+                <Card style={{ marginBottom: spacing.lg }}>
+                  <Text style={[font.h3, { marginBottom: spacing.md }]}>Party members ({cs.total})</Text>
+                  {members.map((m, mi) => {
+                    const inThis = mi < cs.inCount;
+                    const ag = (rsvp.additionalGuests || [])[mi - 1];
+                    const displayName = mi === 0 ? rsvp.name : (ag ? `${ag.firstName} ${ag.lastName}` : m);
+                    return (
+                      <View key={mi}>
+                        {mi > 0 ? <Divider /> : null}
+                        <Row style={styles.between}>
+                          <Text style={{ fontSize: 13.5, color: colors.text, fontWeight: '600' }}>{displayName}</Text>
+                          {inThis ? (
+                            <Row style={{ alignItems: 'center', gap: 4 }}>
+                              <Ionicons name="checkmark-circle" size={16} color={colors.accent} />
+                              <Text style={{ color: colors.accent, fontSize: 11.5, fontWeight: '700' }}>IN</Text>
+                            </Row>
+                          ) : (
+                            <Text style={{ color: colors.textMuted, fontSize: 11.5, fontWeight: '700' }}>PENDING</Text>
+                          )}
+                        </Row>
+                      </View>
+                    );
+                  })}
+                </Card>
+
+                {/* Arrival stepper / banner */}
+                {remaining > 0 ? (
+                  <Card style={{ marginBottom: spacing.lg }}>
+                    <Text style={[font.h3, { marginBottom: spacing.md }]}>Check in arrivals</Text>
+                    <Row style={{ justifyContent: 'center', alignItems: 'center', gap: 18, marginBottom: spacing.md }}>
+                      <TouchableOpacity style={styles.stepBtn} onPress={() => setArriving((v) => Math.max(1, v - 1))} hitSlop={8}>
+                        <Ionicons name="remove" size={22} color={colors.primary} />
+                      </TouchableOpacity>
+                      <Text style={{ fontSize: 28, fontWeight: '800', color: colors.text, minWidth: 44, textAlign: 'center' }}>{Math.min(arriving, remaining)}</Text>
+                      <TouchableOpacity style={styles.stepBtn} onPress={() => setArriving((v) => Math.min(remaining, v + 1))} hitSlop={8}>
+                        <Ionicons name="add" size={22} color={colors.primary} />
+                      </TouchableOpacity>
+                    </Row>
+                    <Button
+                      label={`Check In ${Math.min(arriving, remaining)}`}
+                      variant="accent"
+                      icon="checkmark-circle"
+                      style={{ marginBottom: spacing.sm }}
+                      onPress={() => {
+                        const updated = recordArrival(rsvp.id, Math.min(arriving, remaining), 'Host');
+                        setScanResult({ ...scanResult, rsvp: updated || rsvp });
+                        setArriving(1);
+                      }}
+                    />
+                    <Button
+                      label={`All ${remaining}`}
+                      variant="outline"
+                      onPress={() => {
+                        const updated = recordArrival(rsvp.id, remaining, 'Host');
+                        setScanResult({ ...scanResult, rsvp: updated || rsvp });
+                        setArriving(1);
+                      }}
+                    />
+                  </Card>
+                ) : (
+                  <Card style={{ marginBottom: spacing.lg, backgroundColor: colors.accentTint, borderColor: colors.accent, borderWidth: 1 }}>
+                    <Row style={{ alignItems: 'center' }}>
+                      <Ionicons name="checkmark-done-circle" size={22} color={colors.accent} />
+                      <Text style={[font.small, { marginLeft: spacing.sm, color: colors.text, fontWeight: '700' }]}>All {cs.total} attendees checked in</Text>
+                    </Row>
+                  </Card>
+                )}
+
+                {/* Check-in timeline */}
+                {rsvp.checkInLog && rsvp.checkInLog.length > 0 ? (
+                  <Card style={{ marginBottom: spacing.lg }}>
+                    <Text style={[font.h3, { marginBottom: spacing.md }]}>Check-in timeline</Text>
+                    {rsvp.checkInLog.map((e, ei) => (
+                      <Row key={ei} style={{ marginBottom: 6 }}>
+                        <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+                        <Text style={[font.tiny, { marginLeft: 6 }]}>{e.time} · Checked in {e.count} attendee(s){e.by ? ` · ${e.by}` : ''}</Text>
+                      </Row>
+                    ))}
+                  </Card>
+                ) : null}
+
+                {/* Guest attendance history */}
+                {history.found ? (
+                  <Card style={{ marginBottom: spacing.lg }}>
+                    <Row style={[styles.between, { marginBottom: spacing.md }]}>
+                      <Text style={font.h3}>Guest attendance history</Text>
+                      {history.hasWarning ? (
+                        <View style={[styles.csBadge, { backgroundColor: colors.redTint }]}>
+                          <Text style={{ color: colors.red, fontSize: 11, fontWeight: '700', fontFamily: 'Inter_700Bold' }}>⚠ Repeated Over-RSVP</Text>
+                        </View>
+                      ) : null}
+                    </Row>
+                    <Row style={{ flexWrap: 'wrap', gap: 8, marginBottom: spacing.md }}>
+                      <View style={styles.histChip}><Text style={styles.histChipNum}>{history.totalEventsRsvpd}</Text><Text style={font.tiny}>Events RSVP'd</Text></View>
+                      <View style={styles.histChip}><Text style={styles.histChipNum}>{history.accuracy}%</Text><Text style={font.tiny}>Accuracy</Text></View>
+                      <View style={styles.histChip}><Text style={[styles.histChipNum, { color: colors.red }]}>{history.noShow}</Text><Text style={font.tiny}>No-Shows</Text></View>
+                      <View style={styles.histChip}><Text style={[styles.histChipNum, { color: colors.amber }]}>{history.partial}</Text><Text style={font.tiny}>Partials</Text></View>
+                    </Row>
+                    {history.recent.length > 0 ? (
+                      <View>
+                        <Row style={[styles.between, { marginBottom: 4 }]}>
+                          <Text style={[font.tiny, { fontWeight: '700', color: colors.text, flex: 2 }]}>Event</Text>
+                          <Text style={[font.tiny, { fontWeight: '700', color: colors.text, flex: 1, textAlign: 'right' }]}>RSVP</Text>
+                          <Text style={[font.tiny, { fontWeight: '700', color: colors.text, flex: 1, textAlign: 'right' }]}>Actual</Text>
+                        </Row>
+                        {history.recent.map((h, hi) => (
+                          <Row key={hi} style={[styles.between, { marginTop: 4 }]}>
+                            <Text style={[font.tiny, { flex: 2 }]} numberOfLines={1}>{h.event}</Text>
+                            <Text style={[font.tiny, { flex: 1, textAlign: 'right' }]}>{h.rsvpCount}</Text>
+                            <Text style={[font.tiny, { flex: 1, textAlign: 'right', color: h.actual === 0 ? colors.red : h.actual < h.rsvpCount ? colors.amber : colors.accent, fontWeight: '700' }]}>{h.actual}</Text>
+                          </Row>
+                        ))}
+                      </View>
+                    ) : null}
+                  </Card>
+                ) : null}
+
+                <Button label="Scan next guest" variant="primary" icon="qr-code-outline" style={{ marginBottom: spacing.lg }} onPress={() => { setScanResult(null); setPassInput(''); setArriving(1); }} />
+              </View>
+            );
+          })()}
+
+          {/* C. Going guests list */}
           <SectionTitle>Going guests</SectionTitle>
           <Card>
             {eventRsvps.filter((r) => r.status === 'going').length === 0 ? (
@@ -881,11 +1242,7 @@ export default function HostEventManageScreen({ navigation, route }) {
                         <Text style={font.tiny}>{r.email}</Text>
                       </View>
                     </Row>
-                    {r.checkedIn ? (
-                      <Badge tone="green" dot label={`Arrived${r.checkedInAt ? ' · ' + new Date(r.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`} />
-                    ) : (
-                      <Button label="Check in" small variant="accent" onPress={() => checkInGuest(r.id, 'Host')} />
-                    )}
+                    <AttendeeCheckinControls r={r} />
                   </View>
                 ))
             )}
@@ -905,6 +1262,20 @@ const styles = StyleSheet.create({
   pollTrack: { height: 8, backgroundColor: colors.surfaceHover, borderRadius: radius.full, marginTop: 4, overflow: 'hidden' },
   pollFill: { height: 8, backgroundColor: colors.primary, borderRadius: radius.full },
   qrTile: { width: 120, height: 120, borderRadius: radius.lg, backgroundColor: colors.primaryTint, alignItems: 'center', justifyContent: 'center' },
+  viewfinder: { height: 184, borderRadius: radius.md, backgroundColor: '#0f0f14', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' },
+  corner: { position: 'absolute', width: 26, height: 26, borderColor: colors.primary },
+  tl: { top: 14, left: 14, borderTopWidth: 3, borderLeftWidth: 3 },
+  tr: { top: 14, right: 14, borderTopWidth: 3, borderRightWidth: 3 },
+  bl: { bottom: 14, left: 14, borderBottomWidth: 3, borderLeftWidth: 3 },
+  br: { bottom: 14, right: 14, borderBottomWidth: 3, borderRightWidth: 3 },
+  scanPassRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
+  csBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.full, alignSelf: 'flex-start' },
+  scanResultCard: { borderWidth: 1 },
+  checkinStat: { flex: 1, alignItems: 'center', backgroundColor: colors.surfaceHover, borderRadius: radius.md, paddingVertical: spacing.sm },
+  checkinStatNum: { fontSize: 22, fontWeight: '800', color: colors.text },
+  stepBtn: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover },
+  histChip: { alignItems: 'center', backgroundColor: colors.surfaceHover, borderRadius: radius.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, minWidth: 72 },
+  histChipNum: { fontSize: 18, fontWeight: '800', color: colors.text },
   photoThumb: { width: 60, height: 60, borderRadius: radius.sm, backgroundColor: colors.surfaceHover },
   photoGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },
   photoCell: { width: '33.33%', aspectRatio: 1, padding: 4, position: 'relative' },

@@ -3,6 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts, Inter_400Regular, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
+import { View, Text } from 'react-native';
 
 import { AuthProvider } from './src/auth/AuthContext';
 import PhoneFrame from './src/components/PhoneFrame';
@@ -17,6 +19,8 @@ import StaffTabs from './src/navigation/StaffTabs';
 import HostEventManageScreen from './src/screens/host/HostEventManageScreen';
 import HostCreateEventScreen from './src/screens/host/HostCreateEventScreen';
 import HostNotificationsScreen from './src/screens/host/HostNotificationsScreen';
+import IntegrationsScreen from './src/screens/host/IntegrationsScreen';
+import StaffRolesScreen from './src/screens/host/StaffRolesScreen';
 
 import GuestEventDetailScreen from './src/screens/guest/GuestEventDetailScreen';
 import GuestRsvpScreen from './src/screens/guest/GuestRsvpScreen';
@@ -26,6 +30,20 @@ import GuestChatScreen from './src/screens/guest/GuestChatScreen';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  let [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <AuthProvider>
@@ -48,6 +66,8 @@ export default function App() {
               <Stack.Screen name="HostEventManage" component={HostEventManageScreen} />
               <Stack.Screen name="HostCreateEvent" component={HostCreateEventScreen} />
               <Stack.Screen name="HostNotifications" component={HostNotificationsScreen} />
+              <Stack.Screen name="Integrations" component={IntegrationsScreen} />
+              <Stack.Screen name="StaffRoles" component={StaffRolesScreen} />
 
               {/* Shared / guest pushed screens (reachable while browsing) */}
               <Stack.Screen name="GuestEventDetail" component={GuestEventDetailScreen} />

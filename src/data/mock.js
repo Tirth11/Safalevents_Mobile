@@ -617,6 +617,31 @@ export const validateScan = (eventId, passId) => {
   return { ok: true, code: 'valid', message: 'Valid — ready to check in.', rsvp };
 };
 
+// Update RSVP status: updates in both memory arrays and notifies subscribers
+export const updateRsvpStatus = (rsvpId, status) => {
+  const r = rsvps.find((x) => x.id === rsvpId);
+  if (r) {
+    r.status = status;
+  }
+  const myR = myRsvps.find((x) => x.id === rsvpId);
+  if (myR) {
+    myR.status = status;
+  }
+  _notify();
+};
+
+export const updateRsvpDetails = (rsvpId, patch) => {
+  const r = rsvps.find((x) => x.id === rsvpId);
+  if (r) {
+    Object.assign(r, patch);
+  }
+  const myR = myRsvps.find((x) => x.id === rsvpId);
+  if (myR) {
+    Object.assign(myR, patch);
+  }
+  _notify();
+};
+
 // Mark a guest as arrived: mutates state, triggers a guest email + host
 // notification + audit entry, and notifies subscribers so the host UI updates.
 export const checkInGuest = (rsvpId, scannerName = 'Gate Staff') => {
@@ -654,6 +679,339 @@ export const checkInGuest = (rsvpId, scannerName = 'Gate Staff') => {
   _notify();
   return rsvp;
 };
+
+// ─── Guest Intelligence (trust scores, patterns, attendance history) ─────────
+export const MOCK_GUESTS = [
+  {
+    id: 1, name: 'Alice Vance', email: 'alice@example.com', phone: '+1 555-0101',
+    eventsRsvpd: 8, totalAttendees: 10, actualAttendees: 10, trustScore: 92,
+    pattern: 'Consistent Attendee', remindersSent: 0, firstRsvp: 'Jan 2025',
+    notes: '',
+    history: [
+      { event: 'Summer Mixer', rsvpCount: 2, actual: 2, date: '22 Jun 2026', rsvpDate: '15 Jun 2026' },
+      { event: 'Startup Meetup', rsvpCount: 1, actual: 1, date: '15 May 2026', rsvpDate: '08 May 2026' },
+      { event: 'Founder Dinner', rsvpCount: 2, actual: 2, date: '12 Apr 2026', rsvpDate: '02 Apr 2026' },
+    ],
+    communications: [],
+  },
+  {
+    id: 2, name: 'Bob Smith', email: 'bob@example.com', phone: '+1 555-0102',
+    eventsRsvpd: 12, totalAttendees: 68, actualAttendees: 24, trustScore: 35,
+    pattern: 'Over-RSVP Pattern', remindersSent: 2, firstRsvp: 'Mar 2025',
+    notes: 'Frequently reserves large groups. Typically attends with 1-3 guests. Monitor future RSVPs.',
+    history: [
+      { event: 'Summer Mixer', rsvpCount: 10, actual: 2, date: '22 Jun 2026', rsvpDate: '14 Jun 2026' },
+      { event: 'Startup Meetup', rsvpCount: 8, actual: 1, date: '15 May 2026', rsvpDate: '06 May 2026' },
+      { event: 'Product Launch', rsvpCount: 12, actual: 0, date: '12 Apr 2026', rsvpDate: '05 Apr 2026' },
+      { event: 'Founder Dinner', rsvpCount: 6, actual: 2, date: '08 Mar 2026', rsvpDate: '01 Mar 2026' },
+    ],
+    communications: [
+      { type: 'Reminder Email', date: '22 Jun 2026', status: 'Delivered' },
+      { type: 'Attendance Reminder', date: '15 May 2026', status: 'Opened' },
+      { type: 'SMS Reminder', date: '10 Apr 2026', status: 'Delivered' },
+    ],
+  },
+  {
+    id: 3, name: 'Charlie Brown', email: 'charlie@example.com', phone: '+1 555-0103',
+    eventsRsvpd: 6, totalAttendees: 12, actualAttendees: 8, trustScore: 65,
+    pattern: 'Partial Attendance', remindersSent: 1, firstRsvp: 'Feb 2025',
+    notes: '',
+    history: [
+      { event: 'Summer Mixer', rsvpCount: 4, actual: 2, date: '22 Jun 2026', rsvpDate: '16 Jun 2026' },
+      { event: 'Startup Meetup', rsvpCount: 2, actual: 1, date: '15 May 2026', rsvpDate: '09 May 2026' },
+    ],
+    communications: [
+      { type: 'Attendance Reminder', date: '14 May 2026', status: 'Opened' },
+    ],
+  },
+  {
+    id: 4, name: 'Diana Prince', email: 'diana@example.com', phone: '+1 555-0104',
+    eventsRsvpd: 3, totalAttendees: 3, actualAttendees: 0, trustScore: 10,
+    pattern: 'Frequent No-Show', remindersSent: 3, firstRsvp: 'Apr 2025',
+    notes: '',
+    history: [
+      { event: 'Summer Mixer', rsvpCount: 1, actual: 0, date: '22 Jun 2026', rsvpDate: '18 Jun 2026' },
+      { event: 'Startup Meetup', rsvpCount: 1, actual: 0, date: '15 May 2026', rsvpDate: '11 May 2026' },
+      { event: 'Product Launch', rsvpCount: 1, actual: 0, date: '12 Apr 2026', rsvpDate: '07 Apr 2026' },
+    ],
+    communications: [
+      { type: 'Reminder Email', date: '21 Jun 2026', status: 'Delivered' },
+      { type: 'Attendance Reminder', date: '14 May 2026', status: 'Not Opened' },
+      { type: 'SMS Reminder', date: '11 Apr 2026', status: 'Delivered' },
+    ],
+  },
+  {
+    id: 5, name: 'Ethan Cole', email: 'ethan@example.com', phone: '+1 555-0105',
+    eventsRsvpd: 5, totalAttendees: 7, actualAttendees: 7, trustScore: 88,
+    pattern: 'Consistent Attendee', remindersSent: 0, firstRsvp: 'May 2025',
+    notes: '',
+    history: [
+      { event: 'Summer Mixer', rsvpCount: 3, actual: 3, date: '22 Jun 2026', rsvpDate: '15 Jun 2026' },
+      { event: 'Product Launch', rsvpCount: 2, actual: 2, date: '12 Apr 2026', rsvpDate: '04 Apr 2026' },
+    ],
+    communications: [],
+  },
+];
+
+export const getTrustBadge = (score) => {
+  if (score >= 85) return { color: '#16a34a', bg: '#16a34a22', text: 'Excellent' };
+  if (score >= 70) return { color: '#22c55e', bg: '#22c55e22', text: 'Good' };
+  if (score >= 50) return { color: '#eab308', bg: '#eab30822', text: 'Moderate' };
+  return { color: '#ef4444', bg: '#ef444422', text: 'High Risk' };
+};
+
+export const getPatternBadge = (pattern) => {
+  switch (pattern) {
+    case 'Consistent Attendee': return { color: '#16a34a', bg: '#16a34a22' };
+    case 'Partial Attendance':
+    case 'Frequent Partial Attendance': return { color: '#eab308', bg: '#eab30822' };
+    case 'Frequent No-Show': return { color: '#f97316', bg: '#f9731622' };
+    case 'Over-RSVP Pattern': return { color: '#ef4444', bg: '#ef444422' };
+    default: return { color: '#94a3b8', bg: '#94a3b822' };
+  }
+};
+
+export const getEventStatus = (rsvpCount, actual) => {
+  if (actual === 0) return { label: 'No Show', icon: '✕', color: '#ef4444', bg: '#ef444422' };
+  if (actual >= rsvpCount) return { label: 'Fully Attended', icon: '✓', color: '#16a34a', bg: '#16a34a22' };
+  return { label: 'Partial', icon: '⚠', color: '#eab308', bg: '#eab30822' };
+};
+
+const PARTY_NAMES = ['Alex', 'Jordan', 'Taylor', 'Morgan', 'Casey', 'Riley', 'Jamie', 'Quinn', 'Avery', 'Skyler'];
+export const getPartyMembers = (guestName, count) => {
+  if (count <= 1) return [guestName];
+  const lastName = guestName.split(' ').pop();
+  return [guestName, ...Array.from({ length: count - 1 }, (_, i) => `${PARTY_NAMES[i % PARTY_NAMES.length]} ${lastName} (+1)`)];
+};
+
+// ─── Attendee-level partial check-in (mirrors web app) ───────────────────────
+// A guest's RSVP may have `guestCount` attendees. Each can arrive incrementally.
+// checkedInCount = how many have arrived; fullyCheckedIn = all in; checkInLog = trail.
+export const getCheckedInCount = (r) =>
+  r.checkedInCount != null ? r.checkedInCount : (r.checkedIn ? (r.guestCount || 1) : 0);
+
+export const getCheckinState = (r) => {
+  const total = r.guestCount || 1;
+  const inCount = getCheckedInCount(r);
+  if (inCount >= total) return { inCount, total, label: `All ${total} in`, state: 'full', color: '#16a34a', bg: '#16a34a22' };
+  if (inCount > 0) return { inCount, total, label: `${inCount}/${total} arrived`, state: 'partial', color: '#d97706', bg: '#d9770622' };
+  return { inCount, total, label: 'Not arrived', state: 'none', color: '#6e6e73', bg: '#f5f5f7' };
+};
+
+// Record a batch of arriving attendees against an RSVP. Updates count/log; only
+// fires the full check-in side-effects (guest email, host notification, audit)
+// once everyone in the party has arrived.
+export const recordArrival = (rsvpId, count, scannerName = 'Host') => {
+  const rsvp = rsvps.find((r) => r.id === rsvpId);
+  if (!rsvp) return null;
+  const total = rsvp.guestCount || 1;
+  const current = getCheckedInCount(rsvp);
+  const next = Math.min(total, current + (count || 1));
+  if (next === current) return rsvp;
+
+  const stamp = new Date();
+  const entry = {
+    time: stamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    iso: stamp.toISOString(),
+    count: next - current,
+    by: scannerName,
+  };
+  rsvp.checkedInCount = next;
+  rsvp.fullyCheckedIn = next >= total;
+  rsvp.checkedIn = next > 0;
+  rsvp.checkedInAt = stamp.toISOString();
+  rsvp.checkInLog = [...(rsvp.checkInLog || []), entry];
+
+  const ev = getEvent(rsvp.eventId);
+  outbox.unshift({
+    id: 'o_' + Math.random().toString(36).slice(2, 8),
+    to: rsvp.email,
+    channel: 'Email',
+    subject: rsvp.fullyCheckedIn
+      ? `Welcome! Your full party is checked in to ${ev ? ev.title : 'the event'}`
+      : `${next}/${total} of your party checked in to ${ev ? ev.title : 'the event'}`,
+    time: 'just now',
+  });
+  notifications.unshift({
+    id: 'n_' + Math.random().toString(36).slice(2, 8),
+    type: 'checkin',
+    title: rsvp.fullyCheckedIn ? 'Party Fully Checked In' : 'Partial Arrival',
+    message: `${rsvp.name}: ${next}/${total} attendees arrived (by ${scannerName}).`,
+    time: 'just now',
+    read: false,
+  });
+  auditTrail.unshift({
+    id: 'a_' + Math.random().toString(36).slice(2, 8),
+    actor: scannerName,
+    action: `Checked in ${next - current} of ${rsvp.name}'s party (${next}/${total})`,
+    time: entry.time,
+  });
+  _notify();
+  return rsvp;
+};
+
+// Reset a guest's arrivals (undo) — clears partial check-in state.
+export const resetArrival = (rsvpId) => {
+  const rsvp = rsvps.find((r) => r.id === rsvpId);
+  if (!rsvp) return null;
+  rsvp.checkedInCount = 0;
+  rsvp.fullyCheckedIn = false;
+  rsvp.checkedIn = false;
+  rsvp.checkInLog = [];
+  _notify();
+  return rsvp;
+};
+
+// Cross-event guest intelligence by email — accuracy, no-shows, partials, recent.
+export const getGuestHistorySummary = (email) => {
+  const guest = MOCK_GUESTS.find((g) => g.email === email);
+  if (!guest) {
+    return { found: false, trustScore: 100, accuracy: 100, totalEventsRsvpd: 0, noShow: 0, partial: 0, pattern: null, recent: [], hasWarning: false };
+  }
+  const accuracy = Math.round((guest.actualAttendees / (guest.totalAttendees || 1)) * 100);
+  const noShow = guest.history.filter((h) => h.actual === 0).length;
+  const partial = guest.history.filter((h) => h.actual > 0 && h.actual < h.rsvpCount).length;
+  return {
+    found: true,
+    trustScore: guest.trustScore,
+    accuracy,
+    totalEventsRsvpd: guest.eventsRsvpd,
+    noShow,
+    partial,
+    pattern: guest.pattern,
+    recent: guest.history.slice(0, 3),
+    hasWarning: guest.pattern === 'Over-RSVP Pattern' || guest.trustScore < 50,
+  };
+};
+
+// ─── Guest RSVP creation (makes "My Tickets" real) ──────────────────────────
+// Creates a real RSVP for the demo guest, pushes it into both the event guest
+// list and the guest's "My Tickets". Approval-required events land pending.
+export const createGuestRsvp = (eventId, data = {}) => {
+  const ev = getEvent(eventId);
+  if (!ev) return { ok: false, error: 'Event not found.' };
+
+  // Capacity check (approved going seats).
+  const going = rsvps.filter((r) => r.eventId === eventId && r.status === 'going' && r.approvalState === 'APPROVED');
+  const seats = going.reduce((n, r) => n + (r.guestCount || 1), 0);
+  const want = Number(data.guestCount) || 1;
+  const atCapacity = ev.capacity && seats + want > ev.capacity;
+
+  const approvalState = ev.approvalRequired ? 'UNDER_APPROVAL' : 'APPROVED';
+  const status = atCapacity ? 'waitlist' : 'going';
+
+  const record = {
+    id: 'r_' + Math.random().toString(36).slice(2, 8),
+    eventId,
+    name: data.name || GUEST.name,
+    email: data.email || GUEST.email,
+    phone: data.phone || GUEST.phone,
+    status,
+    approvalState,
+    checkedIn: false,
+    checkedInCount: 0,
+    guestCount: want,
+    dob: data.dob || null,
+    ageVerified: data.ageVerified != null ? data.ageVerified : (data.dob ? meetsAge(data.dob, ev.minimumAge || 0) : false),
+    additionalGuests: data.additionalGuests || [],
+    timestamp: new Date().toISOString(),
+    answers: data.answers || {},
+  };
+  rsvps.push(record);
+
+  // Mirror into the guest's My Tickets (dedupe by event).
+  const existingIdx = myRsvps.findIndex((r) => r.eventId === eventId);
+  const ticket = { ...record, event: ev };
+  if (existingIdx >= 0) myRsvps[existingIdx] = ticket;
+  else myRsvps.unshift(ticket);
+
+  // Confirmation to the guest.
+  outbox.unshift({
+    id: 'o_' + Math.random().toString(36).slice(2, 8),
+    to: record.email,
+    channel: ev.sendRsvpConfirmationSms ? 'SMS' : 'Email',
+    subject: approvalState === 'UNDER_APPROVAL'
+      ? `We received your RSVP for ${ev.title} — pending approval`
+      : `You're confirmed for ${ev.title}!`,
+    time: 'just now',
+  });
+  // Notify the host.
+  notifications.unshift({
+    id: 'n_' + Math.random().toString(36).slice(2, 8),
+    type: 'rsvp',
+    title: approvalState === 'UNDER_APPROVAL' ? 'New RSVP — needs approval' : 'New RSVP',
+    message: `${record.name} RSVP'd to ${ev.title} (${want} guest${want > 1 ? 's' : ''}).`,
+    time: 'just now',
+    read: false,
+  });
+  _notify();
+  return { ok: true, rsvp: record, waitlisted: status === 'waitlist', pending: approvalState === 'UNDER_APPROVAL' };
+};
+
+// ─── Account settings (host + guest) — controlled & persistent in-session ────
+export const hostSettings = {
+  emailConfirmations: true,
+  smsConfirmations: false,
+  preEventReminders: true,
+  dailyDigest: false,
+};
+export const guestSettings = {
+  emailReminders: true,
+  smsReminders: false,
+  newMessageAlerts: true,
+};
+export const updateHostSettings = (patch) => { Object.assign(hostSettings, patch); _notify(); return hostSettings; };
+export const updateGuestSettings = (patch) => { Object.assign(guestSettings, patch); _notify(); return guestSettings; };
+
+// ─── Integrations (connect / disconnect) ─────────────────────────────────────
+export const integrations = [
+  { id: 'gcal', name: 'Google Calendar', desc: 'Sync events & RSVPs to your calendar', icon: 'calendar-outline', color: '#4285F4', connected: true },
+  { id: 'stripe', name: 'Stripe', desc: 'Collect ticket payments & payouts', icon: 'card-outline', color: '#635BFF', connected: false },
+  { id: 'mailchimp', name: 'Mailchimp', desc: 'Sync guests to email campaigns', icon: 'mail-outline', color: '#FFE01B', connected: false },
+  { id: 'whatsapp', name: 'WhatsApp', desc: 'Send invites & reminders on WhatsApp', icon: 'logo-whatsapp', color: '#25D366', connected: true },
+  { id: 'zapier', name: 'Zapier', desc: 'Automate workflows with 5,000+ apps', icon: 'flash-outline', color: '#FF4F00', connected: false },
+];
+export const toggleIntegration = (id) => {
+  const it = integrations.find((x) => x.id === id);
+  if (it) { it.connected = !it.connected; _notify(); }
+  return it;
+};
+
+// ─── Staff invite / role management ──────────────────────────────────────────
+export const inviteStaff = (eventId, { name, email, roleId }) => {
+  const role = getRoleById(roleId) || roles[0];
+  const record = {
+    id: 'st_' + Math.random().toString(36).slice(2, 8),
+    eventId,
+    name: name || 'New Teammate',
+    email: email || '',
+    roleId: role.id,
+    roleName: role.name,
+    inviteId: 'INV-' + Math.random().toString(36).slice(2, 7).toUpperCase(),
+    status: 'INVITED',
+  };
+  staff.push(record);
+  outbox.unshift({
+    id: 'o_' + Math.random().toString(36).slice(2, 8),
+    to: record.email || record.name,
+    channel: 'Email',
+    subject: `You're invited as ${role.name} — Invite ID ${record.inviteId}`,
+    time: 'just now',
+  });
+  _notify();
+  return record;
+};
+export const updateStaffRole = (staffId, roleId) => {
+  const s = staff.find((x) => x.id === staffId);
+  const role = getRoleById(roleId);
+  if (s && role) { s.roleId = role.id; s.roleName = role.name; _notify(); }
+  return s;
+};
+export const removeStaff = (staffId) => {
+  const i = staff.findIndex((x) => x.id === staffId);
+  if (i >= 0) { staff.splice(i, 1); _notify(); }
+};
+export const getStaffForEvent = (eventId) => staff.filter((s) => s.eventId === eventId);
 
 // ─── Photo album store (EP-001) ───────────────────────────────────────────────
 export const getEventPhotos = (eventId) => photos.filter((p) => p.eventId === eventId);

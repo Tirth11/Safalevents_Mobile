@@ -13,7 +13,7 @@ import {
   Field,
   ScreenHeader,
 } from '../../components/ui';
-import { events, getEvent, GUEST, meetsAge } from '../../data/mock';
+import { events, getEvent, GUEST, meetsAge, createGuestRsvp } from '../../data/mock';
 
 // Small controlled input that matches the shared Field styling.
 function LInput({ label, value, onChangeText, placeholder, keyboardType }) {
@@ -70,10 +70,38 @@ export default function GuestRsvpScreen({ navigation, route }) {
           return Alert.alert('Age requirement not met', `Guest ${i + 2} doesn't meet the ${minAge}+ requirement. Correct the date of birth or reduce your guest count.`);
       }
     }
+    const data = {
+      name: GUEST.name,
+      email: GUEST.email,
+      phone: GUEST.phone,
+      guestCount,
+      dob,
+      additionalGuests: extras,
+      answers: [],
+    };
+    const res = createGuestRsvp(event.id, data);
+
+    const message = res.pending
+      ? 'Request submitted — pending host approval.'
+      : res.waitlisted
+      ? "You're on the waitlist — we'll notify you if a spot opens."
+      : 'RSVP confirmed! Your pass is ready in My Tickets.';
+
     Alert.alert(
-      event.approvalRequired ? 'Request submitted' : 'Success',
-      event.approvalRequired ? 'Request submitted — pending approval' : 'RSVP confirmed!',
-      [{ text: 'OK', onPress: () => navigation.goBack() }]
+      res.pending ? 'Request submitted' : res.waitlisted ? 'Waitlisted' : 'Success',
+      message,
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            try {
+              navigation.navigate('GuestTabs', { screen: 'Tickets' });
+            } catch (e) {
+              navigation.goBack();
+            }
+          },
+        },
+      ]
     );
   };
 

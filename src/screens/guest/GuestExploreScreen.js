@@ -11,7 +11,7 @@ import {
   Avatar,
   Row,
   Divider,
-  Field,
+  TextField,
 } from '../../components/ui';
 import { events } from '../../data/mock';
 
@@ -19,12 +19,26 @@ const CATEGORIES = ['All', 'Party', 'Meetup', 'Fitness', 'Comedy'];
 
 export default function GuestExploreScreen({ navigation, route }) {
   const [activeCat, setActiveCat] = useState('All');
+  const [search, setSearch] = useState('');
+
+  const list = events.filter((e) => {
+    const matchesCat = activeCat === 'All' || e.eventType.toLowerCase() === activeCat.toLowerCase();
+    const matchesSearch = !search.trim() ||
+      e.title.toLowerCase().includes(search.toLowerCase()) ||
+      e.location.toLowerCase().includes(search.toLowerCase()) ||
+      e.hostName.toLowerCase().includes(search.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
 
   return (
     <Screen>
       <Text style={[font.h1, { marginBottom: spacing.md }]}>Explore</Text>
 
-      <Field placeholder="Search events, venues…" />
+      <TextField
+        placeholder="Search events, venues, hosts…"
+        value={search}
+        onChangeText={setSearch}
+      />
 
       <ScrollView
         horizontal
@@ -45,44 +59,51 @@ export default function GuestExploreScreen({ navigation, route }) {
         </Row>
       </ScrollView>
 
-      {events.map((e) => (
-        <Card
-          key={e.id}
-          padded={false}
-          style={styles.eventCard}
-          onPress={() => navigation.navigate('GuestEventDetail', { eventId: e.id })}
-        >
-          <Image source={{ uri: e.cover }} style={styles.cover} />
-          <View style={{ padding: spacing.lg }}>
-            <Text style={font.h3} numberOfLines={1}>
-              {e.title}
-            </Text>
-            <Row style={[styles.between, { marginTop: 6 }]}>
-              <Row>
-                <Ionicons name="star" size={14} color={colors.amber} />
-                <Text style={[font.small, { marginLeft: 4, color: colors.text, fontWeight: '700' }]}>
-                  {e.rating}
+      {list.length === 0 ? (
+        <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+          <Ionicons name="search-outline" size={38} color={colors.textMuted} style={{ marginBottom: 10 }} />
+          <Text style={[font.body, { color: colors.textMuted }]}>No events match your criteria</Text>
+        </View>
+      ) : (
+        list.map((e) => (
+          <Card
+            key={e.id}
+            padded={false}
+            style={styles.eventCard}
+            onPress={() => navigation.navigate('GuestEventDetail', { eventId: e.id })}
+          >
+            <Image source={{ uri: e.cover }} style={styles.cover} />
+            <View style={{ padding: spacing.lg }}>
+              <Text style={font.h3} numberOfLines={1}>
+                {e.title}
+              </Text>
+              <Row style={[styles.between, { marginTop: 6 }]}>
+                <Row>
+                  <Ionicons name="star" size={14} color={colors.amber} />
+                  <Text style={[font.small, { marginLeft: 4, color: colors.text, fontWeight: '700' }]}>
+                    {e.rating}
+                  </Text>
+                </Row>
+                <Badge tone="blue" label={e.eventType} />
+              </Row>
+              <Row style={{ marginTop: 8 }}>
+                <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
+                <Text style={[font.small, { marginLeft: 4, flex: 1 }]} numberOfLines={1}>
+                  {e.date} • {e.location}
                 </Text>
               </Row>
-              <Badge tone="blue" label={e.eventType} />
-            </Row>
-            <Row style={{ marginTop: 8 }}>
-              <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
-              <Text style={[font.small, { marginLeft: 4, flex: 1 }]} numberOfLines={1}>
-                {e.date} • {e.location}
-              </Text>
-            </Row>
-            <Divider style={{ marginVertical: spacing.sm }} />
-            <Row>
-              <Avatar seed={e.hostName} size={22} />
-              <Text style={[font.small, { marginLeft: 6, flex: 1 }]} numberOfLines={1}>
-                Hosted by {e.hostName}
-              </Text>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </Row>
-          </View>
-        </Card>
-      ))}
+              <Divider style={{ marginVertical: spacing.sm }} />
+              <Row>
+                <Avatar seed={e.hostName} size={22} />
+                <Text style={[font.small, { marginLeft: 6, flex: 1 }]} numberOfLines={1}>
+                  Hosted by {e.hostName}
+                </Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </Row>
+            </View>
+          </Card>
+        ))
+      )}
     </Screen>
   );
 }

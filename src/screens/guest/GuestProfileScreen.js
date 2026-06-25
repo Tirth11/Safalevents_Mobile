@@ -44,7 +44,7 @@ export default function GuestProfileScreen({ navigation, route }) {
       </Card>
 
       <SectionTitle>Stats</SectionTitle>
-      <Row style={{ marginBottom: spacing.lg }}>
+      <Row style={{ marginBottom: spacing.lg, alignItems: 'stretch' }}>
         <StatCard label="Attended" value="12" icon="checkmark-circle" color={colors.accent} />
         <View style={{ width: spacing.md }} />
         <StatCard label="Upcoming" value="3" icon="calendar-outline" color={colors.primary} />

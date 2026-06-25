@@ -5,6 +5,7 @@ import { colors } from '../theme/theme';
 
 import HostDashboardScreen from '../screens/host/HostDashboardScreen';
 import HostEventsScreen from '../screens/host/HostEventsScreen';
+import HostGuestsScreen from '../screens/host/HostGuestsScreen';
 import HostMessagesScreen from '../screens/host/HostMessagesScreen';
 import HostAccountScreen from '../screens/host/HostAccountScreen';
 
@@ -13,6 +14,7 @@ const Tab = createBottomTabNavigator();
 const ICONS = {
   Dashboard: 'grid-outline',
   Events: 'calendar-outline',
+  Guests: 'people-outline',
   Messages: 'chatbubbles-outline',
   Account: 'person-circle-outline',
 };
@@ -31,6 +33,7 @@ export default function HostTabs() {
     >
       <Tab.Screen name="Dashboard" component={HostDashboardScreen} />
       <Tab.Screen name="Events" component={HostEventsScreen} />
+      <Tab.Screen name="Guests" component={HostGuestsScreen} />
       <Tab.Screen name="Messages" component={HostMessagesScreen} />
       <Tab.Screen name="Account" component={HostAccountScreen} />
     </Tab.Navigator>
