@@ -76,10 +76,30 @@ export default function HostDashboardScreen({ navigation }) {
   ].filter((s) => s.value > 0);
 
   const earningsBars = [
-    { label: 'Week 1', value: 800, color: colors.primary },
-    { label: 'Week 2', value: 1500, color: colors.primary },
-    { label: 'Week 3', value: 2100, color: colors.primary },
-    { label: 'Week 4', value: 3200, color: colors.accent },
+    { label: 'Jan', value: 1200, color: colors.primary },
+    { label: 'Feb', value: 2500, color: colors.primary },
+    { label: 'Mar', value: 3800, color: colors.primary },
+    { label: 'Apr', value: 5100, color: colors.primary },
+    { label: 'May', value: 7200, color: colors.primary },
+    { label: 'Jun', value: 10450, color: colors.accent },
+  ];
+
+  const geoBars = [
+    { label: 'New York', value: 320, color: colors.primary },
+    { label: 'New Jersey', value: 150, color: colors.primary },
+    { label: 'Connecticut', value: 65, color: colors.primary },
+    { label: 'London', value: 28, color: colors.primary },
+    { label: 'Boston', value: 12, color: colors.primary },
+  ];
+
+  const dayBars = [
+    { label: 'M', a: 20, b: 0 },
+    { label: 'T', a: 45, b: 0 },
+    { label: 'W', a: 80, b: 0 },
+    { label: 'T', a: 110, b: 0 },
+    { label: 'F', a: 190, b: 0 },
+    { label: 'S', a: 310, b: 0 },
+    { label: 'S', a: 150, b: 0 },
   ];
 
   return (
@@ -145,21 +165,23 @@ export default function HostDashboardScreen({ navigation }) {
       )}
 
       {/* ── Earnings growth ── */}
-      <Card style={{ marginBottom: spacing.xl }}>
-        <ChartHeading icon="trending-up-outline" title="Earnings Growth" subtitle="This month · $2,450 collected" color={colors.primary} />
+      <Card style={{ marginBottom: spacing.lg }}>
+        <ChartHeading icon="trending-up-outline" title="Earnings Growth" subtitle="Cumulative revenue over time" color={colors.primary} />
         <HBars data={earningsBars} suffix="" />
-        <Divider style={{ marginVertical: spacing.md }} />
-        <Row style={styles.between}>
-          <View>
-            <Text style={font.tiny}>This month</Text>
-            <Text style={[font.h2, { color: colors.text }]}>$2,450</Text>
-          </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={font.tiny}>Projected</Text>
-            <Text style={[font.h2, { color: colors.accent }]}>$4,100</Text>
-          </View>
-        </Row>
       </Card>
+
+      {/* ── Guest Demographics ── */}
+      <Card style={{ marginBottom: spacing.lg }}>
+        <ChartHeading icon="map-outline" title="Guest Demographics" subtitle="Top regions across all events" color={colors.blue} />
+        <HBars data={geoBars} />
+      </Card>
+
+      {/* ── Day of Week ── */}
+      <Card style={{ marginBottom: spacing.xl }}>
+        <ChartHeading icon="calendar-outline" title="Successful Participation" subtitle="Avg. RSVPs by day" color={colors.accent} />
+        <BarGroupChart data={dayBars} bColor="transparent" />
+      </Card>
+
 
       {/* Pending approvals callout */}
       {pendingCount > 0 && (
