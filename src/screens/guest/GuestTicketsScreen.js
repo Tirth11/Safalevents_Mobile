@@ -14,12 +14,27 @@ import {
   EmptyState,
   ApprovalBadge,
 } from '../../components/ui';
-import { myRsvps, GUEST } from '../../data/mock';
+import {
+  myRsvps,
+  GUEST,
+  useStore,
+  getCheckinState,
+  getCheckedInCount,
+  getGuestHistorySummary,
+} from '../../data/mock';
 
 export default function GuestTicketsScreen({ navigation, route }) {
+  useStore();
+
   const actionCount = myRsvps.filter(
     (r) => r.approvalState === 'UNDER_APPROVAL' || r.status === 'waitlist'
   ).length;
+
+  const summary = getGuestHistorySummary(GUEST.email);
+  const accuracyColor =
+    summary.accuracy >= 80 ? colors.success || '#16a34a'
+      : summary.accuracy >= 50 ? '#d97706'
+      : '#dc2626';
 
   return (
     <Screen>
@@ -45,6 +60,8 @@ export default function GuestTicketsScreen({ navigation, route }) {
         const isPending = rsvp.approvalState === 'UNDER_APPROVAL';
         const isRejected = rsvp.approvalState === 'REJECTED';
         const showMessageHost = event.messagingEnabled && !isRejected;
+        const isConfirmed = rsvp.status === 'going' && rsvp.approvalState === 'APPROVED';
+        const checkin = isConfirmed ? getCheckinState(rsvp) : null;
 
         return (
           <Card key={rsvp.id} padded={false} style={styles.ticketCard}>
@@ -66,9 +83,18 @@ export default function GuestTicketsScreen({ navigation, route }) {
                     Hosted by {event.hostName}
                   </Text>
                 </Row>
-                <View style={{ marginTop: 8, alignSelf: 'flex-start' }}>
-                  <ApprovalBadge rsvp={rsvp} />
-                </View>
+                <Row style={{ marginTop: 8, flexWrap: 'wrap' }}>
+                  <View style={{ alignSelf: 'flex-start', marginRight: 6 }}>
+                    <ApprovalBadge rsvp={rsvp} />
+                  </View>
+                  {checkin ? (
+                    <View style={[styles.checkinBadge, { backgroundColor: checkin.bg }]}>
+                      <Text style={[styles.checkinText, { color: checkin.color }]}>
+                        {checkin.label}
+                      </Text>
+                    </View>
+                  ) : null}
+                </Row>
               </View>
             </Row>
 
@@ -104,23 +130,69 @@ export default function GuestTicketsScreen({ navigation, route }) {
         );
       })}
 
-      <SectionTitle>Event History &amp; Records</SectionTitle>
-      <Card>
-        <Row style={styles.between}>
-          <Row style={{ flex: 1 }}>
-            <View style={styles.histIcon}>
-              <Ionicons name="ticket-outline" size={16} color={colors.textMuted} />
-            </View>
-            <View style={{ flex: 1, paddingHorizontal: spacing.md }}>
-              <Text style={[font.body, { fontWeight: '700' }]} numberOfLines={1}>
-                Spring Networking Brunch
-              </Text>
-              <Text style={font.small}>Attended • 2026-04-12</Text>
-            </View>
-          </Row>
-          <Badge tone="gray" label="Past" />
-        </Row>
-      </Card>
+      <SectionTitle>Check-in History</SectionTitle>
+
+      {summary.found && summary.recent.length > 0 ? (
+        <>
+          <Card style={{ marginBottom: spacing.md }}>
+            <Row style={styles.between}>
+              <View style={styles.statTile}>
+                <Text style={[font.h2, { textAlign: 'center' }]}>
+                  {summary.totalEventsRsvpd}
+                </Text>
+                <Text style={[font.small, { textAlign: 'center' }]}>Events Attended</Text>
+              </View>
+              <View style={styles.statTile}>
+                <Text style={[font.h2, { textAlign: 'center', color: accuracyColor }]}>
+                  {`${summary.accuracy}%`}
+                </Text>
+                <Text style={[font.small, { textAlign: 'center' }]}>Accuracy</Text>
+              </View>
+              <View style={styles.statTile}>
+                <Text style={[font.h2, { textAlign: 'center' }]}>{summary.noShow}</Text>
+                <Text style={[font.small, { textAlign: 'center' }]}>No-Shows</Text>
+              </View>
+            </Row>
+          </Card>
+
+          {summary.recent.map((h, i) => {
+            const status =
+              h.actual >= h.rsvpCount
+                ? { tone: 'green', label: 'Fully Attended' }
+                : h.actual > 0
+                ? { tone: 'amber', label: 'Partial' }
+                : { tone: 'red', label: 'No Show' };
+            return (
+              <Card key={`${h.event}-${i}`} style={{ marginBottom: spacing.sm }}>
+                <Row style={styles.between}>
+                  <Row style={{ flex: 1 }}>
+                    <View style={styles.histIcon}>
+                      <Ionicons name="ticket-outline" size={16} color={colors.textMuted} />
+                    </View>
+                    <View style={{ flex: 1, paddingHorizontal: spacing.md }}>
+                      <Text style={[font.body, { fontWeight: '700' }]} numberOfLines={1}>
+                        {h.event}
+                      </Text>
+                      <Text style={font.small}>
+                        {h.date} • Checked in {h.actual}/{h.rsvpCount}
+                      </Text>
+                    </View>
+                  </Row>
+                  <Badge tone={status.tone} label={status.label} />
+                </Row>
+              </Card>
+            );
+          })}
+        </>
+      ) : (
+        <Card>
+          <EmptyState
+            icon="ticket-outline"
+            title="No attendance history yet"
+            subtitle="Your past events will appear here."
+          />
+        </Card>
+      )}
     </Screen>
   );
 }
@@ -131,6 +203,14 @@ const styles = StyleSheet.create({
   between: { justifyContent: 'space-between' },
   ticketCard: { marginBottom: spacing.md, overflow: 'hidden' },
   ticketCover: { width: 96, alignSelf: 'stretch', minHeight: 124, backgroundColor: colors.surfaceHover },
+  checkinBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.sm || 6,
+    alignSelf: 'flex-start',
+  },
+  checkinText: { fontSize: 11, fontWeight: '700' },
+  statTile: { flex: 1, alignItems: 'center', paddingHorizontal: 4 },
   histIcon: {
     width: 38,
     height: 38,

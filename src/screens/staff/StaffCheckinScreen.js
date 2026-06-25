@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, StyleSheet 
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font } from '../../theme/theme';
 import { Screen, Card, Badge, Button, SectionTitle, Avatar, Row, ApprovalBadge, EmptyState } from '../../components/ui';
+import GuestCheckinDetail from '../../components/GuestCheckinDetail';
 import {
   useStore, getCurrentStaff, getEvent, getRsvps, validateScan, checkInGuest, staffCan, calcAge, meetsAge,
   MOCK_GUESTS, getTrustBadge, getEventStatus, getPartyMembers,
@@ -142,245 +143,30 @@ export default function StaffCheckinScreen() {
         </Card>
       ) : null}
 
-      {/* Scan result — full guest details, then check in */}
-      {result ? (
+      {/* Scan result — full guest details via shared component */}
+      {result && result.rsvp ? (
+        <View style={{ marginBottom: spacing.lg }}>
+          <GuestCheckinDetail
+            rsvp={result.rsvp}
+            event={event}
+            result={result}
+            scannerName={`${staff?.name || 'Staff'} (Staff)`}
+            canCheckin={staffCan('checkin')}
+            canViewHistory={staffCan('history_view') || staffCan('guests_view')}
+          />
+          <Button label="Scan next guest" variant="outline" icon="qr-code-outline" onPress={() => { setResult(null); setScanning(true); }} style={{ marginTop: spacing.md }} />
+        </View>
+      ) : result ? (
         <Card style={{ marginBottom: spacing.lg, borderColor: toneFor(result.code), borderWidth: 1.5 }}>
           <Row style={{ marginBottom: 12 }}>
             <Ionicons
-              name={result.ok ? 'checkmark-circle' : result.code === 'duplicate' || result.code === 'pending' ? 'alert-circle' : 'close-circle'}
+              name={result.code === 'duplicate' || result.code === 'pending' ? 'alert-circle' : 'close-circle'}
               size={24}
               color={toneFor(result.code)}
             />
             <Text style={{ marginLeft: 8, fontWeight: '800', fontSize: 15, color: colors.text, flex: 1 }}>{result.message}</Text>
           </Row>
-
-          {result.rsvp ? (
-            <View style={styles.detailCard}>
-              <Row>
-                <Avatar seed={result.rsvp.name} size={52} />
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={{ fontWeight: '800', fontSize: 17, color: colors.text }}>{result.rsvp.name}</Text>
-                  <ApprovalBadge rsvp={result.rsvp} />
-                </View>
-              </Row>
-
-              <View style={styles.detailRows}>
-                <DetailRow icon="mail-outline" label="Email" value={result.rsvp.email} />
-                {result.rsvp.phone ? <DetailRow icon="call-outline" label="Phone" value={result.rsvp.phone} /> : null}
-                <DetailRow icon="people-outline" label="Party size" value={`${result.rsvp.guestCount || 1} attendee${(result.rsvp.guestCount || 1) > 1 ? 's' : ''}`} />
-                <DetailRow icon="ticket-outline" label="Pass ID" value={result.rsvp.id} />
-                <DetailRow icon="calendar-outline" label="Event" value={event.title} />
-              </View>
-
-              {event.ageRestricted ? (() => {
-                const verified = result.rsvp.dob ? meetsAge(result.rsvp.dob, event.minimumAge) : !!result.rsvp.ageVerified;
-                const yrs = calcAge(result.rsvp.dob);
-                return (
-                  <View style={{ marginTop: 10, padding: 10, borderRadius: radius.md, backgroundColor: verified ? colors.accentTint : colors.amberTint }}>
-                    <Text style={{ fontWeight: '800', fontSize: 13.5, color: verified ? colors.accent : colors.amber }}>
-                      {verified
-                        ? `🔒 Age Verified: ${event.minimumAge}+${yrs != null ? ` (${yrs} yrs)` : ''}`
-                        : '⚠️ Age Unverified — check physical ID'}
-                    </Text>
-                  </View>
-                );
-              })() : null}
-
-              {Object.keys(result.rsvp.answers || {}).length > 0 ? (
-                <View style={{ marginTop: 10 }}>
-                  <Text style={[font.tiny, { fontWeight: '700', color: colors.text, marginBottom: 2 }]}>Responses</Text>
-                  {Object.entries(result.rsvp.answers).map(([q, a]) => (
-                    <Text key={q} style={font.tiny}><Text style={{ fontWeight: '700' }}>{q} </Text>{a}</Text>
-                  ))}
-                </View>
-              ) : null}
-            </View>
-          ) : null}
-
-          {/* ── Partial check-in controls ── */}
-          {result.ok && canCheckin ? (() => {
-            const rsvp = result.rsvp;
-            const total = rsvp.guestCount || 1;
-            const alreadyIn = rsvp.checkedInCount || 0;
-            const remaining = total - alreadyIn;
-            const partyMembers = getPartyMembers(rsvp.name, total);
-            const guestIntel = MOCK_GUESTS.find((g) => g.email === rsvp.email);
-            const pct = total > 0 ? Math.round((alreadyIn / total) * 100) : 0;
-
-            return (
-              <View style={{ marginTop: spacing.md }}>
-                {/* Party members list */}
-                {total > 1 ? (
-                  <View style={{ marginBottom: spacing.md }}>
-                    <Text style={[font.small, { fontWeight: '800', color: colors.text, marginBottom: 6 }]}>
-                      Party Members ({alreadyIn}/{total})
-                    </Text>
-                    {partyMembers.map((member, i) => {
-                      const isIn = i < alreadyIn;
-                      return (
-                        <Row key={i} style={{ paddingVertical: 6 }}>
-                          <View style={[styles.statusDot, { backgroundColor: isIn ? colors.accent : colors.border }]} />
-                          <Text style={{ flex: 1, fontSize: 13.5, color: colors.text, marginLeft: 8 }}>{member}</Text>
-                          <Badge tone={isIn ? 'green' : 'neutral'} label={isIn ? 'IN' : 'PENDING'} dot />
-                        </Row>
-                      );
-                    })}
-                  </View>
-                ) : null}
-
-                {/* Attendance progress (for parties > 1) */}
-                {total > 1 ? (
-                  <View style={{ marginBottom: spacing.md }}>
-                    <Text style={[font.tiny, { fontWeight: '700', color: colors.text, marginBottom: 4 }]}>
-                      Attendance Progress
-                    </Text>
-                    <View style={styles.progressTrack}>
-                      <View style={[styles.progressFill, { width: `${pct}%` }]} />
-                    </View>
-                    <Text style={[font.tiny, { marginTop: 3, color: colors.textMuted }]}>
-                      {alreadyIn} of {total} checked in ({pct}%) -- {remaining} remaining
-                    </Text>
-                  </View>
-                ) : null}
-
-                {/* Arrival stepper */}
-                {remaining > 0 ? (
-                  <View style={{ marginBottom: spacing.md }}>
-                    <Text style={[font.tiny, { fontWeight: '700', color: colors.text, marginBottom: 6 }]}>
-                      How many arriving now?
-                    </Text>
-                    <Row style={{ alignItems: 'center', gap: 12 }}>
-                      <TouchableOpacity
-                        onPress={() => setArrivalCount((c) => Math.max(1, c - 1))}
-                        style={[styles.stepperBtn, arrivalCount <= 1 && { opacity: 0.35 }]}
-                        disabled={arrivalCount <= 1}
-                      >
-                        <Ionicons name="remove" size={20} color={colors.primary} />
-                      </TouchableOpacity>
-                      <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, minWidth: 36, textAlign: 'center' }}>
-                        {arrivalCount}
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => setArrivalCount((c) => Math.min(remaining, c + 1))}
-                        style={[styles.stepperBtn, arrivalCount >= remaining && { opacity: 0.35 }]}
-                        disabled={arrivalCount >= remaining}
-                      >
-                        <Ionicons name="add" size={20} color={colors.primary} />
-                      </TouchableOpacity>
-                      <Text style={[font.tiny, { color: colors.textMuted, marginLeft: 4 }]}>
-                        of {remaining} remaining
-                      </Text>
-                    </Row>
-                  </View>
-                ) : null}
-
-                {/* Check-in action buttons */}
-                {remaining > 0 ? (
-                  <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <Button
-                      label={`Check In ${arrivalCount}`}
-                      icon="checkmark-done"
-                      variant="accent"
-                      onPress={() => confirmArrival(rsvp, arrivalCount)}
-                      style={{ flex: 1, paddingVertical: 15 }}
-                    />
-                    {remaining > 1 && arrivalCount < remaining ? (
-                      <Button
-                        label={`All ${remaining}`}
-                        icon="people"
-                        variant="outline"
-                        onPress={() => confirmArrival(rsvp, remaining)}
-                        style={{ paddingVertical: 15, paddingHorizontal: 16 }}
-                      />
-                    ) : null}
-                  </View>
-                ) : (
-                  <View style={{ padding: 12, borderRadius: radius.md, backgroundColor: colors.accentTint, alignItems: 'center' }}>
-                    <Text style={{ fontWeight: '800', color: colors.accent, fontSize: 14 }}>
-                      Entire party checked in ({total}/{total})
-                    </Text>
-                  </View>
-                )}
-
-                {/* Historical Guest Intelligence */}
-                {guestIntel ? (() => {
-                  const badge = getTrustBadge(guestIntel.trustScore);
-                  const accuracy = guestIntel.totalAttendees > 0
-                    ? Math.round((guestIntel.actualAttendees / guestIntel.totalAttendees) * 100) : 0;
-                  const noShows = (guestIntel.history || []).filter((h) => h.actual === 0).length;
-                  const partials = (guestIntel.history || []).filter((h) => h.actual > 0 && h.actual < h.rsvpCount).length;
-
-                  return (
-                    <View style={[styles.intelCard, { marginTop: spacing.md }]}>
-                      <Row style={{ marginBottom: 8 }}>
-                        <Ionicons name="analytics-outline" size={16} color={colors.primary} />
-                        <Text style={{ marginLeft: 6, fontWeight: '800', fontSize: 13, color: colors.text }}>
-                          Guest Intelligence
-                        </Text>
-                      </Row>
-
-                      <Row style={{ flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                        <View style={[styles.intelChip, { backgroundColor: badge.bg }]}>
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: badge.color }}>
-                            Trust: {guestIntel.trustScore}% ({badge.text})
-                          </Text>
-                        </View>
-                        <View style={[styles.intelChip, { backgroundColor: colors.surfaceHover }]}>
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>
-                            Accuracy: {accuracy}%
-                          </Text>
-                        </View>
-                      </Row>
-
-                      <Row style={{ flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-                        <Text style={[font.tiny, { color: colors.textMuted }]}>
-                          {guestIntel.eventsRsvpd} events
-                        </Text>
-                        <Text style={[font.tiny, { color: colors.textMuted }]}>|</Text>
-                        <Text style={[font.tiny, { color: noShows > 0 ? colors.red : colors.textMuted }]}>
-                          {noShows} no-show{noShows !== 1 ? 's' : ''}
-                        </Text>
-                        <Text style={[font.tiny, { color: colors.textMuted }]}>|</Text>
-                        <Text style={[font.tiny, { color: partials > 0 ? colors.amber : colors.textMuted }]}>
-                          {partials} partial{partials !== 1 ? 's' : ''}
-                        </Text>
-                      </Row>
-
-                      {guestIntel.pattern ? (
-                        <Text style={[font.tiny, { color: colors.textMuted }]}>
-                          Pattern: {guestIntel.pattern}
-                        </Text>
-                      ) : null}
-
-                      {/* Recent history (last 3 events) */}
-                      {(guestIntel.history || []).length > 0 ? (
-                        <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 6 }}>
-                          {guestIntel.history.slice(0, 3).map((h, i) => {
-                            const st = getEventStatus(h.rsvpCount, h.actual);
-                            return (
-                              <Row key={i} style={{ paddingVertical: 3 }}>
-                                <Text style={{ fontSize: 11, color: st.color, width: 14 }}>{st.icon}</Text>
-                                <Text style={{ flex: 1, fontSize: 11.5, color: colors.text }}>{h.event}</Text>
-                                <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                                  {h.actual}/{h.rsvpCount}
-                                </Text>
-                              </Row>
-                            );
-                          })}
-                        </View>
-                      ) : null}
-                    </View>
-                  );
-                })() : null}
-              </View>
-            );
-          })() : null}
-          {result.ok && !canCheckin ? (
-            <Text style={[font.small, { marginTop: 12 }]}>Your role can view this guest but not check them in.</Text>
-          ) : null}
-          {!result.ok ? (
-            <Button label="Scan again" variant="outline" icon="qr-code-outline" onPress={() => { setResult(null); setScanning(true); }} style={{ marginTop: spacing.lg }} />
-          ) : null}
+          <Button label="Scan again" variant="outline" icon="qr-code-outline" onPress={() => { setResult(null); setScanning(true); }} style={{ marginTop: spacing.sm }} />
         </Card>
       ) : null}
 

@@ -36,7 +36,7 @@ export default function DiscoverScreen({ navigation }) {
         {/* Hero */}
         <View style={styles.hero}>
           <Image source={{ uri: featured.cover }} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(15,8,20,0.55)' }]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(15,8,20,0.25)' }]} />
           <View style={{ padding: spacing.lg }}>
             <Badge tone="primary" label="Browse freely · no account needed" />
             <Text style={styles.heroTitle}>Discover events worth showing up for</Text>
@@ -104,8 +104,8 @@ const styles = StyleSheet.create({
   loginPill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 7 },
   loginPillTxt: { color: colors.primary, fontWeight: '700', fontSize: 12.5 },
   hero: { marginHorizontal: spacing.lg, borderRadius: radius.lg, overflow: 'hidden', minHeight: 230, justifyContent: 'flex-end', ...shadow },
-  heroTitle: { color: '#fff', fontSize: 24, fontWeight: '800', marginTop: 10, lineHeight: 29 },
-  heroSub: { color: 'rgba(255,255,255,0.9)', fontSize: 13.5, marginTop: 6, lineHeight: 19 },
+  heroTitle: { color: '#fff', fontSize: 24, fontWeight: '800', marginTop: 10, lineHeight: 29, textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  heroSub: { color: 'rgba(255,255,255,0.95)', fontSize: 13.5, marginTop: 6, lineHeight: 19, textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   card: { flexDirection: 'row', alignItems: 'stretch', backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', marginBottom: 12, ...shadow },

@@ -948,6 +948,79 @@ export const createGuestRsvp = (eventId, data = {}) => {
   return { ok: true, rsvp: record, waitlisted: status === 'waitlist', pending: approvalState === 'UNDER_APPROVAL' };
 };
 
+// ─── RSVP approval workflow (host management) ────────────────────────────────
+const _rsvpEmail = (rsvpId, subject) => {
+  const r = rsvps.find((x) => x.id === rsvpId);
+  if (!r) return;
+  outbox.unshift({ id: 'o_' + Math.random().toString(36).slice(2, 8), to: r.email || r.name, channel: 'Email', subject, time: 'just now' });
+};
+const _audit = (actor, action) => {
+  auditTrail.unshift({ id: 'a_' + Math.random().toString(36).slice(2, 8), actor, action, time: 'just now' });
+};
+
+export const approveRsvp = (rsvpId, actor = 'Host') => {
+  const r = rsvps.find((x) => x.id === rsvpId);
+  if (!r) return null;
+  r.approvalState = 'APPROVED';
+  if (r.status !== 'going') r.status = 'going';
+  const ev = getEvent(r.eventId);
+  _rsvpEmail(rsvpId, `You're approved for ${ev ? ev.title : 'the event'}!`);
+  _audit(actor, `Approved RSVP for ${r.name}`);
+  _notify();
+  return r;
+};
+
+export const rejectRsvp = (rsvpId, reason = '', actor = 'Host') => {
+  const r = rsvps.find((x) => x.id === rsvpId);
+  if (!r) return null;
+  r.approvalState = 'REJECTED';
+  r.rejectionReason = reason || 'Not approved by host.';
+  const ev = getEvent(r.eventId);
+  _rsvpEmail(rsvpId, `Update on your RSVP for ${ev ? ev.title : 'the event'}`);
+  _audit(actor, `Rejected RSVP for ${r.name}`);
+  _notify();
+  return r;
+};
+
+// Approve a waitlisted guest and move them into the confirmed list.
+export const approveFromWaitlist = (rsvpId, actor = 'Host') => {
+  const r = rsvps.find((x) => x.id === rsvpId);
+  if (!r) return null;
+  r.status = 'going';
+  r.approvalState = 'APPROVED';
+  const ev = getEvent(r.eventId);
+  _rsvpEmail(rsvpId, `A spot opened — you're in for ${ev ? ev.title : 'the event'}!`);
+  _audit(actor, `Promoted ${r.name} from waitlist`);
+  _notify();
+  return r;
+};
+
+export const reopenRsvp = (rsvpId, actor = 'Host') => {
+  const r = rsvps.find((x) => x.id === rsvpId);
+  if (!r) return null;
+  r.approvalState = 'UNDER_APPROVAL';
+  r.rejectionReason = undefined;
+  _audit(actor, `Re-opened RSVP for ${r.name}`);
+  _notify();
+  return r;
+};
+
+export const removeRsvp = (rsvpId, actor = 'Host') => {
+  const i = rsvps.findIndex((x) => x.id === rsvpId);
+  if (i < 0) return;
+  const r = rsvps[i];
+  rsvps.splice(i, 1);
+  _audit(actor, `Removed ${r.name} from the guest list`);
+  _notify();
+};
+
+// Approve every pending (UNDER_APPROVAL, going) request for an event. Returns count.
+export const approveAllPending = (eventId, actor = 'Host') => {
+  const pending = rsvps.filter((r) => r.eventId === eventId && r.approvalState === 'UNDER_APPROVAL' && r.status === 'going');
+  pending.forEach((r) => approveRsvp(r.id, actor));
+  return pending.length;
+};
+
 // ─── Account settings (host + guest) — controlled & persistent in-session ────
 export const hostSettings = {
   emailConfirmations: true,

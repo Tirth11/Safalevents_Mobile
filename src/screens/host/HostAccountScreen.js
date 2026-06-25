@@ -12,6 +12,7 @@ import {
   Row,
   Divider,
   ToggleRow,
+  Toggle,
 } from '../../components/ui';
 import {
   payouts,
@@ -29,6 +30,8 @@ import {
   topUps,
   transactions,
   getPlanById,
+  hostSettings,
+  updateHostSettings,
 } from '../../data/mock';
 import { useAuth } from '../../auth/AuthContext';
 
@@ -52,9 +55,9 @@ function UsageBar({ label, current, max, color }) {
 const PAYOUT_TONE = { Paid: 'green', Processing: 'amber', Failed: 'red' };
 
 const MENU = [
-  { icon: 'people-outline', label: 'Staff & Roles (managed per event)' },
-  { icon: 'card-outline', label: 'Integrations' },
-  { icon: 'mail-outline', label: 'Help & Support' },
+  { icon: 'people-outline', label: 'Staff & Roles (managed per event)', route: 'StaffRoles' },
+  { icon: 'card-outline', label: 'Integrations', route: 'Integrations' },
+  { icon: 'mail-outline', label: 'Help & Support', help: true },
 ];
 
 // Realistic filenames cycled through by the simulated "upload" control.
@@ -323,16 +326,23 @@ export default function HostAccountScreen({ navigation }) {
 
           <SectionTitle>Settings</SectionTitle>
           <Card style={{ marginBottom: spacing.lg }}>
-            <ToggleRow label="Email confirmations" desc="Send RSVP receipts via email" value icon="mail-outline" />
-            <ToggleRow label="SMS confirmations" desc="Text guests when approved" value={false} icon="call-outline" />
-            <ToggleRow label="Pre-event reminders" desc="Remind guests 24h before" value icon="time-outline" />
-            <ToggleRow label="Daily digest" desc="Daily summary of RSVPs" value={false} icon="notifications-outline" />
+            <Toggle label="Email confirmations" desc="Send RSVP receipts via email" icon="mail-outline" value={hostSettings.emailConfirmations} onValueChange={(v) => updateHostSettings({ emailConfirmations: v })} />
+            <Toggle label="SMS confirmations" desc="Text guests when approved" icon="call-outline" value={hostSettings.smsConfirmations} onValueChange={(v) => updateHostSettings({ smsConfirmations: v })} />
+            <Toggle label="Pre-event reminders" desc="Remind guests 24h before" icon="time-outline" value={hostSettings.preEventReminders} onValueChange={(v) => updateHostSettings({ preEventReminders: v })} />
+            <Toggle label="Daily digest" desc="Daily summary of RSVPs" icon="notifications-outline" value={hostSettings.dailyDigest} onValueChange={(v) => updateHostSettings({ dailyDigest: v })} />
           </Card>
 
           <Card style={{ marginBottom: spacing.lg }} padded={false}>
             {MENU.map((m, i) => (
               <View key={m.label}>
-                <TouchableOpacity activeOpacity={0.8} onPress={() => Alert.alert(m.label, 'Prototype — not wired.')} style={styles.menuRow}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    if (m.route) navigation.navigate(m.route);
+                    else if (m.help) Alert.alert('Help & Support', 'Email us at support@safalevent.com or visit our Help Center.');
+                  }}
+                  style={styles.menuRow}
+                >
                   <View style={[styles.iconTile, { backgroundColor: colors.primaryTint }]}>
                     <Ionicons name={m.icon} size={18} color={colors.primary} />
                   </View>

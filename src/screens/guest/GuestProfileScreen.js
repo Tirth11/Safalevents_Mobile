@@ -13,8 +13,9 @@ import {
   Row,
   Divider,
   ToggleRow,
+  Toggle,
 } from '../../components/ui';
-import { GUEST } from '../../data/mock';
+import { GUEST, useStore, guestSettings, updateGuestSettings } from '../../data/mock';
 
 const MENU = [
   { key: 'edit', label: 'Edit profile', icon: 'person-circle-outline' },
@@ -25,6 +26,7 @@ const MENU = [
 import { useAuth } from '../../auth/AuthContext';
 
 export default function GuestProfileScreen({ navigation, route }) {
+  useStore();
   const auth = useAuth();
   return (
     <Screen>
@@ -54,23 +56,26 @@ export default function GuestProfileScreen({ navigation, route }) {
 
       <SectionTitle>Settings</SectionTitle>
       <Card style={{ marginBottom: spacing.lg }}>
-        <ToggleRow
+        <Toggle
           label="Email reminders"
           desc="Get event reminders by email"
           icon="mail-outline"
-          value={true}
+          value={guestSettings.emailReminders}
+          onValueChange={(v) => updateGuestSettings({ emailReminders: v })}
         />
-        <ToggleRow
+        <Toggle
           label="SMS reminders"
           desc="Text alerts before your events"
           icon="call-outline"
-          value={false}
+          value={guestSettings.smsReminders}
+          onValueChange={(v) => updateGuestSettings({ smsReminders: v })}
         />
-        <ToggleRow
+        <Toggle
           label="New message alerts"
           desc="Notify me when a host replies"
           icon="chatbubbles-outline"
-          value={true}
+          value={guestSettings.newMessageAlerts}
+          onValueChange={(v) => updateGuestSettings({ newMessageAlerts: v })}
         />
       </Card>
 
@@ -80,7 +85,11 @@ export default function GuestProfileScreen({ navigation, route }) {
           <View key={item.key}>
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => Alert.alert(item.label, 'Prototype — not wired')}
+              onPress={() => {
+                if (item.key === 'help') Alert.alert('Help & Support', 'Email support@safalevent.com or visit our Help Center.');
+                else if (item.key === 'notify') Alert.alert('Notification preferences', 'Adjust your reminders in the Settings section above.');
+                else if (item.key === 'edit') Alert.alert('Edit profile', 'Profile editing is available in the full app.');
+              }}
               style={styles.menuRow}
             >
               <Ionicons name={item.icon} size={18} color={colors.primary} />
