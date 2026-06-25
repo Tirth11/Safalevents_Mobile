@@ -15,7 +15,7 @@ import {
   VerificationGate,
 } from '../../components/ui';
 import { GaugeRing, BarGroupChart, StackedBar, HBars, Legend } from '../../components/Charts';
-import { events, rsvps, useStore, getCurrentHost, hostFullyVerified, getCheckedInCount } from '../../data/mock';
+import { events, rsvps, useStore, getCurrentHost, hostFullyVerified, getCheckedInCount, conversations } from '../../data/mock';
 
 const STATUS_TONE = {
   Published: 'green',
@@ -49,31 +49,18 @@ export default function HostDashboardScreen({ navigation }) {
 
   // ── Derived metrics ──────────────────────────────────────────────────────
   const pendingCount = rsvps.filter((r) => r.approvalState === 'UNDER_APPROVAL').length;
-  const totalSeats = rsvps.reduce((n, r) => n + (r.guestCount || 1), 0);
-  const arrivedSeats = rsvps.reduce((n, r) => n + getCheckedInCount(r), 0);
-  const checkinPct = totalSeats ? arrivedSeats / totalSeats : 0;
+  const unreadCount = conversations ? conversations.filter((c) => c.unread).length : 2;
+  const pendingEventsCount = events.filter((e) => e.status === 'Pending').length;
 
   // Per-event RSVP vs attended (first few events) for the trend chart.
   const eventBars = events.slice(0, 4).map((e) => {
     const ev = rsvps.filter((r) => r.eventId === e.id);
     return {
       label: e.title.split(' ')[0],
-      a: ev.reduce((n, r) => n + (r.guestCount || 1), 0),
-      b: ev.reduce((n, r) => n + getCheckedInCount(r), 0),
+      a: ev.filter((r) => r.status === 'going').length,
+      b: ev.filter((r) => r.status === 'maybe' || r.status === 'waitlist').length,
     };
   });
-
-  // RSVP response breakdown for the stacked bar.
-  const confirmed = rsvps.filter((r) => r.status === 'going' && r.approvalState === 'APPROVED').length;
-  const pending = rsvps.filter((r) => r.approvalState === 'UNDER_APPROVAL').length;
-  const waitlist = rsvps.filter((r) => r.status === 'waitlist').length;
-  const rejected = rsvps.filter((r) => r.approvalState === 'REJECTED').length;
-  const rsvpSegments = [
-    { label: 'Confirmed', value: confirmed, color: colors.accent },
-    { label: 'Pending', value: pending, color: colors.amber },
-    { label: 'Waitlist', value: waitlist, color: colors.blue },
-    { label: 'Rejected', value: rejected, color: colors.red },
-  ].filter((s) => s.value > 0);
 
   const earningsBars = [
     { label: 'Jan', value: 1200, color: colors.primary },
@@ -119,50 +106,29 @@ export default function HostDashboardScreen({ navigation }) {
         </TouchableOpacity>
       </Row>
 
-      {/* Quick stats */}
+      {/* Quick stats matching web app */}
       <Row style={{ marginBottom: spacing.md, alignItems: 'stretch' }}>
         <StatCard label="Total Events" value={events.length} icon="calendar-outline" color={colors.primary} />
         <View style={{ width: spacing.md }} />
-        <StatCard label="Total RSVPs" value={rsvps.length} icon="people-outline" color={colors.blue} />
+        <StatCard label="Unread Messages" value={unreadCount} icon="chatbubble-outline" color={colors.blue} />
       </Row>
       <Row style={{ marginBottom: spacing.xl, alignItems: 'stretch' }}>
-        <StatCard label="Pending" value={pendingCount} icon="time-outline" color={colors.amber} />
+        <StatCard label="RSVP Pending" value={pendingCount} icon="time-outline" color={colors.amber} />
         <View style={{ width: spacing.md }} />
-        <StatCard label="Attendees In" value={`${arrivedSeats}/${totalSeats}`} icon="checkmark-circle" color={colors.accent} />
+        <StatCard label="Events Pending" value={pendingEventsCount} icon="shield-checkmark-outline" color={colors.red} />
       </Row>
 
-      {/* ── Check-in rate gauge ── */}
+      {/* ── RSVP Response Overview ── */}
       <Card style={{ marginBottom: spacing.lg }}>
-        <ChartHeading icon="speedometer-outline" title="Check-in Rate" subtitle="Attendees arrived vs expected" color={colors.accent} />
-        <Row style={{ justifyContent: 'space-around', alignItems: 'center' }}>
-          <GaugeRing progress={checkinPct} color={colors.accent} label={`${arrivedSeats} of ${totalSeats}\nattendees in`} />
-          <View style={{ gap: spacing.md }}>
-            <MiniStat color={colors.accent} value={arrivedSeats} label="Arrived" />
-            <MiniStat color={colors.amber} value={totalSeats - arrivedSeats} label="Expected" />
-            <MiniStat color={colors.primary} value={`${Math.round(checkinPct * 100)}%`} label="Turnout" />
-          </View>
-        </Row>
-      </Card>
-
-      {/* ── Attendance trend ── */}
-      <Card style={{ marginBottom: spacing.lg }}>
-        <ChartHeading icon="bar-chart-outline" title="RSVP vs Attendance" subtitle="Reserved seats vs who showed up" />
-        <BarGroupChart data={eventBars} />
+        <ChartHeading icon="pie-chart-outline" title="RSVP Response Overview" subtitle="Total RSVPs by event" />
+        <BarGroupChart data={eventBars} aColor="#00A152" bColor="#F59F00" />
         <Legend
           items={[
-            { label: 'RSVP seats', color: colors.primary },
-            { label: 'Attended', color: colors.accent },
+            { label: 'Yes', color: '#00A152' },
+            { label: 'Maybe', color: '#F59F00' },
           ]}
         />
       </Card>
-
-      {/* ── RSVP response overview ── */}
-      {rsvpSegments.length > 0 && (
-        <Card style={{ marginBottom: spacing.lg }}>
-          <ChartHeading icon="pie-chart-outline" title="RSVP Responses" subtitle="Where your guests stand" color={colors.blue} />
-          <StackedBar segments={rsvpSegments} />
-        </Card>
-      )}
 
       {/* ── Earnings growth ── */}
       <Card style={{ marginBottom: spacing.lg }}>
