@@ -95,11 +95,11 @@ export default function StaffCheckinScreen() {
             <Ionicons name="people" size={28} color={colors.accent} />
           </View>
         </View>
-        <View style={{ marginTop: 10 }}>
+        <View style={{ marginTop: spacing.md }}>
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: totalAttendees ? `${Math.round((arrivedAttendees / totalAttendees) * 100)}%` : '0%' }]} />
           </View>
-          <Text style={[font.tiny, { marginTop: 4, color: colors.textMuted }]}>
+          <Text style={[font.tiny, { marginTop: spacing.xs, color: colors.textMuted, lineHeight: 16 }]}>
             {arrived.length} of {goingApproved.length} RSVPs arrived{' '}
             ({totalAttendees > 0 ? Math.round((arrivedAttendees / totalAttendees) * 100) : 0}% of attendees)
           </Text>
@@ -117,27 +117,27 @@ export default function StaffCheckinScreen() {
             <View style={[styles.corner, styles.tl]} /><View style={[styles.corner, styles.tr]} />
             <View style={[styles.corner, styles.bl]} /><View style={[styles.corner, styles.br]} />
           </View>
-          <Text style={[font.small, { textAlign: 'center', marginTop: 10 }]}>Point the camera at the guest's QR pass</Text>
+          <Text style={[font.small, { textAlign: 'center', marginTop: spacing.md, lineHeight: 19 }]}>Point the camera at the guest's QR pass</Text>
 
-          <Row style={{ marginTop: spacing.md, gap: 8 }}>
+          <Row style={{ marginTop: spacing.md, gap: spacing.sm }}>
             <TextInput value={manualId} onChangeText={setManualId} placeholder="…or type pass ID (e.g. r1)" placeholderTextColor={colors.textMuted} autoCapitalize="none" style={styles.input} />
             <Button label="Verify" small onPress={() => handleScan(manualId)} />
           </Row>
 
-          <Text style={[font.tiny, { marginTop: spacing.md, marginBottom: 6, fontWeight: '700', color: colors.text }]}>
+          <Text style={[font.tiny, { marginTop: spacing.md, marginBottom: spacing.xs, fontWeight: '700', color: colors.text, lineHeight: 16 }]}>
             Demo (no camera): tap a guest to simulate scanning their QR
           </Text>
           {eventRsvps.map((r) => (
             <TouchableOpacity key={r.id} onPress={() => handleScan(r.id)} style={styles.passRow} activeOpacity={0.8}>
               <Avatar seed={r.name} size={32} />
-              <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{r.name}</Text>
-                <Text style={font.tiny}>Pass {r.id} · {r.checkedIn ? 'checked in' : 'not arrived'}</Text>
+              <View style={{ flex: 1, marginLeft: spacing.md }}>
+                <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>{r.name}</Text>
+                <Text style={font.tiny} numberOfLines={1}>Pass {r.id} · {r.checkedIn ? 'checked in' : 'not arrived'}</Text>
               </View>
-              <Ionicons name="scan-outline" size={20} color={colors.primary} />
+              <Ionicons name="scan-outline" size={20} color={colors.primary} style={{ marginLeft: spacing.sm }} />
             </TouchableOpacity>
           ))}
-          <TouchableOpacity onPress={() => setScanning(false)} style={{ alignSelf: 'center', marginTop: 14 }}>
+          <TouchableOpacity onPress={() => setScanning(false)} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ alignSelf: 'center', marginTop: spacing.md, minHeight: 44, justifyContent: 'center' }}>
             <Text style={{ color: colors.textMuted, fontWeight: '600' }}>Close scanner</Text>
           </TouchableOpacity>
         </Card>
@@ -158,13 +158,13 @@ export default function StaffCheckinScreen() {
         </View>
       ) : result ? (
         <Card style={{ marginBottom: spacing.lg, borderColor: toneFor(result.code), borderWidth: 1.5 }}>
-          <Row style={{ marginBottom: 12 }}>
+          <Row style={{ marginBottom: spacing.md }}>
             <Ionicons
               name={result.code === 'duplicate' || result.code === 'pending' ? 'alert-circle' : 'close-circle'}
               size={24}
               color={toneFor(result.code)}
             />
-            <Text style={{ marginLeft: 8, fontWeight: '800', fontSize: 15, color: colors.text, flex: 1 }}>{result.message}</Text>
+            <Text style={{ marginLeft: spacing.sm, fontWeight: '800', fontSize: 15, color: colors.text, flex: 1, lineHeight: 20 }}>{result.message}</Text>
           </Row>
           <Button label="Scan again" variant="outline" icon="qr-code-outline" onPress={() => { setResult(null); setScanning(true); }} style={{ marginTop: spacing.sm }} />
         </Card>
@@ -177,13 +177,13 @@ export default function StaffCheckinScreen() {
       ) : (
         <Card padded={false} style={{ padding: 6 }}>
           {arrived.map((r) => (
-            <Row key={r.id} style={{ padding: 10 }}>
+            <Row key={r.id} style={{ padding: spacing.md }}>
               <Avatar seed={r.name} size={32} />
-              <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{r.name}</Text>
-                <Text style={font.tiny}>{r.checkedInAt ? new Date(r.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'arrived'}</Text>
+              <View style={{ flex: 1, marginLeft: spacing.md }}>
+                <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>{r.name}</Text>
+                <Text style={font.tiny} numberOfLines={1}>{r.checkedInAt ? new Date(r.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'arrived'}</Text>
               </View>
-              <Badge tone="green" dot label="Arrived" />
+              <Badge tone="green" dot label="Arrived" style={{ marginLeft: spacing.sm }} />
             </Row>
           ))}
         </Card>

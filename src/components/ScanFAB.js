@@ -44,8 +44,9 @@ export default function ScanFAB() {
     <>
       {/* ── Floating action button ── */}
       <TouchableOpacity
-        activeOpacity={0.9}
+        activeOpacity={0.8}
         onPress={() => setOpen(true)}
+        hitSlop={8}
         style={styles.fab}
       >
         <Ionicons name="qr-code-outline" size={20} color="#fff" />
@@ -59,10 +60,10 @@ export default function ScanFAB() {
           {/* Header */}
           <Row style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={font.h2}>Smart Check-In Scanner</Text>
-              <Text style={font.small}>Scan a guest pass to verify entry</Text>
+              <Text style={font.h2} numberOfLines={1}>Smart Check-In Scanner</Text>
+              <Text style={[font.small, { marginTop: spacing.xs }]} numberOfLines={1}>Scan a guest pass to verify entry</Text>
             </View>
-            <TouchableOpacity onPress={close} hitSlop={10} style={styles.closeBtn}>
+            <TouchableOpacity activeOpacity={0.8} onPress={close} hitSlop={10} style={styles.closeBtn}>
               <Ionicons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
           </Row>
@@ -78,7 +79,7 @@ export default function ScanFAB() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 8 }}
+                contentContainerStyle={{ gap: spacing.sm }}
               >
                 {events.map((e) => {
                   const on = e.id === eventId;
@@ -119,7 +120,7 @@ export default function ScanFAB() {
                 <Card style={styles.errorCard}>
                   <Row style={{ alignItems: 'flex-start' }}>
                     <Ionicons name="alert-circle" size={20} color={colors.red} />
-                    <Text style={{ flex: 1, marginLeft: 8, fontWeight: '700', color: colors.red, fontSize: 13.5 }}>
+                    <Text style={{ flex: 1, marginLeft: spacing.sm, fontWeight: '700', color: colors.red, fontSize: 13.5, lineHeight: 19 }}>
                       {result.message || 'Invalid pass.'}
                     </Text>
                   </Row>
@@ -142,7 +143,7 @@ export default function ScanFAB() {
                 {/* Manual entry */}
                 <Card>
                   <Text style={styles.kicker}>MANUAL PASS ENTRY</Text>
-                  <Row style={{ gap: 8 }}>
+                  <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
                     <TextInput
                       value={passInput}
                       onChangeText={setPassInput}
@@ -159,7 +160,7 @@ export default function ScanFAB() {
                 {/* Demo guest list */}
                 <Card>
                   <Text style={styles.kicker}>DEMO GUESTS ({rsvps.length})</Text>
-                  <View style={{ gap: 8 }}>
+                  <View style={{ gap: spacing.sm }}>
                     {rsvps.length === 0 ? (
                       <Text style={font.small}>No RSVPs for this event yet.</Text>
                     ) : (
@@ -173,13 +174,13 @@ export default function ScanFAB() {
                             style={styles.guestRow}
                           >
                             <Avatar seed={r.name} size={40} />
-                            <View style={{ flex: 1, marginLeft: 10 }}>
+                            <View style={{ flex: 1, marginLeft: spacing.sm }}>
                               <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>
                                 {r.name}
                               </Text>
-                              <Text style={font.tiny}>Pass {r.id} · {st.label}</Text>
+                              <Text style={font.tiny} numberOfLines={1}>Pass {r.id} · {st.label}</Text>
                             </View>
-                            <Ionicons name="scan-outline" size={20} color={colors.primary} />
+                            <Ionicons name="scan-outline" size={20} color={colors.primary} style={{ marginLeft: spacing.sm }} />
                           </TouchableOpacity>
                         );
                       })
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
 
   kicker: { fontSize: 11, fontWeight: '700', letterSpacing: 0.4, color: colors.textMuted, marginBottom: 10 },
 
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
 
   viewfinder: {
@@ -239,7 +240,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  viewfinderHint: { color: 'rgba(255,255,255,0.7)', fontSize: 12, textAlign: 'center', marginTop: 14, paddingHorizontal: 24 },
+  viewfinderHint: { color: 'rgba(255,255,255,0.7)', fontSize: 12, textAlign: 'center', marginTop: 14, paddingHorizontal: 24, lineHeight: 17 },
   corner: { position: 'absolute', width: 28, height: 28, borderColor: colors.amber },
   tl: { top: 22, left: 22, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 6 },
   tr: { top: 22, right: 22, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 6 },

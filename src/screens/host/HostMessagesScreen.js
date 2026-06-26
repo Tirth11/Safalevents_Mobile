@@ -44,17 +44,17 @@ export default function HostMessagesScreen({ navigation, route }) {
             <Card key={c.id} style={{ marginBottom: spacing.md }} onPress={() => setSelectedId(c.id)}>
               <Row>
                 <Avatar seed={c.guestName} size={44} />
-                <View style={{ flex: 1, marginLeft: spacing.md }}>
+                <View style={{ flex: 1, marginLeft: spacing.md, paddingRight: spacing.sm }}>
                   <Row style={styles.between}>
-                    <Text style={{ fontWeight: '800', fontSize: 15, color: colors.text }}>{c.guestName}</Text>
-                    {c.unread ? <View style={styles.unreadDot} /> : null}
+                    <Text style={{ fontWeight: '800', fontSize: 15, color: colors.text, flex: 1 }} numberOfLines={1}>{c.guestName}</Text>
+                    {c.unread ? <View style={[styles.unreadDot, { marginLeft: spacing.sm }]} /> : null}
                   </Row>
-                  <Text style={font.small}>{c.eventTitle}</Text>
-                  <Text style={[font.small, { marginTop: 4, color: colors.text }]} numberOfLines={1}>
+                  <Text style={font.small} numberOfLines={1}>{c.eventTitle}</Text>
+                  <Text style={[font.small, { marginTop: spacing.xs, color: colors.text }]} numberOfLines={1}>
                     {last ? last.text : ''}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} style={{ marginLeft: spacing.sm }} />
               </Row>
             </Card>
           );
@@ -62,11 +62,11 @@ export default function HostMessagesScreen({ navigation, route }) {
       ) : (
         <View>
           <Row style={[styles.between, { marginBottom: spacing.md }]}>
-            <Row>
+            <Row style={{ flex: 1, paddingRight: spacing.sm }}>
               <Avatar seed={selected.guestName} size={40} />
-              <View style={{ marginLeft: spacing.md }}>
-                <Text style={{ fontWeight: '800', fontSize: 15, color: colors.text }}>{selected.guestName}</Text>
-                <Text style={font.small}>{selected.eventTitle}</Text>
+              <View style={{ marginLeft: spacing.md, flex: 1 }}>
+                <Text style={{ fontWeight: '800', fontSize: 15, color: colors.text }} numberOfLines={1}>{selected.guestName}</Text>
+                <Text style={font.small} numberOfLines={1}>{selected.eventTitle}</Text>
               </View>
             </Row>
             <Button label="Back" variant="ghost" icon="chevron-back" small onPress={() => setSelectedId(null)} />
@@ -85,11 +85,12 @@ export default function HostMessagesScreen({ navigation, route }) {
                       : { backgroundColor: colors.surfaceHover, alignSelf: 'flex-start' },
                   ]}
                 >
-                  <Text style={{ color: isHost ? '#fff' : colors.text, fontSize: 14 }}>{m.text}</Text>
+                  <Text style={{ color: isHost ? '#fff' : colors.text, fontSize: 14, lineHeight: 20 }}>{m.text}</Text>
                   <Text
                     style={{
                       fontSize: 10,
-                      marginTop: 4,
+                      marginTop: spacing.xs,
+                      textAlign: 'right',
                       color: isHost ? 'rgba(255,255,255,0.8)' : colors.textMuted,
                     }}
                   >

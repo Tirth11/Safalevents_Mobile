@@ -66,23 +66,23 @@ export default function HostEventsScreen({ navigation, route }) {
                 </Text>
                 <Badge tone={STATUS_TONE[e.status] || 'gray'} label={e.status} />
               </Row>
-              <Row style={{ marginTop: 6 }}>
+              <Row style={{ marginTop: spacing.xs }}>
                 <Ionicons name="time-outline" size={13} color={colors.textMuted} />
-                <Text style={[font.small, { marginLeft: 4 }]}>
+                <Text style={[font.small, { marginLeft: spacing.xs, flex: 1 }]} numberOfLines={1}>
                   {e.date} • {e.time}
                 </Text>
               </Row>
-              <Row style={{ marginTop: 4 }}>
+              <Row style={{ marginTop: spacing.xs }}>
                 <Ionicons name="location-outline" size={13} color={colors.textMuted} />
-                <Text style={[font.small, { marginLeft: 4, flex: 1 }]} numberOfLines={1}>
+                <Text style={[font.small, { marginLeft: spacing.xs, flex: 1 }]} numberOfLines={1}>
                   {e.location}
                 </Text>
               </Row>
               <Divider style={{ marginVertical: spacing.sm }} />
               <Row style={styles.between}>
-                <Row>
+                <Row style={{ flex: 1, paddingRight: spacing.sm }}>
                   <Ionicons name="people-outline" size={14} color={colors.primary} />
-                  <Text style={[font.small, { marginLeft: 4, color: colors.text, fontWeight: '700' }]}>
+                  <Text style={[font.small, { marginLeft: spacing.xs, color: colors.text, fontWeight: '700' }]} numberOfLines={1}>
                     {count} RSVPs · cap {e.capacity}
                   </Text>
                 </Row>

@@ -32,8 +32,8 @@ function StatMini({ label, value, icon, color }) {
       <View style={[s.iconTile, { backgroundColor: color + '22' }]}>
         <Ionicons name={icon} size={18} color={color} />
       </View>
-      <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 6 }}>{value}</Text>
-      <Text style={font.small}>{label}</Text>
+      <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: spacing.sm }}>{value}</Text>
+      <Text style={font.small} numberOfLines={1}>{label}</Text>
     </View>
   );
 }
@@ -180,6 +180,8 @@ export default function HostGuestsScreen({ navigation }) {
             </Row>
             <TouchableOpacity
               onPress={() => { setSelectedGuest(null); setShowCheckinPanel(false); setCheckinState({}); setHistoryModal(null); }}
+              activeOpacity={0.8}
+              hitSlop={8}
               style={s.closeBtn}
             >
               <Ionicons name="close" size={20} color={colors.text} />
@@ -436,7 +438,8 @@ export default function HostGuestsScreen({ navigation }) {
                     style={[s.actionBtn, action.highlight && { borderColor: colors.primary, backgroundColor: colors.primaryTint }]}
                   >
                     <Ionicons name={action.icon} size={15} color={colors.primary} />
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, marginLeft: 12 }}>{action.label}</Text>
+                    <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: colors.text, marginLeft: spacing.md }} numberOfLines={1}>{action.label}</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ marginLeft: spacing.sm }} />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -508,17 +511,18 @@ export default function HostGuestsScreen({ navigation }) {
                             <Row style={{ flexWrap: 'wrap', gap: 10 }}>
                               {/* Stepper */}
                               <View style={s.stepper}>
-                                <TouchableOpacity onPress={() => setArrivingNow(Math.max(1, arrivingNow - 1))} style={s.stepperBtn}>
+                                <TouchableOpacity onPress={() => setArrivingNow(Math.max(1, arrivingNow - 1))} activeOpacity={0.8} style={s.stepperBtn}>
                                   <Ionicons name="remove" size={14} color={colors.text} />
                                 </TouchableOpacity>
                                 <Text style={{ minWidth: 28, textAlign: 'center', fontWeight: '800', fontSize: 15 }}>{Math.min(arrivingNow, remaining)}</Text>
-                                <TouchableOpacity onPress={() => setArrivingNow(Math.min(remaining, arrivingNow + 1))} style={s.stepperBtn}>
+                                <TouchableOpacity onPress={() => setArrivingNow(Math.min(remaining, arrivingNow + 1))} activeOpacity={0.8} style={s.stepperBtn}>
                                   <Ionicons name="add" size={14} color={colors.text} />
                                 </TouchableOpacity>
                               </View>
                               {/* Check In button */}
                               <TouchableOpacity
                                 onPress={() => { setCheckinState((prev) => ({ ...prev, [idx]: checked + Math.min(arrivingNow, remaining) })); setArrivingNow(1); }}
+                                activeOpacity={0.85}
                                 style={[s.checkInBtn, { flex: 1, minWidth: 120 }]}
                               >
                                 <Ionicons name="checkmark-circle" size={14} color="#fff" />
@@ -528,6 +532,7 @@ export default function HostGuestsScreen({ navigation }) {
                               {remaining > 1 && (
                                 <TouchableOpacity
                                   onPress={() => setCheckinState((prev) => ({ ...prev, [idx]: total }))}
+                                  activeOpacity={0.85}
                                   style={s.allBtn}
                                 >
                                   <Text style={{ fontWeight: '700', fontSize: 12, color: colors.text }}>All {remaining}</Text>
@@ -570,7 +575,7 @@ export default function HostGuestsScreen({ navigation }) {
       <View style={{ marginTop: spacing.xl }}>
         <View style={[s.between, { marginBottom: spacing.md }]}>
           <Text style={font.h3}>Full RSVP History</Text>
-          <TouchableOpacity onPress={() => setHistoryModal(null)}>
+          <TouchableOpacity onPress={() => setHistoryModal(null)} activeOpacity={0.8} hitSlop={8}>
             <Ionicons name="close-circle" size={22} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
@@ -614,7 +619,7 @@ export default function HostGuestsScreen({ navigation }) {
       <View style={{ marginTop: spacing.xl }}>
         <View style={[s.between, { marginBottom: spacing.md }]}>
           <Text style={font.h3}>Check-In History</Text>
-          <TouchableOpacity onPress={() => setHistoryModal(null)}>
+          <TouchableOpacity onPress={() => setHistoryModal(null)} activeOpacity={0.8} hitSlop={8}>
             <Ionicons name="close-circle" size={22} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
@@ -694,7 +699,7 @@ export default function HostGuestsScreen({ navigation }) {
           style={s.searchInput}
         />
         {searchTerm.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchTerm('')}>
+          <TouchableOpacity onPress={() => setSearchTerm('')} activeOpacity={0.8} hitSlop={8}>
             <Ionicons name="close-circle" size={18} color={colors.textMuted} />
           </TouchableOpacity>
         )}
@@ -778,7 +783,7 @@ export default function HostGuestsScreen({ navigation }) {
           {filteredGuests.length} of {MOCK_GUESTS.length} guests
         </Text>
         {hasActiveFilters && (
-          <TouchableOpacity onPress={resetFilters} style={{ marginLeft: spacing.sm }}>
+          <TouchableOpacity onPress={resetFilters} activeOpacity={0.8} hitSlop={8} style={{ marginLeft: spacing.sm }}>
             <Badge tone="primary" label="Reset Filters" />
           </TouchableOpacity>
         )}
@@ -1035,7 +1040,8 @@ const s = StyleSheet.create({
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: spacing.md,
+    minHeight: 48,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.border,
@@ -1060,8 +1066,8 @@ const s = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   stepperBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
   },
   checkInBtn: {
     flexDirection: 'row',

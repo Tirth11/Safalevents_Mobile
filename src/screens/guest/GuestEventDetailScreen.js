@@ -29,6 +29,7 @@ export default function GuestEventDetailScreen({ navigation, route }) {
         <View style={styles.coverOverlay} />
         <TouchableOpacity
           activeOpacity={0.8}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
         >
@@ -39,7 +40,7 @@ export default function GuestEventDetailScreen({ navigation, route }) {
             <Badge tone="primary" label={event.eventType} />
             {event.ageRestricted ? <Badge tone="red" label={`🔒 ${event.minimumAge}+ Event`} /> : null}
           </Row>
-          <Text style={[font.h1, { color: colors.white, marginTop: 6 }]}>{event.title}</Text>
+          <Text style={[font.h1, { color: colors.white, marginTop: spacing.sm }]} numberOfLines={2}>{event.title}</Text>
         </View>
       </View>
 
@@ -47,25 +48,25 @@ export default function GuestEventDetailScreen({ navigation, route }) {
         <Card style={{ marginBottom: spacing.lg }}>
           <Row style={{ marginBottom: spacing.sm }}>
             <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-            <Text style={[font.body, { marginLeft: spacing.md }]}>
+            <Text style={[font.body, { marginLeft: spacing.sm }]}>
               {event.date} • {event.time}
             </Text>
           </Row>
           <Row style={{ marginBottom: spacing.sm }}>
             <Ionicons name="location-outline" size={18} color={colors.primary} />
-            <Text style={[font.body, { marginLeft: spacing.md, flex: 1 }]}>{event.location}</Text>
+            <Text style={[font.body, { marginLeft: spacing.sm, flex: 1 }]} numberOfLines={2}>{event.location}</Text>
           </Row>
           <Row style={{ marginBottom: spacing.sm }}>
             <Ionicons name="people-outline" size={18} color={colors.primary} />
-            <Text style={[font.body, { marginLeft: spacing.md }]}>
+            <Text style={[font.body, { marginLeft: spacing.sm }]}>
               Capacity {event.capacity}
             </Text>
           </Row>
           <Divider />
           <Row>
             <Avatar seed={event.hostName} size={36} />
-            <View style={{ marginLeft: spacing.md }}>
-              <Text style={[font.body, { fontWeight: '700' }]}>{event.hostName}</Text>
+            <View style={{ marginLeft: spacing.sm }}>
+              <Text style={[font.body, { fontWeight: '700' }]} numberOfLines={1}>{event.hostName}</Text>
               <Text style={font.small}>Host</Text>
             </View>
           </Row>
@@ -94,7 +95,11 @@ export default function GuestEventDetailScreen({ navigation, route }) {
           <>
             <SectionTitle
               right={canUploadPhotos ? (
-                <TouchableOpacity onPress={() => uploadPhoto(event.id, { uploader: 'Alice Vance', role: 'guest' })}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  onPress={() => uploadPhoto(event.id, { uploader: 'Alice Vance', role: 'guest' })}
+                >
                   <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>+ Add photos</Text>
                 </TouchableOpacity>
               ) : null}
@@ -114,11 +119,11 @@ export default function GuestEventDetailScreen({ navigation, route }) {
                 </View>
               )}
               {event.photoUploadPermission === 'guests' && event.requirePhotoApproval ? (
-                <Text style={[font.tiny, { marginTop: 8 }]}>Guest uploads are reviewed by the host before they appear.</Text>
+                <Text style={[font.tiny, { marginTop: spacing.sm, lineHeight: 16 }]}>Guest uploads are reviewed by the host before they appear.</Text>
               ) : event.photoUploadPermission !== 'guests' ? (
-                <Text style={[font.tiny, { marginTop: 8 }]}>Only the host can add photos to this album.</Text>
+                <Text style={[font.tiny, { marginTop: spacing.sm, lineHeight: 16 }]}>Only the host can add photos to this album.</Text>
               ) : !auth.isAuthed ? (
-                <Text style={[font.tiny, { marginTop: 8 }]}>RSVP to add your own photos.</Text>
+                <Text style={[font.tiny, { marginTop: spacing.sm, lineHeight: 16 }]}>RSVP to add your own photos.</Text>
               ) : null}
             </Card>
           </>
@@ -128,7 +133,7 @@ export default function GuestEventDetailScreen({ navigation, route }) {
           <Text style={font.h2}>
             {event.approvalRequired ? 'Request your spot' : 'Reserve your spot'}
           </Text>
-          <Text style={[font.small, { marginTop: 4 }]}>
+          <Text style={[font.small, { marginTop: spacing.xs, lineHeight: 17 }]}>
             {event.approvalRequired
               ? 'This event requires organizer approval.'
               : 'RSVP now — capacity is limited.'}
@@ -137,7 +142,7 @@ export default function GuestEventDetailScreen({ navigation, route }) {
           {event.ageRestricted ? (
             <Row style={{ marginTop: spacing.sm }}>
               <Ionicons name="lock-closed" size={16} color={colors.red} />
-              <Text style={[font.small, { marginLeft: 6, color: colors.red, fontWeight: '700' }]}>
+              <Text style={[font.small, { marginLeft: spacing.xs, color: colors.red, fontWeight: '700', flex: 1 }]}>
                 {event.minimumAge}+ only · age verified at RSVP
               </Text>
             </Row>
@@ -170,7 +175,7 @@ export default function GuestEventDetailScreen({ navigation, route }) {
           ) : null}
 
           {!auth.isAuthed ? (
-            <Text style={[font.tiny, { textAlign: 'center', marginTop: 10 }]}>
+            <Text style={[font.tiny, { textAlign: 'center', marginTop: spacing.sm, lineHeight: 16 }]}>
               You're browsing as a guest — we'll ask you to sign in when you RSVP.
             </Text>
           ) : null}

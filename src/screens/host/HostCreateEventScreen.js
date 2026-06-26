@@ -77,10 +77,10 @@ export default function HostCreateEventScreen({ navigation }) {
       {step === 0 && (
         <Card style={{ marginBottom: spacing.lg }}>
           <TextField label="Event title" value={form.title} onChangeText={(t) => set('title', t)} placeholder="e.g. Summer Rooftop Mixer" />
-          <Text style={[font.small, { fontWeight: '700', marginBottom: 6, color: colors.text }]}>Event type</Text>
+          <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>Event type</Text>
           <Chips options={EVENT_TYPES} value={form.eventType} onChange={(v) => set('eventType', v)} />
           <View style={{ height: spacing.md }} />
-          <Row style={{ gap: 10 }}>
+          <Row style={{ gap: spacing.md }}>
             <TextField half label="Date" value={form.date} onChangeText={(t) => set('date', t)} placeholder="YYYY-MM-DD" />
             <TextField half label="Time" value={form.time} onChangeText={(t) => set('time', t)} placeholder="19:00" />
           </Row>
@@ -103,8 +103,8 @@ export default function HostCreateEventScreen({ navigation }) {
                       <View style={{ flex: 1, backgroundColor: t.colors[0] }} />
                       <View style={{ flex: 1, backgroundColor: t.colors[1] }} />
                     </View>
-                    <Row style={{ justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 6 }}>
-                      <Text style={{ fontSize: 11.5, fontWeight: '700', color: colors.text }}>{t.name}</Text>
+                    <Row style={{ justifyContent: 'space-between', paddingHorizontal: spacing.sm, paddingVertical: spacing.sm }}>
+                      <Text style={{ fontSize: 11.5, fontWeight: '700', color: colors.text, flex: 1, paddingRight: spacing.xs }} numberOfLines={1}>{t.name}</Text>
                       {on ? <Ionicons name="checkmark-circle" size={15} color={colors.primary} /> : null}
                     </Row>
                   </TouchableOpacity>
@@ -115,7 +115,7 @@ export default function HostCreateEventScreen({ navigation }) {
 
           <SectionTitle>Cover image</SectionTitle>
           <Card style={{ marginBottom: spacing.lg }}>
-            <Text style={[font.small, { marginBottom: spacing.md }]}>Pick a cover from the gallery (file picker unavailable in the prototype).</Text>
+            <Text style={[font.small, { marginBottom: spacing.md, lineHeight: 18 }]}>Pick a cover from the gallery (file picker unavailable in the prototype).</Text>
             <View style={styles.coverWrap}>
               {COVER_PRESETS.map((url) => {
                 const on = form.cover === url;
@@ -138,16 +138,16 @@ export default function HostCreateEventScreen({ navigation }) {
         <View>
           <SectionTitle>Visibility</SectionTitle>
           <Card style={{ marginBottom: spacing.lg }}>
-            <Text style={[font.small, { fontWeight: '700', marginBottom: 6, color: colors.text }]}>Privacy</Text>
+            <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>Privacy</Text>
             <Chips options={['Public', 'Private', 'Unlisted']} value={form.privacy} onChange={(v) => set('privacy', v)} />
             <View style={{ height: spacing.md }} />
-            <Text style={[font.small, { fontWeight: '700', marginBottom: 6, color: colors.text }]}>RSVP status</Text>
+            <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>RSVP status</Text>
             <Chips options={['Open', 'Closed']} value={form.rsvpStatus} onChange={(v) => set('rsvpStatus', v)} />
           </Card>
 
           <SectionTitle>Capacity</SectionTitle>
           <Card style={{ marginBottom: spacing.lg }}>
-            <Row style={{ gap: 10 }}>
+            <Row style={{ gap: spacing.md }}>
               <TextField half label="Capacity" value={form.capacity} onChangeText={(t) => set('capacity', t)} placeholder="100" keyboardType="numeric" />
               <TextField half label="Max guests / RSVP" value={form.maxGuestsPerRsvp} onChangeText={(t) => set('maxGuestsPerRsvp', t)} placeholder="1" keyboardType="numeric" />
             </Row>
@@ -192,7 +192,7 @@ export default function HostCreateEventScreen({ navigation }) {
             <Toggle label="Guest photo uploads" desc="Create a shared album for the event" value={form.enablePhotoAlbum} onValueChange={(v) => set('enablePhotoAlbum', v)} icon="images-outline" />
             {form.enablePhotoAlbum ? (
               <>
-                <Text style={[font.small, { fontWeight: '700', marginTop: spacing.sm, marginBottom: 6, color: colors.text }]}>Who can upload?</Text>
+                <Text style={[font.small, { fontWeight: '700', marginTop: spacing.sm, marginBottom: spacing.sm, color: colors.text }]}>Who can upload?</Text>
                 <Chips
                   options={['Host only', 'RSVPed guests']}
                   value={form.photoUploadPermission === 'guests' ? 'RSVPed guests' : 'Host only'}
@@ -222,7 +222,7 @@ export default function HostCreateEventScreen({ navigation }) {
                 <Divider />
                 <TextField label="Bank name" value={form.bankName} onChangeText={(t) => set('bankName', t)} placeholder="Chase Bank" />
                 <TextField label="Account holder name" value={form.holderName} onChangeText={(t) => set('holderName', t)} placeholder="Alex Rivera" />
-                <Row style={{ gap: 10 }}>
+                <Row style={{ gap: spacing.md }}>
                   <TextField half label="Routing number" value={form.routing} onChangeText={(t) => set('routing', t)} placeholder="021000021" keyboardType="numeric" />
                   <TextField half label="Account number" value={form.account} onChangeText={(t) => set('account', t)} placeholder="••••1234" keyboardType="numeric" />
                 </Row>
@@ -237,7 +237,7 @@ export default function HostCreateEventScreen({ navigation }) {
                 <View style={{ flex: 1 }}>
                   <TextField label={`Question ${i + 1}`} value={q} onChangeText={(t) => setQuestion(i, t)} placeholder="e.g. Any food allergies?" />
                 </View>
-                <TouchableOpacity onPress={() => removeQuestion(i)} style={{ marginTop: 26, marginLeft: 8 }} hitSlop={8}>
+                <TouchableOpacity onPress={() => removeQuestion(i)} activeOpacity={0.8} style={{ marginTop: 26, marginLeft: spacing.sm, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }} hitSlop={8}>
                   <Ionicons name="close-circle" size={20} color={colors.textMuted} />
                 </TouchableOpacity>
               </Row>
@@ -248,7 +248,7 @@ export default function HostCreateEventScreen({ navigation }) {
       )}
 
       {/* ── Wizard nav ── */}
-      <Row style={{ gap: 10, marginBottom: spacing.md }}>
+      <Row style={{ gap: spacing.md, marginBottom: spacing.md, alignItems: 'stretch' }}>
         {step > 0 ? (
           <View style={{ flex: 1 }}>
             <Button label="Back" variant="outline" icon="chevron-back" onPress={back} />
@@ -272,10 +272,10 @@ export default function HostCreateEventScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  swatchWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  swatchWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   swatch: { width: '47%', borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', backgroundColor: colors.surface },
   swatchBars: { height: 42, flexDirection: 'row' },
-  coverWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  coverWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   coverThumbWrap: { width: '47%', borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
   coverThumb: { width: '100%', height: 80, backgroundColor: colors.surfaceHover },
   coverCheck: { position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },

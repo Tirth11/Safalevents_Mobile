@@ -41,16 +41,16 @@ export default function GuestChatScreen({ navigation, route }) {
                   : { backgroundColor: colors.surfaceHover, borderTopLeftRadius: 4 },
               ]}
             >
-              <Text style={{ color: isGuest ? colors.white : colors.text, fontSize: 14 }}>
+              <Text style={{ color: isGuest ? colors.white : colors.text, fontSize: 14, lineHeight: 20 }}>
                 {m.text}
               </Text>
             </View>
-            <Text style={[font.tiny, { marginTop: 4, marginHorizontal: 4 }]}>{m.time}</Text>
+            <Text style={[font.tiny, { marginTop: spacing.xs, marginHorizontal: spacing.xs }]}>{m.time}</Text>
           </View>
         );
       })}
 
-      <Row style={{ marginTop: spacing.sm }}>
+      <Row style={{ marginTop: spacing.sm, alignItems: 'flex-start' }}>
         <View style={{ flex: 1, marginRight: spacing.sm }}>
           <Field placeholder="Type a message…" />
         </View>
@@ -59,7 +59,6 @@ export default function GuestChatScreen({ navigation, route }) {
           variant="primary"
           icon="send"
           small
-          style={{ marginBottom: spacing.md }}
           onPress={() => Alert.alert('Send', 'Prototype — not wired')}
         />
       </Row>

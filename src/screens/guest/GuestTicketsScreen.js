@@ -68,23 +68,23 @@ export default function GuestTicketsScreen({ navigation, route }) {
             <Row style={{ alignItems: 'stretch' }}>
               <Image source={{ uri: event.cover }} style={styles.ticketCover} />
               <View style={{ flex: 1, padding: spacing.md }}>
-                <Text style={[font.h3, { marginBottom: 4 }]} numberOfLines={2}>
+                <Text style={[font.h3, { marginBottom: spacing.xs }]} numberOfLines={2}>
                   {event.title}
                 </Text>
                 <Row>
                   <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
-                  <Text style={[font.small, { marginLeft: 4, flex: 1 }]} numberOfLines={1}>
+                  <Text style={[font.small, { marginLeft: spacing.xs, flex: 1 }]} numberOfLines={1}>
                     {event.date} • {event.location}
                   </Text>
                 </Row>
-                <Row style={{ marginTop: 8 }}>
+                <Row style={{ marginTop: spacing.sm }}>
                   <Avatar seed={event.hostName} size={22} />
-                  <Text style={[font.small, { marginLeft: 6, flex: 1 }]} numberOfLines={1}>
+                  <Text style={[font.small, { marginLeft: spacing.sm, flex: 1 }]} numberOfLines={1}>
                     Hosted by {event.hostName}
                   </Text>
                 </Row>
-                <Row style={{ marginTop: 8, flexWrap: 'wrap' }}>
-                  <View style={{ alignSelf: 'flex-start', marginRight: 6 }}>
+                <Row style={{ marginTop: spacing.sm, flexWrap: 'wrap' }}>
+                  <View style={{ alignSelf: 'flex-start', marginRight: spacing.sm }}>
                     <ApprovalBadge rsvp={rsvp} />
                   </View>
                   {checkin ? (
@@ -173,12 +173,12 @@ export default function GuestTicketsScreen({ navigation, route }) {
                       <Text style={[font.body, { fontWeight: '700' }]} numberOfLines={1}>
                         {h.event}
                       </Text>
-                      <Text style={font.small}>
+                      <Text style={[font.small, { marginTop: spacing.xs }]} numberOfLines={1}>
                         {h.date} • Checked in {h.actual}/{h.rsvpCount}
                       </Text>
                     </View>
                   </Row>
-                  <Badge tone={status.tone} label={status.label} />
+                  <Badge tone={status.tone} label={status.label} style={{ marginLeft: spacing.sm }} />
                 </Row>
               </Card>
             );
@@ -201,16 +201,16 @@ export { GuestTicketsScreen };
 
 const styles = StyleSheet.create({
   between: { justifyContent: 'space-between' },
-  ticketCard: { marginBottom: spacing.md, overflow: 'hidden' },
+  ticketCard: { marginBottom: spacing.lg, overflow: 'hidden' },
   ticketCover: { width: 96, alignSelf: 'stretch', minHeight: 124, backgroundColor: colors.surfaceHover },
   checkinBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderRadius: radius.sm || 6,
     alignSelf: 'flex-start',
   },
   checkinText: { fontSize: 11, fontWeight: '700' },
-  statTile: { flex: 1, alignItems: 'center', paddingHorizontal: 4 },
+  statTile: { flex: 1, alignItems: 'center', paddingHorizontal: spacing.xs },
   histIcon: {
     width: 38,
     height: 38,

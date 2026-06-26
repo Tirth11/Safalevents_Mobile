@@ -210,7 +210,7 @@ export default function GuestTicketPassScreen({ navigation, route }) {
           <Divider />
 
           <Text style={[font.small, { alignSelf: 'flex-start' }]}>Guest</Text>
-          <Text style={[font.body, { fontWeight: '700', alignSelf: 'flex-start' }]}>
+          <Text style={[font.body, { fontWeight: '700', alignSelf: 'flex-start' }]} numberOfLines={1}>
             {GUEST.name}
           </Text>
 
@@ -232,7 +232,7 @@ export default function GuestTicketPassScreen({ navigation, route }) {
                     </Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[font.body, { fontWeight: '600' }]}>
+                    <Text style={[font.body, { fontWeight: '600' }]} numberOfLines={1}>
                       {guest.firstName} {guest.lastName}
                     </Text>
                     <Text style={font.small}>Additional Guest</Text>
@@ -244,31 +244,31 @@ export default function GuestTicketPassScreen({ navigation, route }) {
           )}
 
           <Text style={[font.small, { alignSelf: 'flex-start', marginTop: spacing.sm }]}>Event</Text>
-          <Text style={[font.body, { fontWeight: '700', alignSelf: 'flex-start' }]}>
+          <Text style={[font.body, { fontWeight: '700', alignSelf: 'stretch' }]} numberOfLines={2}>
             {event.title}
           </Text>
 
           <Row style={{ marginTop: spacing.sm, alignSelf: 'flex-start' }}>
             <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
-            <Text style={[font.small, { marginLeft: 4 }]}>
+            <Text style={[font.small, { marginLeft: spacing.xs }]}>
               {event.date} • {event.time}
             </Text>
           </Row>
-          <Row style={{ marginTop: 4, alignSelf: 'flex-start' }}>
+          <Row style={{ marginTop: spacing.xs, alignSelf: 'stretch' }}>
             <Ionicons name="location-outline" size={14} color={colors.textMuted} />
-            <Text style={[font.small, { marginLeft: 4, flex: 1 }]}>{event.location}</Text>
+            <Text style={[font.small, { marginLeft: spacing.xs, flex: 1 }]} numberOfLines={2}>{event.location}</Text>
           </Row>
 
           <Divider />
 
           <Text style={[font.small, { alignSelf: 'flex-start' }]}>Check-In Status</Text>
-          <Row style={{ alignSelf: 'flex-start', marginTop: 4, alignItems: 'center' }}>
+          <Row style={{ alignSelf: 'flex-start', marginTop: spacing.xs, alignItems: 'center' }}>
             <Ionicons
               name={myRsvp?.checkedIn ? "checkmark-circle" : "ellipse-outline"}
               size={18}
               color={myRsvp?.checkedIn ? colors.accent : colors.textMuted}
             />
-            <Text style={[font.body, { fontWeight: '700', color: myRsvp?.checkedIn ? colors.accent : colors.textMuted, marginLeft: 6 }]}>
+            <Text style={[font.body, { fontWeight: '700', color: myRsvp?.checkedIn ? colors.accent : colors.textMuted, marginLeft: spacing.xs }]}>
               {myRsvp?.checkedIn ? 'Checked In' : 'Not Checked In Yet'}
             </Text>
           </Row>
@@ -279,7 +279,7 @@ export default function GuestTicketPassScreen({ navigation, route }) {
               
               {/* Guest Count Edit */}
               <View style={{ marginBottom: spacing.md }}>
-                <Text style={[font.small, { color: colors.textMuted, marginBottom: 4 }]}>Number of Guests</Text>
+                <Text style={[font.small, { color: colors.textMuted, marginBottom: spacing.xs }]}>Number of Guests</Text>
                 <TextInput
                   keyboardType="numeric"
                   value={String(myRsvp.guestCount || 1)}
@@ -306,7 +306,7 @@ export default function GuestTicketPassScreen({ navigation, route }) {
                 const currentAns = myRsvp.answers?.[q] || '';
                 return (
                   <View key={q} style={{ marginBottom: spacing.md }}>
-                    <Text style={[font.small, { color: colors.textMuted, marginBottom: 4 }]} numberOfLines={1}>{q}</Text>
+                    <Text style={[font.small, { color: colors.textMuted, marginBottom: spacing.xs }]} numberOfLines={1}>{q}</Text>
                     <TextInput
                       value={currentAns}
                       editable={!!event.allowSelfEdit}
@@ -334,7 +334,7 @@ export default function GuestTicketPassScreen({ navigation, route }) {
 
           {myRsvp && (
             <View style={{ alignSelf: 'stretch', marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border }}>
-              <Text style={[font.small, { marginBottom: 8 }]}>Change Attendance RSVP</Text>
+              <Text style={[font.small, { marginBottom: spacing.sm }]}>Change Attendance RSVP</Text>
               <Row style={{ gap: 8 }}>
                 {[
                   { key: 'going', label: 'Yes (Going)', color: '#16a34a', bg: '#16a34a12' },
@@ -352,7 +352,9 @@ export default function GuestTicketPassScreen({ navigation, route }) {
                       }}
                       style={{
                         flex: 1,
-                        paddingVertical: 9,
+                        paddingVertical: spacing.sm,
+                        paddingHorizontal: spacing.xs,
+                        minHeight: 44,
                         borderRadius: radius.md,
                         borderWidth: 1,
                         borderColor: isActive ? opt.color : colors.border,
@@ -361,7 +363,7 @@ export default function GuestTicketPassScreen({ navigation, route }) {
                         justifyContent: 'center',
                       }}
                     >
-                      <Text style={{ color: isActive ? opt.color : colors.textMuted, fontWeight: '700', fontSize: 12 }}>
+                      <Text numberOfLines={1} style={{ color: isActive ? opt.color : colors.textMuted, fontWeight: '700', fontSize: 12 }}>
                         {opt.label}
                       </Text>
                     </TouchableOpacity>

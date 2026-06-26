@@ -41,14 +41,14 @@ export default function HostNotificationsScreen({ navigation, route }) {
                   <Ionicons name={meta.icon} size={20} color={meta.color} />
                 </View>
                 <View style={{ flex: 1, marginLeft: spacing.md }}>
-                  <Row style={styles.between}>
-                    <Text style={{ fontWeight: '800', fontSize: 14, color: colors.text, flex: 1, paddingRight: 8 }}>
+                  <Row style={[styles.between, { alignItems: 'flex-start' }]}>
+                    <Text style={{ fontWeight: '800', fontSize: 14, color: colors.text, flex: 1, paddingRight: spacing.sm }} numberOfLines={2}>
                       {n.title}
                     </Text>
                     {!n.read ? <View style={styles.unreadDot} /> : null}
                   </Row>
-                  <Text style={[font.small, { color: colors.text, marginTop: 2 }]}>{n.message}</Text>
-                  <Text style={[font.tiny, { marginTop: 4 }]}>{n.time}</Text>
+                  <Text style={[font.small, { color: colors.text, marginTop: spacing.xs, lineHeight: 19 }]}>{n.message}</Text>
+                  <Text style={[font.tiny, { marginTop: spacing.xs }]}>{n.time}</Text>
                 </View>
               </Row>
             </Card>

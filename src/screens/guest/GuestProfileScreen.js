@@ -36,9 +36,9 @@ export default function GuestProfileScreen({ navigation, route }) {
         <Row>
           <Avatar seed={GUEST.avatarSeed} size={64} />
           <View style={{ flex: 1, paddingHorizontal: spacing.md }}>
-            <Text style={font.h2}>{GUEST.name}</Text>
-            <Text style={font.small}>{GUEST.email}</Text>
-            <View style={{ marginTop: 6, alignSelf: 'flex-start' }}>
+            <Text style={font.h2} numberOfLines={1}>{GUEST.name}</Text>
+            <Text style={font.small} numberOfLines={1}>{GUEST.email}</Text>
+            <View style={{ marginTop: spacing.sm, alignSelf: 'flex-start' }}>
               <Badge tone="green" label="Guest" />
             </View>
           </View>
@@ -84,7 +84,7 @@ export default function GuestProfileScreen({ navigation, route }) {
         {MENU.map((item, idx) => (
           <View key={item.key}>
             <TouchableOpacity
-              activeOpacity={0.7}
+              activeOpacity={0.8}
               onPress={() => {
                 if (item.key === 'help') Alert.alert('Help & Support', 'Email support@safalevent.com or visit our Help Center.');
                 else if (item.key === 'notify') Alert.alert('Notification preferences', 'Adjust your reminders in the Settings section above.');
@@ -128,5 +128,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
+    minHeight: 44,
   },
 });

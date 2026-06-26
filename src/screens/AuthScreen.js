@@ -22,7 +22,7 @@ function Segment({ options, value, onChange }) {
   return (
     <View style={styles.segment}>
       {options.map((o) => (
-        <TouchableOpacity key={o.key} onPress={() => onChange(o.key)} style={[styles.segBtn, value === o.key && styles.segBtnActive]}>
+        <TouchableOpacity key={o.key} onPress={() => onChange(o.key)} activeOpacity={0.8} style={[styles.segBtn, value === o.key && styles.segBtnActive]}>
           <Text style={{ fontWeight: '700', fontSize: 13, color: value === o.key ? '#fff' : colors.textMuted }}>{o.label}</Text>
         </TouchableOpacity>
       ))}
@@ -32,7 +32,7 @@ function Segment({ options, value, onChange }) {
 
 function Field({ label, half, ...props }) {
   return (
-    <View style={{ marginBottom: 12, flex: half ? 1 : undefined }}>
+    <View style={{ marginBottom: spacing.md, flex: half ? 1 : undefined }}>
       <Text style={styles.label}>{label}</Text>
       <TextInput placeholderTextColor={colors.textMuted} style={styles.input} {...props} />
     </View>
@@ -181,7 +181,7 @@ export default function AuthScreen({ navigation, route }) {
       <ScrollView contentContainerStyle={{ padding: spacing.lg }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <BrandLockup size={34} />
-          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={10}>
+          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -spacing.sm }}>
             <Ionicons name="close" size={26} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
@@ -189,19 +189,19 @@ export default function AuthScreen({ navigation, route }) {
         {error ? (
           <View style={styles.errorBox}>
             <Ionicons name="alert-circle" size={15} color={colors.red} />
-            <Text style={{ color: colors.red, fontSize: 12.5, flex: 1 }}>{error}</Text>
+            <Text style={{ color: colors.red, fontSize: 12.5, flex: 1, lineHeight: 17 }}>{error}</Text>
           </View>
         ) : null}
 
         {staffMode ? (
           <View>
             <Text style={font.h2}>Login as Staff</Text>
-            <Text style={[font.small, { marginBottom: spacing.lg }]}>Use the Invite ID your host shared with you.</Text>
+            <Text style={[font.small, { marginBottom: spacing.lg, lineHeight: 19 }]}>Use the Invite ID your host shared with you.</Text>
             <Field label="Invite ID" value={staffForm.inviteId} autoCapitalize="characters" onChangeText={(t) => setStaffForm({ ...staffForm, inviteId: t })} placeholder="INV-XXXXXX" />
             <Field label="Email or phone" value={staffForm.contact} autoCapitalize="none" onChangeText={(t) => setStaffForm({ ...staffForm, contact: t })} placeholder="you@email.com" />
             <Text style={styles.hint}>Demo: INV-GATE-1 / gabe@safalevent.com (QR Scanner) · INV-SAM-2026 / sam@safalevent.com (Coordinator)</Text>
-            <Button label="Sign in as Staff" icon="lock-closed" onPress={doStaffLogin} style={{ marginTop: 14 }} />
-            <TouchableOpacity onPress={() => { setStaffMode(false); setError(''); }} style={styles.backLink}>
+            <Button label="Sign in as Staff" icon="lock-closed" onPress={doStaffLogin} style={{ marginTop: spacing.md }} />
+            <TouchableOpacity onPress={() => { setStaffMode(false); setError(''); }} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.backLink}>
               <Ionicons name="chevron-back" size={15} color={colors.textMuted} />
               <Text style={{ color: colors.textMuted, fontWeight: '600' }}>Back to login</Text>
             </TouchableOpacity>
@@ -211,7 +211,7 @@ export default function AuthScreen({ navigation, route }) {
           <View style={{ alignItems: 'center', paddingTop: spacing.lg }}>
             <View style={styles.successIcon}><Ionicons name="hourglass-outline" size={34} color={colors.primary} /></View>
             <Text style={[font.h2, { textAlign: 'center' }]}>Account created</Text>
-            <Text style={[font.small, { textAlign: 'center', marginTop: 6, marginBottom: spacing.lg }]}>
+            <Text style={[font.small, { textAlign: 'center', marginTop: spacing.xs, marginBottom: spacing.lg, lineHeight: 19 }]}>
               Next, head to your account to upload your organization's verification documents. A Safal Events admin reviews them before you can host.
             </Text>
             <Button
@@ -225,8 +225,8 @@ export default function AuthScreen({ navigation, route }) {
               }}
               style={{ width: '100%' }}
             />
-            <Button label="Browse events" variant="outline" icon="compass" onPress={() => navigation.goBack()} style={{ width: '100%', marginTop: 10 }} />
-            <TouchableOpacity onPress={() => { setStep('form'); setMode('login'); setError(''); }} style={styles.backLink}>
+            <Button label="Browse events" variant="outline" icon="compass" onPress={() => navigation.goBack()} style={{ width: '100%', marginTop: spacing.sm }} />
+            <TouchableOpacity onPress={() => { setStep('form'); setMode('login'); setError(''); }} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.backLink}>
               <Text style={{ color: colors.textMuted, fontWeight: '600' }}>Back to login</Text>
             </TouchableOpacity>
           </View>
@@ -238,11 +238,11 @@ export default function AuthScreen({ navigation, route }) {
             <Field label="Verification code" value={otp} keyboardType="number-pad" maxLength={6} onChangeText={(t) => setOtp(t.replace(/\D/g, ''))} placeholder="123456" />
             <Button label={mode === 'register' ? 'Create account' : 'Log in'} icon="checkmark" onPress={verify} />
             <View style={styles.otpFooter}>
-              <TouchableOpacity onPress={() => { setStep('form'); setError(''); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <TouchableOpacity onPress={() => { setStep('form'); setError(''); }} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 44 }}>
                 <Ionicons name="chevron-back" size={15} color={colors.textMuted} />
                 <Text style={{ color: colors.textMuted, fontWeight: '600' }}>Back</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={resendCode} disabled={resendIn > 0} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <TouchableOpacity onPress={resendCode} disabled={resendIn > 0} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 44, opacity: resendIn > 0 ? 0.5 : 1 }}>
                 <Ionicons name="time-outline" size={15} color={resendIn > 0 ? colors.textMuted : colors.primary} />
                 <Text style={{ color: resendIn > 0 ? colors.textMuted : colors.primary, fontWeight: '700' }}>{resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code'}</Text>
               </TouchableOpacity>
@@ -251,7 +251,7 @@ export default function AuthScreen({ navigation, route }) {
         ) : (
           <View>
             <Text style={[font.h2, { marginBottom: 4 }]}>{mode === 'register' ? 'Create your account' : 'Welcome back'}</Text>
-            <Text style={[font.small, { marginBottom: spacing.md }]}>{mode === 'register' ? 'Pick how you want to use SafalEvents.' : 'Log in with your email or phone — we’ll send a code.'}</Text>
+            <Text style={[font.small, { marginBottom: spacing.md, lineHeight: 19 }]}>{mode === 'register' ? 'Pick how you want to use SafalEvents.' : 'Log in with your email or phone — we’ll send a code.'}</Text>
 
             <Segment options={[{ key: 'register', label: 'Sign up' }, { key: 'login', label: 'Log in' }]} value={mode} onChange={(m) => { setMode(m); setError(''); }} />
 
@@ -295,7 +295,7 @@ export default function AuthScreen({ navigation, route }) {
                 <Text style={styles.label}>Organization type</Text>
                 <View style={styles.chips}>
                   {ORG_TYPES.map((t) => (
-                    <TouchableOpacity key={t} onPress={() => set('orgType', t)} style={[styles.chip, f.orgType === t && styles.chipActive]}>
+                    <TouchableOpacity key={t} onPress={() => set('orgType', t)} activeOpacity={0.8} style={[styles.chip, f.orgType === t && styles.chipActive]}>
                       <Text style={{ color: f.orgType === t ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>{t}</Text>
                     </TouchableOpacity>
                   ))}
@@ -349,13 +349,13 @@ export default function AuthScreen({ navigation, route }) {
               <>
                 <View style={styles.divider}><View style={styles.line} /><Text style={font.tiny}>  or try a demo profile  </Text><View style={styles.line} /></View>
                 {DEMO_PERSONAS.map((p) => (
-                  <TouchableOpacity key={p.key} onPress={() => quickLogin(p)} style={styles.demoBtn} activeOpacity={0.85}>
+                  <TouchableOpacity key={p.key} onPress={() => quickLogin(p)} style={styles.demoBtn} activeOpacity={0.8}>
                     <View style={[styles.demoIcon, { backgroundColor: p.tint }]}><Ionicons name={p.icon} size={18} color={colors.primary} /></View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }}>{p.title}</Text>
-                      <Text style={{ fontSize: 11.5, color: colors.textMuted }}>{p.desc}</Text>
+                      <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }} numberOfLines={1}>{p.title}</Text>
+                      <Text style={{ fontSize: 11.5, color: colors.textMuted, marginTop: 2, lineHeight: 15 }} numberOfLines={1}>{p.desc}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} style={{ marginLeft: spacing.sm }} />
                   </TouchableOpacity>
                 ))}
               </>
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   docNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 12, marginBottom: 12, backgroundColor: colors.surfaceHover },
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
-  demoBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 12, marginBottom: 10, backgroundColor: colors.surface },
+  demoBtn: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, backgroundColor: colors.surface, minHeight: 60 },
   demoIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   successIcon: { width: 68, height: 68, borderRadius: 22, backgroundColor: colors.primaryTint, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
 });

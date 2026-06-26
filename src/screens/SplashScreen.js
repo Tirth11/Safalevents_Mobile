@@ -22,9 +22,9 @@ export default function SplashScreen({ navigation }) {
   }, [auth.ready]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ flex: 1, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
       <BrandLockup size={54} onLight={false} tile align="center" />
-      <Text style={{ color: 'rgba(255,255,255,0.9)', marginTop: 14, fontWeight: '600' }}>Events worth showing up for</Text>
+      <Text style={{ color: 'rgba(255,255,255,0.9)', marginTop: 14, fontWeight: '600', textAlign: 'center', lineHeight: 20 }}>Events worth showing up for</Text>
       <ActivityIndicator color="#fff" style={{ marginTop: 24 }} />
     </View>
   );

@@ -40,10 +40,10 @@ function UsageBar({ label, current, max, color }) {
   const unlimited = max === -1;
   const pct = unlimited ? 12 : Math.min(100, Math.round((current / Math.max(max, 1)) * 100));
   return (
-    <View style={{ marginBottom: 12 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+    <View style={{ marginBottom: spacing.md }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xs }}>
         <Text style={{ fontSize: 12.5, fontWeight: '600', color: colors.textMuted }}>{label}</Text>
-        <Text style={{ fontSize: 12.5, fontWeight: '700', color: colors.text }}>{current} / {unlimited ? '∞' : max}</Text>
+        <Text style={{ fontSize: 12.5, fontWeight: '700', color: colors.text, textAlign: 'right' }}>{current} / {unlimited ? '∞' : max}</Text>
       </View>
       <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: 'hidden' }}>
         <View style={{ height: 6, borderRadius: 3, width: `${pct}%`, backgroundColor: pct >= 90 ? colors.red : pct >= 70 ? colors.amber : color }} />
@@ -125,8 +125,8 @@ function OrgVerificationCard() {
           docs.map((name, i) => (
             <Row key={`${name}-${i}`} style={[styles.docRow]}>
               <Ionicons name="document-text-outline" size={18} color={colors.primary} />
-              <Text style={{ flex: 1, marginLeft: 8, fontSize: 13, color: colors.text }} numberOfLines={1}>{name}</Text>
-              <TouchableOpacity onPress={() => removeDoc(i)} hitSlop={8}>
+              <Text style={{ flex: 1, marginLeft: spacing.sm, fontSize: 13, color: colors.text }} numberOfLines={1}>{name}</Text>
+              <TouchableOpacity onPress={() => removeDoc(i)} activeOpacity={0.8} hitSlop={8} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -spacing.sm }}>
                 <Ionicons name="close-circle" size={18} color={colors.textMuted} />
               </TouchableOpacity>
             </Row>
@@ -188,9 +188,9 @@ export default function HostAccountScreen({ navigation }) {
       <Card style={{ marginBottom: spacing.lg }}>
         <Row>
           <Avatar seed={host.avatarSeed || host.name} size={56} />
-          <View style={{ flex: 1, marginLeft: spacing.md }}>
-            <Text style={font.h2}>{host.name}</Text>
-            <Text style={font.small}>{host.email}</Text>
+          <View style={{ flex: 1, marginLeft: spacing.md, paddingRight: spacing.sm }}>
+            <Text style={font.h2} numberOfLines={1}>{host.name}</Text>
+            <Text style={font.small} numberOfLines={1}>{host.email}</Text>
           </View>
           <Badge tone={org ? 'blue' : 'purple'} label={org ? 'Org Host' : 'Host'} />
         </Row>
@@ -218,11 +218,11 @@ export default function HostAccountScreen({ navigation }) {
         <UsageBar label="Guest Photos" current={hostUsage.photos} max={plan.limits.photos} color={colors.primary} />
 
         {photoPct >= 80 && photoPack ? (
-          <Row style={{ backgroundColor: colors.primaryTint, borderRadius: radius.md, padding: 10, marginBottom: spacing.md }}>
-            <Text style={{ fontSize: 18, marginRight: 8 }}>{photoPack.icon}</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12.5, fontWeight: '700', color: colors.text }}>Photo album {photoPct}% full</Text>
-              <Text style={font.tiny}>{photoPack.name} · ${photoPack.price}</Text>
+          <Row style={{ backgroundColor: colors.primaryTint, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md }}>
+            <Text style={{ fontSize: 18, marginRight: spacing.sm }}>{photoPack.icon}</Text>
+            <View style={{ flex: 1, paddingRight: spacing.sm }}>
+              <Text style={{ fontSize: 12.5, fontWeight: '700', color: colors.text }} numberOfLines={1}>Photo album {photoPct}% full</Text>
+              <Text style={font.tiny} numberOfLines={1}>{photoPack.name} · ${photoPack.price}</Text>
             </View>
             <Button label={`$${photoPack.price}`} small variant="outline" onPress={() => Alert.alert('Photo Pack', 'Prototype — top-up not wired.')} />
           </Row>
@@ -264,11 +264,11 @@ export default function HostAccountScreen({ navigation }) {
             <Text style={[font.tiny, { fontWeight: '700', color: colors.text, marginBottom: 6 }]}>Top-up add-ons</Text>
             {topUps.map((t) => (
               <Row key={t.id} style={[styles.between, styles.planRow]}>
-                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 18, marginRight: 8 }}>{t.icon}</Text>
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingRight: spacing.sm }}>
+                  <Text style={{ fontSize: 18, marginRight: spacing.sm }}>{t.icon}</Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: '700', fontSize: 13, color: colors.text }}>{t.name}</Text>
-                    <Text style={font.tiny}>{t.desc}</Text>
+                    <Text style={{ fontWeight: '700', fontSize: 13, color: colors.text }} numberOfLines={1}>{t.name}</Text>
+                    <Text style={font.tiny} numberOfLines={1}>{t.desc}</Text>
                   </View>
                 </View>
                 <Button label={`$${t.price}`} small variant="outline" onPress={() => Alert.alert('Top-up', `Prototype — buy ${t.name}.`)} />
@@ -286,10 +286,10 @@ export default function HostAccountScreen({ navigation }) {
             {i > 0 ? <Divider style={{ marginVertical: spacing.sm }} /> : null}
             <Row style={styles.between}>
               <View style={{ flex: 1, paddingRight: spacing.sm }}>
-                <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }}>{t.desc}</Text>
-                <Text style={font.tiny}>{t.date} · {t.type}</Text>
+                <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }} numberOfLines={1}>{t.desc}</Text>
+                <Text style={font.tiny} numberOfLines={1}>{t.date} · {t.type}</Text>
               </View>
-              <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text, marginRight: spacing.sm }}>${t.amount.toFixed(2)}</Text>
+              <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text, marginRight: spacing.sm, textAlign: 'right' }}>${t.amount.toFixed(2)}</Text>
               <Badge tone="green" label={t.status} />
             </Row>
           </View>
@@ -346,8 +346,8 @@ export default function HostAccountScreen({ navigation }) {
                   <View style={[styles.iconTile, { backgroundColor: colors.primaryTint }]}>
                     <Ionicons name={m.icon} size={18} color={colors.primary} />
                   </View>
-                  <Text style={{ flex: 1, marginLeft: spacing.md, fontWeight: '700', fontSize: 14, color: colors.text }}>{m.label}</Text>
-                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                  <Text style={{ flex: 1, marginLeft: spacing.md, fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>{m.label}</Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} style={{ marginLeft: spacing.sm }} />
                 </TouchableOpacity>
                 {i < MENU.length - 1 ? <Divider style={{ marginVertical: 0 }} /> : null}
               </View>
@@ -361,18 +361,18 @@ export default function HostAccountScreen({ navigation }) {
       <Card style={{ marginBottom: spacing.lg }}>
         <TouchableOpacity activeOpacity={0.85} style={styles.switchRow} onPress={() => useIndividualHost()}>
           <Avatar seed="Alex Rivera" size={40} />
-          <View style={{ flex: 1, marginLeft: spacing.md }}>
-            <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>Alex Rivera · Individual</Text>
-            <Text style={font.tiny}>Verified host — full experience</Text>
+          <View style={{ flex: 1, marginLeft: spacing.md, paddingRight: spacing.sm }}>
+            <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>Alex Rivera · Individual</Text>
+            <Text style={font.tiny} numberOfLines={1}>Verified host — full experience</Text>
           </View>
           {host.email === 'alex@safalevent.com' ? <Ionicons name="checkmark-circle" size={20} color={colors.accent} /> : <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />}
         </TouchableOpacity>
         <Divider style={{ marginVertical: spacing.sm }} />
         <TouchableOpacity activeOpacity={0.85} style={styles.switchRow} onPress={() => useOrgHost()}>
           <Avatar seed="Safal Foundation" size={40} />
-          <View style={{ flex: 1, marginLeft: spacing.md }}>
-            <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>Safal Foundation · Organization</Text>
-            <Text style={font.tiny}>Unverified — see the verification gate</Text>
+          <View style={{ flex: 1, marginLeft: spacing.md, paddingRight: spacing.sm }}>
+            <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>Safal Foundation · Organization</Text>
+            <Text style={font.tiny} numberOfLines={1}>Unverified — see the verification gate</Text>
           </View>
           {host.email === 'org@safalevent.com' ? <Ionicons name="checkmark-circle" size={20} color={colors.accent} /> : <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />}
         </TouchableOpacity>
@@ -393,13 +393,13 @@ const styles = StyleSheet.create({
   iconTile: { width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   menuRow: { flexDirection: 'row', alignItems: 'center', padding: spacing.lg },
   switchRow: { flexDirection: 'row', alignItems: 'center' },
-  docRow: { backgroundColor: colors.surfaceHover, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
-  noteBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: radius.md, padding: 12 },
+  docRow: { backgroundColor: colors.surfaceHover, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
+  noteBox: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, borderRadius: radius.md, padding: spacing.md },
   planRow: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    padding: 10,
-    marginBottom: 8,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
 });

@@ -47,15 +47,15 @@ export default function StaffGuestsScreen() {
 
     return (
       <View key={r.id} style={styles.row}>
-        <TouchableOpacity activeOpacity={0.7} onPress={() => setSelected(r)}>
+        <TouchableOpacity activeOpacity={0.8} onPress={() => setSelected(r)}>
           <Row>
             <Avatar seed={r.name} size={34} />
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>
+            <View style={{ flex: 1, marginLeft: spacing.md }}>
+              <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>
                 {r.name}{isParty ? ` · party of ${total}` : ''}
               </Text>
-              <Text style={font.tiny}>{r.email}</Text>
-              <Row style={{ marginTop: 4 }}>
+              <Text style={font.tiny} numberOfLines={1}>{r.email}</Text>
+              <Row style={{ marginTop: spacing.xs }}>
                 <ApprovalBadge rsvp={r} />
                 {isConfirmed && (
                   <View style={[styles.statusBadge, { backgroundColor: ci.bg }]}>
@@ -64,23 +64,23 @@ export default function StaffGuestsScreen() {
                 )}
               </Row>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} style={{ marginLeft: spacing.sm }} />
           </Row>
         </TouchableOpacity>
 
         {/* Quick door controls */}
         {canCheckin && isConfirmed && (
-          <Row style={{ marginTop: 8, justifyContent: 'flex-end' }}>
+          <Row style={{ marginTop: spacing.sm, justifyContent: 'flex-end' }}>
             {ci.state === 'full' ? (
               <Row>
                 <Badge tone="green" dot label={`All ${total} in`} />
                 <Text style={styles.undo} onPress={() => resetArrival(r.id)}>Undo</Text>
               </Row>
             ) : (
-              <Row>
-                <Button label="View details" small variant="outline" onPress={() => setSelected(r)} style={{ marginRight: 6 }} />
+              <Row style={{ gap: spacing.sm }}>
+                <Button label="View details" small variant="outline" onPress={() => setSelected(r)} />
                 <Button label="+1" small variant="accent" onPress={() => arrive(1)} />
-                {remaining > 1 && <Button label={`All ${remaining}`} small style={{ marginLeft: 6 }} onPress={() => arrive(remaining)} />}
+                {remaining > 1 && <Button label={`All ${remaining}`} small onPress={() => arrive(remaining)} />}
               </Row>
             )}
           </Row>
@@ -91,9 +91,9 @@ export default function StaffGuestsScreen() {
             {members.map((m, i) => {
               const arrived = i < ci.inCount;
               return (
-                <Row key={i} style={{ marginTop: 4 }}>
+                <Row key={i} style={{ marginTop: spacing.xs }}>
                   <View style={[styles.memberDot, { backgroundColor: arrived ? '#16a34a' : colors.border }]} />
-                  <Text style={[font.tiny, { flex: 1, color: arrived ? colors.text : colors.textMuted }]}>{m}</Text>
+                  <Text style={[font.tiny, { flex: 1, color: arrived ? colors.text : colors.textMuted }]} numberOfLines={1}>{m}</Text>
                   <Text style={[font.tiny, { color: arrived ? '#16a34a' : colors.textMuted, fontWeight: '700' }]}>{arrived ? 'IN' : 'PENDING'}</Text>
                 </Row>
               );
@@ -107,18 +107,18 @@ export default function StaffGuestsScreen() {
   return (
     <Screen>
       <SectionTitle>Guests</SectionTitle>
-      <Text style={[font.small, { marginTop: -6, marginBottom: spacing.md }]}>
+      <Text style={[font.small, { marginTop: -spacing.xs, marginBottom: spacing.md, lineHeight: 18 }]} numberOfLines={2}>
         {event.title} · {canCheckin ? 'Tap a guest for full history & check-in' : 'Tap a guest to view details'}
       </Text>
 
       <Card padded={false} style={{ padding: 6, marginBottom: spacing.lg }}>
-        <Text style={[font.tiny, { fontWeight: '700', color: colors.text, padding: 8 }]}>Confirmed attendees ({confirmed.length})</Text>
+        <Text style={[font.tiny, { fontWeight: '700', color: colors.text, padding: spacing.md }]}>Confirmed attendees ({confirmed.length})</Text>
         {confirmed.length ? confirmed.map(renderRow) : <EmptyState icon="people-outline" title="No confirmed guests" />}
       </Card>
 
       {other.length > 0 && (
         <Card padded={false} style={{ padding: 6 }}>
-          <Text style={[font.tiny, { fontWeight: '700', color: colors.text, padding: 8 }]}>Pending / waitlist / not approved</Text>
+          <Text style={[font.tiny, { fontWeight: '700', color: colors.text, padding: spacing.md }]}>Pending / waitlist / not approved</Text>
           {other.map(renderRow)}
         </Card>
       )}
@@ -129,7 +129,7 @@ export default function StaffGuestsScreen() {
         <Screen scroll={false}>
           <Row style={{ justifyContent: 'space-between', marginBottom: spacing.md }}>
             <Text style={font.h2}>Guest Details</Text>
-            <TouchableOpacity onPress={() => setSelected(null)} hitSlop={10} style={styles.close}>
+            <TouchableOpacity onPress={() => setSelected(null)} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.close}>
               <Ionicons name="close" size={22} color={colors.text} />
             </TouchableOpacity>
           </Row>
@@ -155,10 +155,10 @@ export default function StaffGuestsScreen() {
 }
 
 const styles = StyleSheet.create({
-  row: { padding: 8, borderTopWidth: 1, borderTopColor: colors.border },
-  statusBadge: { marginLeft: 6, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
+  row: { padding: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
+  statusBadge: { marginLeft: spacing.xs, paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: 999 },
   statusBadgeText: { fontSize: 11, fontWeight: '700' },
-  undo: { marginLeft: 10, fontSize: 11, fontWeight: '700', color: colors.red },
+  undo: { marginLeft: spacing.md, fontSize: 11, fontWeight: '700', color: colors.red, minHeight: 44, textAlignVertical: 'center' },
   members: { marginTop: 8, marginLeft: 44, paddingLeft: 10, borderLeftWidth: 2, borderLeftColor: colors.border },
   memberDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
   close: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover },

@@ -41,10 +41,10 @@ export default function IntegrationsScreen({ navigation }) {
             </View>
 
             <View style={{ flex: 1, marginLeft: spacing.md, paddingRight: spacing.sm }}>
-              <Text style={{ fontWeight: '700', fontSize: 15, color: colors.text, fontFamily: 'Inter_700Bold' }}>
+              <Text style={{ fontWeight: '700', fontSize: 15, color: colors.text, fontFamily: 'Inter_700Bold' }} numberOfLines={1}>
                 {it.name}
               </Text>
-              <Text style={[font.small, { marginTop: 2 }]}>{it.desc}</Text>
+              <Text style={[font.small, { marginTop: 2, lineHeight: 18 }]} numberOfLines={2}>{it.desc}</Text>
             </View>
           </Row>
 

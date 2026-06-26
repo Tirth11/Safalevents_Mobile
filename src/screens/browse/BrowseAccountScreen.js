@@ -20,15 +20,15 @@ export default function BrowseAccountScreen({ navigation }) {
       <Screen>
         <Card style={{ alignItems: 'center', marginTop: spacing.xl }}>
           <Avatar seed={auth.user.name} size={64} />
-          <Text style={[font.h3, { marginTop: 10 }]}>{auth.user.name}</Text>
-          <Text style={font.small}>{auth.user.email}</Text>
+          <Text style={[font.h3, { marginTop: spacing.md }]} numberOfLines={1}>{auth.user.name}</Text>
+          <Text style={font.small} numberOfLines={1}>{auth.user.email}</Text>
           <Button
             label="Go to my dashboard"
             icon="arrow-forward"
-            style={{ marginTop: spacing.lg }}
+            style={{ marginTop: spacing.lg, alignSelf: 'stretch' }}
             onPress={() => navigation.navigate(auth.user.role === 'host' ? 'HostTabs' : auth.user.role === 'staff' ? 'StaffTabs' : 'GuestTabs')}
           />
-          <Button label="Log out" variant="outline" style={{ marginTop: 10 }} onPress={() => auth.signOut()} />
+          <Button label="Log out" variant="outline" style={{ marginTop: spacing.sm, alignSelf: 'stretch' }} onPress={() => auth.signOut()} />
         </Card>
       </Screen>
     );
@@ -40,15 +40,15 @@ export default function BrowseAccountScreen({ navigation }) {
         <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: colors.primaryTint, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name="person-circle-outline" size={36} color={colors.primary} />
         </View>
-        <Text style={[font.h2, { marginTop: 12 }]}>You're browsing as a guest</Text>
-        <Text style={[font.small, { textAlign: 'center', marginTop: 4 }]}>Create an account to RSVP, message hosts, and host your own events.</Text>
+        <Text style={[font.h2, { marginTop: spacing.md, textAlign: 'center' }]}>You're browsing as a guest</Text>
+        <Text style={[font.small, { textAlign: 'center', marginTop: spacing.xs, lineHeight: 19 }]}>Create an account to RSVP, message hosts, and host your own events.</Text>
       </View>
 
       <Card style={{ marginBottom: spacing.lg }}>
         {PERKS.map((p, i) => (
-          <Row key={p.text} style={{ paddingVertical: 8, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: colors.border }}>
+          <Row key={p.text} style={{ paddingVertical: spacing.sm, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: colors.border }}>
             <Ionicons name={p.icon} size={18} color={colors.primary} />
-            <Text style={{ marginLeft: 10, fontSize: 14, color: colors.text }}>{p.text}</Text>
+            <Text style={{ marginLeft: spacing.md, fontSize: 14, color: colors.text, flex: 1 }} numberOfLines={1}>{p.text}</Text>
           </Row>
         ))}
       </Card>

@@ -79,9 +79,9 @@ function Answers({ answers }) {
   const entries = Object.entries(answers || {});
   if (!entries.length) return null;
   return (
-    <View style={{ marginTop: 6 }}>
+    <View style={{ marginTop: spacing.sm }}>
       {entries.map(([q, a]) => (
-        <Text key={q} style={font.tiny}>
+        <Text key={q} style={[font.tiny, { lineHeight: 16 }]}>
           <Text style={{ fontWeight: '700' }}>{q} </Text>
           {a}
         </Text>
@@ -95,7 +95,7 @@ function AttendeeCheckinControls({ r }) {
   const cs = getCheckinState(r);
   const remaining = cs.total - cs.inCount;
   return (
-    <Row style={{ flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+    <Row style={{ flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm }}>
       <View style={[styles.csBadge, { backgroundColor: cs.bg }]}>
         <Text style={{ color: cs.color, fontSize: 11, fontWeight: '700', fontFamily: 'Inter_700Bold' }}>{cs.label}</Text>
       </View>
@@ -107,7 +107,7 @@ function AttendeeCheckinControls({ r }) {
           ) : null}
         </>
       ) : (
-        <TouchableOpacity onPress={() => resetArrival(r.id)} hitSlop={6}>
+        <TouchableOpacity onPress={() => resetArrival(r.id)} activeOpacity={0.8} hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}>
           <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' }}>Undo</Text>
         </TouchableOpacity>
       )}
@@ -245,7 +245,7 @@ export default function HostEventManageScreen({ navigation, route }) {
           <Text style={font.h2} numberOfLines={1}>{event.title}</Text>
           <Text style={font.small}>{event.date}{event.seriesType && event.seriesType !== 'None' ? ` · ${event.seriesType} series` : ''}</Text>
         </View>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={8}>
+        <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.8} hitSlop={8} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -spacing.sm }}>
           <Ionicons name="close" size={26} color={colors.textMuted} />
         </TouchableOpacity>
       </Row>
@@ -278,7 +278,7 @@ export default function HostEventManageScreen({ navigation, route }) {
           <Card style={{ marginBottom: spacing.lg }}>
             <Text style={[font.h3, { marginBottom: spacing.sm }]}>Message all guests</Text>
             <TextField value={bcast} onChangeText={setBcast} placeholder="Compose a broadcast to all confirmed guests…" multiline />
-            <Row style={{ gap: 10 }}>
+            <Row style={{ gap: spacing.md, alignItems: 'stretch' }}>
               <View style={{ flex: 1 }}><Button label="Send broadcast" variant="primary" icon="megaphone-outline" onPress={sendBroadcast} /></View>
               <View style={{ flex: 1 }}><Button label="Export guests" variant="outline" icon="download-outline" onPress={exportGuests} /></View>
             </Row>
@@ -293,8 +293,8 @@ export default function HostEventManageScreen({ navigation, route }) {
                     <Ionicons name="ellipse" size={10} color={colors.primary} />
                   </View>
                   <View style={{ flex: 1, marginLeft: spacing.md }}>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>{a.action}</Text>
-                    <Text style={font.tiny}>{a.actor} · {a.time}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }} numberOfLines={1}>{a.action}</Text>
+                    <Text style={[font.tiny, { marginTop: spacing.xs }]} numberOfLines={1}>{a.actor} · {a.time}</Text>
                   </View>
                 </Row>
                 {i < auditTrail.length - 1 ? <Divider /> : null}
@@ -323,9 +323,9 @@ export default function HostEventManageScreen({ navigation, route }) {
                   <Row style={{ alignItems: 'flex-start' }}>
                     <Avatar seed={r.name} size={40} />
                     <View style={{ flex: 1, marginLeft: spacing.md }}>
-                      <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{r.name}</Text>
-                      <Text style={font.tiny}>{r.email}</Text>
-                      <Text style={[font.tiny, { marginTop: 2 }]}>{r.status} · {r.guestCount} guest(s)</Text>
+                      <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>{r.name}</Text>
+                      <Text style={font.tiny} numberOfLines={1}>{r.email}</Text>
+                      <Text style={[font.tiny, { marginTop: spacing.xs }]}>{r.status} · {r.guestCount} guest(s)</Text>
                       <Answers answers={r.answers} />
                       <Row style={{ marginTop: spacing.sm }}>
                         <Button label="Approve" variant="accent" small onPress={() => { approveRsvp(r.id); Alert.alert('Approved', `${r.name} is confirmed.`); }} />
@@ -351,8 +351,8 @@ export default function HostEventManageScreen({ navigation, route }) {
                   <Row style={{ alignItems: 'flex-start' }}>
                     <Avatar seed={r.name} size={40} />
                     <View style={{ flex: 1, marginLeft: spacing.md }}>
-                      <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{r.name}</Text>
-                      <Text style={font.tiny}>{r.email}</Text>
+                      <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>{r.name}</Text>
+                      <Text style={font.tiny} numberOfLines={1}>{r.email}</Text>
                       <Answers answers={r.answers} />
                       <Row style={{ marginTop: spacing.sm }}>
                         <Button label="Approve & Allow In" variant="accent" small onPress={() => { approveFromWaitlist(r.id); Alert.alert('Approved', `${r.name} is in — confirmed off the waitlist.`); }} />
@@ -374,8 +374,8 @@ export default function HostEventManageScreen({ navigation, route }) {
                   {i > 0 ? <Divider /> : null}
                   <Row style={[styles.between, { alignItems: 'flex-start' }]}>
                     <View style={{ flex: 1, paddingRight: spacing.md }}>
-                      <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{r.name}</Text>
-                      <Text style={font.tiny}>{r.rejectionReason || 'No reason given.'}</Text>
+                      <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>{r.name}</Text>
+                      <Text style={[font.tiny, { marginTop: spacing.xs, lineHeight: 16 }]} numberOfLines={2}>{r.rejectionReason || 'No reason given.'}</Text>
                     </View>
                     <Button label="Re-open" variant="outline" small onPress={() => { reopenRsvp(r.id); Alert.alert('Re-opened', 'Re-opened — back under review.'); }} />
                   </Row>
@@ -400,12 +400,12 @@ export default function HostEventManageScreen({ navigation, route }) {
                   <Row style={{ alignItems: 'flex-start' }}>
                     <Avatar seed={r.name} size={40} />
                     <View style={{ flex: 1, marginLeft: spacing.md }}>
-                      <Row style={styles.between}>
+                      <Row style={[styles.between, { alignItems: 'flex-start' }]}>
                         <View style={{ flex: 1, paddingRight: spacing.sm }}>
-                          <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{r.name}{r.manual ? '  ·  added manually' : ''}</Text>
-                          <Text style={font.tiny}>{r.email}</Text>
+                          <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>{r.name}{r.manual ? '  ·  added manually' : ''}</Text>
+                          <Text style={font.tiny} numberOfLines={1}>{r.email}</Text>
                         </View>
-                        <TouchableOpacity onPress={() => Alert.alert('Remove guest', `Remove ${r.name} from this event?`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => removeRsvp(r.id) }])}>
+                        <TouchableOpacity activeOpacity={0.8} hitSlop={8} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginTop: -spacing.sm, marginRight: -spacing.sm }} onPress={() => Alert.alert('Remove guest', `Remove ${r.name} from this event?`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => removeRsvp(r.id) }])}>
                           <Ionicons name="trash-outline" size={18} color={colors.red} />
                         </TouchableOpacity>
                       </Row>
@@ -425,8 +425,8 @@ export default function HostEventManageScreen({ navigation, route }) {
                             <Badge tone="amber" label="⚠️ Age unverified — check ID" />
                           )}
                           {(r.additionalGuests || []).length > 0 ? (
-                            <View style={{ marginTop: 6 }}>
-                              <Text style={[font.tiny, { fontWeight: '700', color: colors.text, marginBottom: 2 }]}>
+                            <View style={{ marginTop: spacing.sm }}>
+                              <Text style={[font.tiny, { fontWeight: '700', color: colors.text, marginBottom: spacing.xs }]}>
                                 Party members ({r.additionalGuests.length})
                               </Text>
                               {r.additionalGuests.map((g, gi) => {
@@ -468,7 +468,7 @@ export default function HostEventManageScreen({ navigation, route }) {
             <Text style={[font.small, { marginBottom: spacing.md }]}>Creates an approved RSVP (respects capacity).</Text>
             <TextField label="Name" value={mg.name} onChangeText={(t) => setMg({ ...mg, name: t })} placeholder="Full name" />
             <TextField label="Email" value={mg.email} onChangeText={(t) => setMg({ ...mg, email: t })} placeholder="name@email.com" keyboardType="email-address" />
-            <Row style={{ gap: 10 }}>
+            <Row style={{ gap: spacing.md }}>
               <TextField half label="Phone" value={mg.phone} onChangeText={(t) => setMg({ ...mg, phone: t })} placeholder="+1 (555) 000-0000" />
               <TextField half label="Guest count" value={mg.guestCount} onChangeText={(t) => setMg({ ...mg, guestCount: t })} placeholder="1" keyboardType="numeric" />
             </Row>
@@ -492,7 +492,7 @@ export default function HostEventManageScreen({ navigation, route }) {
                   <Row style={styles.between}>
                     <View style={{ flex: 1, paddingRight: spacing.sm }}>
                       <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }} numberOfLines={1}>{o.subject}</Text>
-                      <Text style={font.tiny}>{o.to} · {o.time}</Text>
+                      <Text style={[font.tiny, { marginTop: spacing.xs }]} numberOfLines={1}>{o.to} · {o.time}</Text>
                     </View>
                     <Badge tone={o.channel === 'SMS' ? 'blue' : 'primary'} label={o.channel} />
                   </Row>
@@ -511,7 +511,7 @@ export default function HostEventManageScreen({ navigation, route }) {
                 <Ionicons name="images-outline" size={18} color={colors.primary} />
                 <Text style={[font.h3, { marginLeft: spacing.sm }]}>Photo album is off</Text>
               </Row>
-              <Text style={font.small}>
+              <Text style={[font.small, { lineHeight: 18 }]}>
                 Turn on “Guest photo uploads” in Settings to create a shared album for this event.
               </Text>
             </Card>
@@ -547,8 +547,8 @@ export default function HostEventManageScreen({ navigation, route }) {
                       <Row style={{ alignItems: 'flex-start' }}>
                         <Image source={{ uri: p.url }} style={styles.photoThumb} />
                         <View style={{ flex: 1, marginLeft: spacing.md }}>
-                          <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }}>{p.uploader}</Text>
-                          {p.caption ? <Text style={font.tiny}>“{p.caption}”</Text> : null}
+                          <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }} numberOfLines={1}>{p.uploader}</Text>
+                          {p.caption ? <Text style={[font.tiny, { marginTop: spacing.xs, lineHeight: 16 }]} numberOfLines={2}>“{p.caption}”</Text> : null}
                           <Row style={{ marginTop: spacing.sm }}>
                             <Button label="Approve" variant="accent" small onPress={() => setPhotoStatus(p.id, 'APPROVED')} />
                             <View style={{ width: spacing.sm }} />
@@ -573,7 +573,7 @@ export default function HostEventManageScreen({ navigation, route }) {
                     {approvedPhotos.map((p) => (
                       <View key={p.id} style={styles.photoCell}>
                         <Image source={{ uri: p.url }} style={styles.photoImg} />
-                        <TouchableOpacity style={styles.photoDel} onPress={() => deletePhoto(p.id)}>
+                        <TouchableOpacity activeOpacity={0.8} hitSlop={8} style={styles.photoDel} onPress={() => deletePhoto(p.id)}>
                           <Ionicons name="trash" size={13} color="#fff" />
                         </TouchableOpacity>
                         {p.role === 'guest' ? (
@@ -616,7 +616,7 @@ export default function HostEventManageScreen({ navigation, route }) {
                           <Avatar seed={c.guestName} size={40} />
                           <View style={{ flex: 1, marginLeft: spacing.md }}>
                             <Row style={styles.between}>
-                              <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{c.guestName}</Text>
+                              <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text, flex: 1, paddingRight: spacing.sm }} numberOfLines={1}>{c.guestName}</Text>
                               {c.unread ? <View style={styles.unreadDot} /> : null}
                             </Row>
                             <Text style={font.tiny} numberOfLines={1}>{last ? last.text : ''}</Text>
@@ -646,7 +646,7 @@ export default function HostEventManageScreen({ navigation, route }) {
                   <TextField value={o} onChangeText={(t) => setPollOpts((p) => p.map((x, idx) => (idx === i ? t : x)))} placeholder={`Option ${i + 1}`} />
                 </View>
                 {pollOpts.length > 2 ? (
-                  <TouchableOpacity onPress={() => setPollOpts((p) => p.filter((_, idx) => idx !== i))} style={{ marginTop: 14, marginLeft: 8 }} hitSlop={8}>
+                  <TouchableOpacity onPress={() => setPollOpts((p) => p.filter((_, idx) => idx !== i))} activeOpacity={0.8} style={{ marginTop: 14, marginLeft: spacing.sm, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }} hitSlop={8}>
                     <Ionicons name="close-circle" size={20} color={colors.textMuted} />
                   </TouchableOpacity>
                 ) : null}
@@ -707,13 +707,13 @@ export default function HostEventManageScreen({ navigation, route }) {
                     <Avatar seed={c.name} size={36} />
                     <View style={{ flex: 1, marginLeft: spacing.md }}>
                       <Row style={styles.between}>
-                        <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }}>{c.name}</Text>
-                        <TouchableOpacity onPress={() => deleteComment(c.id)} hitSlop={8}>
+                        <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }} numberOfLines={1}>{c.name}</Text>
+                        <TouchableOpacity onPress={() => deleteComment(c.id)} activeOpacity={0.8} hitSlop={8} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginTop: -spacing.sm, marginRight: -spacing.sm }}>
                           <Ionicons name="trash-outline" size={16} color={colors.red} />
                         </TouchableOpacity>
                       </Row>
-                      <Text style={[font.small, { color: colors.text, marginTop: 2 }]}>{c.text}</Text>
-                      <Text style={font.tiny}>{c.time}</Text>
+                      <Text style={[font.small, { color: colors.text, marginTop: spacing.xs, lineHeight: 18 }]}>{c.text}</Text>
+                      <Text style={[font.tiny, { marginTop: spacing.xs }]}>{c.time}</Text>
                     </View>
                   </Row>
                 </View>
@@ -729,7 +729,7 @@ export default function HostEventManageScreen({ navigation, route }) {
             <Row style={styles.between}>
               <View style={{ flex: 1, paddingRight: spacing.sm }}>
                 <Text style={font.h3}>Payments</Text>
-                <Text style={font.small}>{event.enablePayments ? `Paid event · $${event.ticketPrice || 0} per ticket` : 'Free event'}</Text>
+                <Text style={[font.small, { marginTop: spacing.xs }]} numberOfLines={1}>{event.enablePayments ? `Paid event · $${event.ticketPrice || 0} per ticket` : 'Free event'}</Text>
               </View>
               <Badge tone={event.enablePayments ? 'green' : 'gray'} label={event.enablePayments ? 'Enabled' : 'Off'} />
             </Row>
@@ -738,7 +738,7 @@ export default function HostEventManageScreen({ navigation, route }) {
             <Text style={[font.h3, { marginBottom: spacing.sm }]}>Payout bank account</Text>
             <TextField label="Bank name" value={bank.bankName} onChangeText={(t) => setBank({ ...bank, bankName: t })} placeholder="Chase Bank" />
             <TextField label="Account holder name" value={bank.holderName} onChangeText={(t) => setBank({ ...bank, holderName: t })} placeholder="Alex Rivera" />
-            <Row style={{ gap: 10 }}>
+            <Row style={{ gap: spacing.md }}>
               <TextField half label="Routing number" value={bank.routingNumber} onChangeText={(t) => setBank({ ...bank, routingNumber: t })} placeholder="021000021" keyboardType="numeric" />
               <TextField half label="Account number" value={bank.accountNumber} onChangeText={(t) => setBank({ ...bank, accountNumber: t })} placeholder="••••1234" keyboardType="numeric" />
             </Row>
@@ -767,7 +767,7 @@ export default function HostEventManageScreen({ navigation, route }) {
                     </View>
                     <View style={{ flex: 1, marginLeft: spacing.md }}>
                       <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }} numberOfLines={1}>{o.subject}</Text>
-                      <Text style={font.tiny}>To {o.to} · {o.channel} · {o.time}</Text>
+                      <Text style={[font.tiny, { marginTop: spacing.xs }]} numberOfLines={1}>To {o.to} · {o.channel} · {o.time}</Text>
                     </View>
                   </Row>
                 </View>
@@ -782,7 +782,7 @@ export default function HostEventManageScreen({ navigation, route }) {
           <SectionTitle>Edit event</SectionTitle>
           <Card style={{ marginBottom: spacing.lg }}>
             <TextField label="Event title" value={edit.title} onChangeText={(t) => setE('title', t)} />
-            <Row style={{ gap: 10 }}>
+            <Row style={{ gap: spacing.md }}>
               <TextField half label="Date" value={edit.date} onChangeText={(t) => setE('date', t)} placeholder="YYYY-MM-DD" />
               <TextField half label="Time" value={edit.time} onChangeText={(t) => setE('time', t)} placeholder="19:00" />
             </Row>
@@ -837,7 +837,7 @@ export default function HostEventManageScreen({ navigation, route }) {
                   <View style={[styles.corner, styles.tl]} /><View style={[styles.corner, styles.tr]} />
                   <View style={[styles.corner, styles.bl]} /><View style={[styles.corner, styles.br]} />
                 </View>
-                <Text style={[font.tiny, { marginTop: spacing.md, marginBottom: 6, fontWeight: '700', color: colors.text }]}>
+                <Text style={[font.tiny, { marginTop: spacing.md, marginBottom: spacing.sm, fontWeight: '700', color: colors.text, lineHeight: 16 }]}>
                   Demo (no camera): tap a guest to simulate scanning their QR pass
                 </Text>
                 {eventRsvps.filter((r) => r.status === 'going').map((r) => {
@@ -850,15 +850,15 @@ export default function HostEventManageScreen({ navigation, route }) {
                       onPress={() => { setScanResult(validateScan(event.id, r.id)); setScanning(false); setArriving(1); }}
                     >
                       <Avatar seed={r.name} size={32} />
-                      <View style={{ flex: 1, marginLeft: 10 }}>
-                        <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{r.name}</Text>
-                        <Text style={font.tiny}>Pass {r.id} · {rcs.label}</Text>
+                      <View style={{ flex: 1, marginLeft: spacing.md }}>
+                        <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>{r.name}</Text>
+                        <Text style={font.tiny} numberOfLines={1}>Pass {r.id} · {rcs.label}</Text>
                       </View>
-                      <Ionicons name="scan-outline" size={20} color={colors.primary} />
+                      <Ionicons name="scan-outline" size={20} color={colors.primary} style={{ marginLeft: spacing.sm }} />
                     </TouchableOpacity>
                   );
                 })}
-                <TouchableOpacity onPress={() => setScanning(false)} style={{ alignSelf: 'center', marginTop: 14 }}>
+                <TouchableOpacity onPress={() => setScanning(false)} activeOpacity={0.8} hitSlop={8} style={{ alignSelf: 'center', marginTop: spacing.md, minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.md }}>
                   <Text style={{ color: colors.textMuted, fontWeight: '600' }}>Close scanner</Text>
                 </TouchableOpacity>
               </View>
@@ -917,11 +917,11 @@ export default function HostEventManageScreen({ navigation, route }) {
                 .map((r, i) => (
                   <View key={r.id}>
                     {i > 0 ? <Divider /> : null}
-                    <Row style={{ marginBottom: 6 }}>
+                    <Row style={{ marginBottom: spacing.sm }}>
                       <Avatar seed={r.name} size={36} />
                       <View style={{ marginLeft: spacing.md, flex: 1 }}>
-                        <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }}>{r.name}</Text>
-                        <Text style={font.tiny}>{r.email}</Text>
+                        <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>{r.name}</Text>
+                        <Text style={font.tiny} numberOfLines={1}>{r.email}</Text>
                       </View>
                     </Row>
                     <AttendeeCheckinControls r={r} />

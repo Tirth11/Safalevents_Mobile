@@ -101,27 +101,27 @@ export default function StaffRolesScreen({ navigation }) {
               <Row>
                 <Avatar seed={s.name} size={44} />
                 <View style={{ flex: 1, marginLeft: spacing.md, paddingRight: spacing.sm }}>
-                  <Text style={{ fontWeight: '700', fontSize: 15, color: colors.text, fontFamily: 'Inter_700Bold' }}>
+                  <Text style={{ fontWeight: '700', fontSize: 15, color: colors.text, fontFamily: 'Inter_700Bold' }} numberOfLines={1}>
                     {s.name}
                   </Text>
-                  <Text style={[font.small, { marginTop: 1 }]}>{s.email}</Text>
-                  <Row style={{ marginTop: 6, flexWrap: 'wrap' }}>
-                    <Badge tone="primary" label={s.roleName} style={{ marginRight: 6, marginBottom: 4 }} />
+                  <Text style={[font.small, { marginTop: 1 }]} numberOfLines={1}>{s.email}</Text>
+                  <Row style={{ marginTop: spacing.xs, flexWrap: 'wrap' }}>
+                    <Badge tone="primary" label={s.roleName} style={{ marginRight: spacing.xs, marginBottom: spacing.xs }} />
                     <Badge
                       tone={s.status === 'ACTIVE' ? 'green' : 'amber'}
                       dot
                       label={s.status}
-                      style={{ marginBottom: 4 }}
+                      style={{ marginBottom: spacing.xs }}
                     />
                   </Row>
                 </View>
-                <TouchableOpacity onPress={() => confirmRemove(s)} style={{ padding: 6 }}>
+                <TouchableOpacity onPress={() => confirmRemove(s)} activeOpacity={0.8} hitSlop={8} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -spacing.sm }}>
                   <Ionicons name="trash-outline" size={20} color={colors.red} />
                 </TouchableOpacity>
               </Row>
 
               {/* Change role chips */}
-              <Text style={[font.tiny, { marginTop: 8, marginBottom: 4 }]}>Change role</Text>
+              <Text style={[font.tiny, { marginTop: spacing.sm, marginBottom: spacing.xs }]}>Change role</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                 {roles.map((r) => {
                   const on = r.id === s.roleId;
@@ -131,12 +131,12 @@ export default function StaffRolesScreen({ navigation }) {
                       onPress={() => updateStaffRole(s.id, r.id)}
                       activeOpacity={0.85}
                       style={{
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
+                        paddingHorizontal: spacing.md,
+                        paddingVertical: spacing.sm,
                         borderRadius: radius.full,
                         borderWidth: 1,
-                        marginRight: 6,
-                        marginBottom: 6,
+                        marginRight: spacing.xs,
+                        marginBottom: spacing.xs,
                         backgroundColor: on ? colors.primary : colors.surface,
                         borderColor: on ? colors.primary : colors.border,
                       }}
@@ -162,16 +162,16 @@ export default function StaffRolesScreen({ navigation }) {
             <Text style={{ fontWeight: '700', fontSize: 15, color: colors.text, fontFamily: 'Inter_700Bold' }}>
               {role.name}
             </Text>
-            <Text style={[font.small, { marginTop: 2, marginBottom: spacing.sm }]}>{role.description}</Text>
+            <Text style={[font.small, { marginTop: 2, marginBottom: spacing.sm, lineHeight: 19 }]}>{role.description}</Text>
             {PERMISSION_LABELS.map((p) => {
               const granted = !!role.permissions[p.key];
               return (
-                <Row key={p.key} style={{ marginBottom: 6 }}>
+                <Row key={p.key} style={{ marginBottom: spacing.xs }}>
                   <Ionicons
                     name={granted ? 'checkmark-circle' : 'close-circle'}
                     size={16}
                     color={granted ? colors.accent : colors.textMuted}
-                    style={{ marginRight: 8 }}
+                    style={{ marginRight: spacing.sm }}
                   />
                   <Text style={{ fontSize: 13, color: granted ? colors.text : colors.textMuted, fontFamily: 'Inter_400Regular' }}>
                     {p.label}

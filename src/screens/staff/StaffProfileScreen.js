@@ -23,18 +23,18 @@ export default function StaffProfileScreen({ navigation }) {
       <Card style={{ marginBottom: spacing.lg }}>
         <Row>
           <Avatar seed={staff?.name} size={52} />
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={font.h3}>{staff?.name}</Text>
-            <Text style={font.small}>{staff?.email}</Text>
-            <Row style={{ marginTop: 4 }}>
+          <View style={{ flex: 1, marginLeft: spacing.md }}>
+            <Text style={font.h3} numberOfLines={1}>{staff?.name}</Text>
+            <Text style={font.small} numberOfLines={1}>{staff?.email}</Text>
+            <Row style={{ marginTop: spacing.xs }}>
               <Badge tone="purple" label={role ? role.name : 'Staff'} />
             </Row>
           </View>
         </Row>
-        {role?.description ? <Text style={[font.small, { marginTop: 10 }]}>{role.description}</Text> : null}
+        {role?.description ? <Text style={[font.small, { marginTop: spacing.md, lineHeight: 19 }]}>{role.description}</Text> : null}
         <Divider />
         <Text style={font.small}>Assigned event</Text>
-        <Text style={{ fontWeight: '700', color: colors.text, marginTop: 2 }}>{event ? event.title : '—'}</Text>
+        <Text style={{ fontWeight: '700', color: colors.text, marginTop: spacing.xs }} numberOfLines={1}>{event ? event.title : '—'}</Text>
       </Card>
 
       <SectionTitle>What your role allows</SectionTitle>
@@ -42,10 +42,10 @@ export default function StaffProfileScreen({ navigation }) {
         {PERMISSION_LABELS.map((p, i) => {
           const on = !!perms[p.key];
           return (
-            <Row key={p.key} style={{ paddingVertical: 8, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: colors.border }}>
+            <Row key={p.key} style={{ paddingVertical: spacing.sm, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: colors.border }}>
               <Ionicons name={on ? 'checkmark-circle' : 'close-circle'} size={18} color={on ? colors.accent : colors.textMuted} />
-              <Text style={{ marginLeft: 10, fontSize: 14, color: on ? colors.text : colors.textMuted, flex: 1 }}>{p.label}</Text>
-              {on ? <Badge tone="green" label="Allowed" /> : <Badge tone="gray" label="Hidden" />}
+              <Text style={{ marginLeft: spacing.md, fontSize: 14, color: on ? colors.text : colors.textMuted, flex: 1 }} numberOfLines={1}>{p.label}</Text>
+              {on ? <Badge tone="green" label="Allowed" style={{ marginLeft: spacing.sm }} /> : <Badge tone="gray" label="Hidden" style={{ marginLeft: spacing.sm }} />}
             </Row>
           );
         })}
@@ -56,7 +56,7 @@ export default function StaffProfileScreen({ navigation }) {
         icon="swap-horizontal-outline"
         variant="outline"
         onPress={() => { auth.signOut(); navigation.navigate('Auth', { mode: 'login' }); }}
-        style={{ marginBottom: 10 }}
+        style={{ marginBottom: spacing.sm }}
       />
       <Button
         label="Log out"

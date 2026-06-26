@@ -60,10 +60,10 @@ export function BarGroupChart({ data = [], height = 130, aColor = colors.primary
   const max = Math.max(1, ...data.map((d) => Math.max(d.a || 0, d.b || 0)));
   return (
     <View>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', height, gap: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', height, gap: spacing.md }}>
         {data.map((d, i) => (
           <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: '100%' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: spacing.xs, height: '100%' }}>
               <View
                 style={{
                   width: 13,
@@ -86,7 +86,7 @@ export function BarGroupChart({ data = [], height = 130, aColor = colors.primary
           </View>
         ))}
       </View>
-      <View style={{ flexDirection: 'row', marginTop: 8, gap: 12 }}>
+      <View style={{ flexDirection: 'row', marginTop: spacing.sm, gap: spacing.md }}>
         {data.map((d, i) => (
           <Text key={i} numberOfLines={1} style={[font.tiny, { flex: 1, textAlign: 'center' }]}>
             {d.label}
@@ -102,14 +102,14 @@ export function BarGroupChart({ data = [], height = 130, aColor = colors.primary
 export function HBars({ data = [], trackColor = colors.surfaceHover, barColor = colors.primary, suffix = '' }) {
   const max = Math.max(1, ...data.map((d) => d.value || 0));
   return (
-    <View style={{ gap: 12 }}>
+    <View style={{ gap: spacing.md }}>
       {data.map((d, i) => (
         <View key={i}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
-            <Text style={[font.small, { fontWeight: '700', color: colors.text }]} numberOfLines={1}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs }}>
+            <Text style={[font.small, { fontWeight: '700', color: colors.text, flex: 1, marginRight: spacing.sm }]} numberOfLines={1}>
               {d.label}
             </Text>
-            <Text style={[font.small, { fontWeight: '700', color: colors.text }]}>
+            <Text style={[font.small, { fontWeight: '700', color: colors.text, textAlign: 'right' }]}>
               {d.value}
               {suffix}
             </Text>
@@ -141,11 +141,11 @@ export function StackedBar({ segments = [], height = 12 }) {
           <View key={i} style={{ width: `${((s.value || 0) / total) * 100}%`, backgroundColor: s.color }} />
         ))}
       </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 10, gap: 14 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.sm, gap: spacing.md }}>
         {segments.map((s, i) => (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 9, height: 9, borderRadius: 3, backgroundColor: s.color, marginRight: 6 }} />
-            <Text style={font.tiny}>
+            <View style={{ width: 9, height: 9, borderRadius: 3, backgroundColor: s.color, marginRight: spacing.xs }} />
+            <Text style={font.tiny} numberOfLines={1}>
               {s.label} · {s.value}
             </Text>
           </View>
@@ -158,11 +158,11 @@ export function StackedBar({ segments = [], height = 12 }) {
 // ─── Small chart legend ─────────────────────────────────────────────────────
 export function Legend({ items = [] }) {
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: spacing.md }}>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.md }}>
       {items.map((it, i) => (
         <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: it.color, marginRight: 6 }} />
-          <Text style={font.tiny}>{it.label}</Text>
+          <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: it.color, marginRight: spacing.xs }} />
+          <Text style={font.tiny} numberOfLines={1}>{it.label}</Text>
         </View>
       ))}
     </View>

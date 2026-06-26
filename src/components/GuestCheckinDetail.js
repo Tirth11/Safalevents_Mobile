@@ -85,28 +85,28 @@ export default function GuestCheckinDetail({
             : { backgroundColor: colors.primaryTint, borderColor: colors.primary },
         ]}
       >
-        <Row style={{ justifyContent: 'space-between' }}>
-          <Text style={{ fontWeight: '800', fontSize: 14, color: denied ? RED : allIn ? GREEN : colors.primary, flex: 1 }}>
+        <Row style={{ justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm }}>
+          <Text numberOfLines={1} style={{ fontWeight: '800', fontSize: 14, color: denied ? RED : allIn ? GREEN : colors.primary, flex: 1 }}>
             {denied ? '✕ ENTRY DENIED' : allIn ? '✓ ALL ATTENDEES IN' : '✓ VALID — READY TO CHECK IN'}
           </Text>
           <Badge label={state.label} tone={state.state === 'full' ? 'green' : state.state === 'partial' ? 'amber' : 'gray'} />
         </Row>
-        {denied && result?.message ? <Text style={[font.small, { marginTop: 4, color: RED }]}>{result.message}</Text> : null}
+        {denied && result?.message ? <Text style={[font.small, { marginTop: spacing.xs, color: RED, lineHeight: 18 }]}>{result.message}</Text> : null}
       </View>
 
       {/* ── 2. GUEST IDENTITY ── */}
       <Card>
         <Row style={{ alignItems: 'flex-start' }}>
           <Avatar seed={rsvp.name} size={50} />
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={{ fontWeight: '800', fontSize: 17, color: colors.text }}>{rsvp.name}</Text>
-            <Text style={font.tiny}>{rsvp.email}</Text>
-            {rsvp.phone ? <Text style={font.tiny}>{rsvp.phone}</Text> : null}
-            <Text style={[font.tiny, { marginTop: 2 }]}>
+          <View style={{ flex: 1, marginLeft: spacing.md }}>
+            <Text numberOfLines={1} style={{ fontWeight: '800', fontSize: 17, color: colors.text }}>{rsvp.name}</Text>
+            <Text style={font.tiny} numberOfLines={1}>{rsvp.email}</Text>
+            {rsvp.phone ? <Text style={font.tiny} numberOfLines={1}>{rsvp.phone}</Text> : null}
+            <Text style={[font.tiny, { marginTop: spacing.xs }]} numberOfLines={2}>
               {event.title} · {rsvp.ticketType || 'General Admission'}
             </Text>
             {ageBadge ? (
-              <Text style={{ marginTop: 6, fontWeight: '700', fontSize: 12, color: ageBadge.color }}>{ageBadge.text}</Text>
+              <Text style={{ marginTop: spacing.xs, fontWeight: '700', fontSize: 12, color: ageBadge.color }}>{ageBadge.text}</Text>
             ) : null}
           </View>
         </Row>
@@ -115,15 +115,15 @@ export default function GuestCheckinDetail({
       {/* ── 3. CURRENT ATTENDANCE / PARTIAL CHECK-IN ── */}
       {!denied && (
         <Card>
-          <Row style={{ justifyContent: 'space-between', marginBottom: spacing.md }}>
-            <Row>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
+            <Row style={{ alignItems: 'center', flex: 1 }}>
               <Ionicons name="people" size={16} color={colors.primary} />
-              <Text style={{ fontWeight: '800', fontSize: 15, color: colors.text, marginLeft: 6 }}>Current Attendance</Text>
+              <Text numberOfLines={1} style={{ fontWeight: '800', fontSize: 15, color: colors.text, marginLeft: spacing.sm, flex: 1 }}>Current Attendance</Text>
             </Row>
             <Badge label={state.state === 'full' ? 'Complete' : state.state === 'partial' ? 'Partial' : 'Not in'} tone={state.state === 'full' ? 'green' : state.state === 'partial' ? 'amber' : 'gray'} />
           </Row>
 
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
             <Stat label="RSVP Total" value={total} color={colors.text} />
             <Stat label="Checked-In" value={checked} color={GREEN} />
             <Stat label="Remaining" value={remaining} color={remaining > 0 ? AMBER : colors.textMuted} />
@@ -131,7 +131,7 @@ export default function GuestCheckinDetail({
 
           {/* progress */}
           <View style={{ marginTop: spacing.md }}>
-            <Row style={{ justifyContent: 'space-between', marginBottom: 5 }}>
+            <Row style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs }}>
               <Text style={[font.tiny, { fontWeight: '700', color: colors.text }]}>Attendance Progress</Text>
               <Text style={[font.tiny, { fontWeight: '700', color: colors.text }]}>{pct}%</Text>
             </Row>
@@ -143,14 +143,14 @@ export default function GuestCheckinDetail({
           {/* stepper / controls */}
           {canCheckin && remaining > 0 ? (
             <View style={styles.stepperWrap}>
-              <Text style={[font.small, { fontWeight: '700', marginBottom: 10 }]}>Additional attendees arriving now</Text>
-              <Row style={{ gap: 10, flexWrap: 'wrap' }}>
+              <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm }]}>Additional attendees arriving now</Text>
+              <Row style={{ gap: spacing.sm, flexWrap: 'wrap', alignItems: 'center' }}>
                 <Row style={styles.stepper}>
-                  <TouchableOpacity onPress={() => setArriving((a) => Math.max(1, a - 1))} style={styles.stepBtn}>
+                  <TouchableOpacity activeOpacity={0.8} hitSlop={8} onPress={() => setArriving((a) => Math.max(1, a - 1))} style={styles.stepBtn}>
                     <Ionicons name="remove" size={16} color={colors.text} />
                   </TouchableOpacity>
                   <Text style={{ minWidth: 32, textAlign: 'center', fontWeight: '800', fontSize: 16 }}>{Math.min(arriving, remaining)}</Text>
-                  <TouchableOpacity onPress={() => setArriving((a) => Math.min(remaining, a + 1))} style={styles.stepBtn}>
+                  <TouchableOpacity activeOpacity={0.8} hitSlop={8} onPress={() => setArriving((a) => Math.min(remaining, a + 1))} style={styles.stepBtn}>
                     <Ionicons name="add" size={16} color={colors.text} />
                   </TouchableOpacity>
                 </Row>
@@ -167,11 +167,11 @@ export default function GuestCheckinDetail({
           {checked >= total ? (
             <View style={styles.complete}>
               <Ionicons name="checkmark-circle" size={18} color={GREEN} />
-              <Text style={{ marginLeft: 8, fontWeight: '700', color: GREEN, fontSize: 13, flex: 1 }}>
+              <Text style={{ marginLeft: spacing.sm, fontWeight: '700', color: GREEN, fontSize: 13, flex: 1, lineHeight: 18 }}>
                 All {total} attendee{total > 1 ? 's' : ''} checked in — complete attendance recorded.
               </Text>
               {canCheckin ? (
-                <TouchableOpacity onPress={() => resetArrival(rsvp.id)} hitSlop={8}>
+                <TouchableOpacity activeOpacity={0.8} onPress={() => resetArrival(rsvp.id)} hitSlop={8} style={{ marginLeft: spacing.sm }}>
                   <Text style={{ color: RED, fontWeight: '700', fontSize: 12 }}>Undo</Text>
                 </TouchableOpacity>
               ) : null}
@@ -179,7 +179,7 @@ export default function GuestCheckinDetail({
           ) : null}
 
           {!canCheckin ? (
-            <Text style={[font.small, { marginTop: 10 }]}>Your role can view this guest but not check them in.</Text>
+            <Text style={[font.small, { marginTop: spacing.sm, lineHeight: 18 }]}>Your role can view this guest but not check them in.</Text>
           ) : null}
         </Card>
       )}
@@ -187,16 +187,16 @@ export default function GuestCheckinDetail({
       {/* ── 4. THIS-EVENT TIMELINE ── */}
       {log.length > 0 ? (
         <Card>
-          <Row style={{ marginBottom: spacing.md }}>
+          <Row style={{ alignItems: 'center', marginBottom: spacing.md }}>
             <Ionicons name="time-outline" size={16} color={colors.primary} />
-            <Text style={{ fontWeight: '800', fontSize: 15, color: colors.text, marginLeft: 6 }}>This Event — Check-In Timeline</Text>
+            <Text numberOfLines={1} style={{ fontWeight: '800', fontSize: 15, color: colors.text, marginLeft: spacing.sm, flex: 1 }}>This Event — Check-In Timeline</Text>
           </Row>
           <View style={{ paddingLeft: 18 }}>
             <View style={styles.timeLine} />
             {log.map((l, i) => (
-              <View key={i} style={{ paddingBottom: i < log.length - 1 ? 14 : 0, position: 'relative' }}>
+              <View key={i} style={{ paddingBottom: i < log.length - 1 ? spacing.md : 0, position: 'relative' }}>
                 <View style={styles.timeDot} />
-                <Text style={[font.tiny, { fontWeight: '600' }]}>{l.time}{l.by ? ` · ${l.by}` : ''}</Text>
+                <Text style={[font.tiny, { fontWeight: '600' }]} numberOfLines={1}>{l.time}{l.by ? ` · ${l.by}` : ''}</Text>
                 <Text style={{ fontSize: 13.5, fontWeight: '700', color: colors.text }}>
                   Checked in {l.count} attendee{l.count > 1 ? 's' : ''}
                 </Text>
@@ -214,7 +214,7 @@ export default function GuestCheckinDetail({
       {total > 1 ? (
         <Card>
           <Text style={styles.kicker}>PARTY MEMBERS ({total})</Text>
-          <View style={{ gap: 8 }}>
+          <View style={{ gap: spacing.sm }}>
             {members.map((m, i) => {
               const inHere = i < checked;
               const real = i === 0 ? null : (rsvp.additionalGuests || [])[i - 1];
@@ -224,10 +224,10 @@ export default function GuestCheckinDetail({
                   <View style={[styles.memberDot, { backgroundColor: inHere ? GREEN + '22' : colors.surfaceHover }]}>
                     {inHere ? <Ionicons name="checkmark" size={13} color={GREEN} /> : <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted }}>{i + 1}</Text>}
                   </View>
-                  <Text style={{ flex: 1, marginLeft: 10, fontSize: 13.5, fontWeight: inHere ? '700' : '500', color: inHere ? colors.text : colors.textMuted }}>
+                  <Text numberOfLines={1} style={{ flex: 1, marginLeft: spacing.sm, fontSize: 13.5, fontWeight: inHere ? '700' : '500', color: inHere ? colors.text : colors.textMuted }}>
                     {display}
                   </Text>
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: inHere ? GREEN : colors.textMuted }}>{inHere ? 'Arrived' : 'Pending'}</Text>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: inHere ? GREEN : colors.textMuted, textAlign: 'right' }}>{inHere ? 'Arrived' : 'Pending'}</Text>
                 </Row>
               );
             })}
@@ -238,10 +238,10 @@ export default function GuestCheckinDetail({
       {/* ── 6 + 7. CROSS-EVENT INTELLIGENCE + VERDICT ── */}
       {hist ? (
         <Card>
-          <Row style={{ justifyContent: 'space-between', marginBottom: spacing.md }}>
-            <Row>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
+            <Row style={{ alignItems: 'center', flex: 1 }}>
               <Ionicons name="bar-chart-outline" size={16} color={colors.primary} />
-              <Text style={{ fontWeight: '800', fontSize: 15, color: colors.text, marginLeft: 6 }}>Guest Attendance History</Text>
+              <Text numberOfLines={1} style={{ fontWeight: '800', fontSize: 15, color: colors.text, marginLeft: spacing.sm, flex: 1 }}>Guest Attendance History</Text>
             </Row>
             {hist.hasWarning ? <Badge tone="red" label="⚠ Over-RSVP" /> : null}
           </Row>
@@ -264,12 +264,12 @@ export default function GuestCheckinDetail({
               ) : (
                 <View style={[styles.amberVerdict]}>
                   <Text style={{ fontWeight: '800', fontSize: 13.5, color: '#a16207' }}>⚠ Partial Attendance</Text>
-                  <Text style={[font.small, { color: colors.text, marginTop: 2 }]}>{hist.accuracy}% accuracy across {hist.totalEventsRsvpd} events — monitor future RSVPs.</Text>
+                  <Text style={[font.small, { color: colors.text, marginTop: spacing.xs, lineHeight: 18 }]}>{hist.accuracy}% accuracy across {hist.totalEventsRsvpd} events — monitor future RSVPs.</Text>
                 </View>
               )}
 
               {/* summary stats */}
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: spacing.md }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md }}>
                 <Stat label="Events" value={hist.totalEventsRsvpd} color={colors.text} small />
                 <Stat label="Accuracy" value={`${hist.accuracy}%`} color={hist.accuracy >= 80 ? GREEN : hist.accuracy >= 50 ? AMBER : RED} small />
                 <Stat label="No-Shows" value={hist.noShow} color={hist.noShow > 0 ? RED : colors.text} small />
@@ -302,7 +302,7 @@ export default function GuestCheckinDetail({
           ) : (
             <View style={styles.empty}>
               <Ionicons name="shield-checkmark-outline" size={28} color={colors.textMuted} style={{ opacity: 0.5 }} />
-              <Text style={[font.small, { textAlign: 'center', marginTop: 8 }]}>First-time attendee — no past attendance history yet.</Text>
+              <Text style={[font.small, { textAlign: 'center', marginTop: spacing.sm, lineHeight: 18 }]}>First-time attendee — no past attendance history yet.</Text>
             </View>
           )}
         </Card>
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   bigVerdictNote: { color: '#fff', fontSize: 12.5, opacity: 0.92, marginTop: 6 },
   amberVerdict: { backgroundColor: '#eab30815', borderWidth: 1, borderColor: '#eab30840', borderLeftWidth: 4, borderLeftColor: '#eab308', borderRadius: radius.md, padding: 14 },
   histTable: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, overflow: 'hidden', marginTop: spacing.md },
-  histHead: { backgroundColor: colors.surfaceHover, paddingHorizontal: 12, paddingVertical: 9 },
+  histHead: { backgroundColor: colors.surfaceHover, paddingHorizontal: 12, paddingVertical: 9, alignItems: 'center' },
   histRow: { paddingHorizontal: 12, paddingVertical: 9, alignItems: 'center' },
   hCell: { fontSize: 10.5, fontWeight: '700', color: colors.textMuted },
   hCenter: { flex: 1, textAlign: 'center' },

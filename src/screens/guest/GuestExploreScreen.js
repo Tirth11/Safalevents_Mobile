@@ -60,8 +60,8 @@ export default function GuestExploreScreen({ navigation, route }) {
       </ScrollView>
 
       {list.length === 0 ? (
-        <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-          <Ionicons name="search-outline" size={38} color={colors.textMuted} style={{ marginBottom: 10 }} />
+        <View style={{ alignItems: 'center', paddingVertical: spacing.xxl }}>
+          <Ionicons name="search-outline" size={38} color={colors.textMuted} style={{ marginBottom: spacing.md }} />
           <Text style={[font.body, { color: colors.textMuted }]}>No events match your criteria</Text>
         </View>
       ) : (
@@ -77,25 +77,25 @@ export default function GuestExploreScreen({ navigation, route }) {
               <Text style={font.h3} numberOfLines={1}>
                 {e.title}
               </Text>
-              <Row style={[styles.between, { marginTop: 6 }]}>
+              <Row style={[styles.between, { marginTop: spacing.sm }]}>
                 <Row>
                   <Ionicons name="star" size={14} color={colors.amber} />
-                  <Text style={[font.small, { marginLeft: 4, color: colors.text, fontWeight: '700' }]}>
+                  <Text style={[font.small, { marginLeft: spacing.xs, color: colors.text, fontWeight: '700' }]}>
                     {e.rating}
                   </Text>
                 </Row>
                 <Badge tone="blue" label={e.eventType} />
               </Row>
-              <Row style={{ marginTop: 8 }}>
+              <Row style={{ marginTop: spacing.sm }}>
                 <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
-                <Text style={[font.small, { marginLeft: 4, flex: 1 }]} numberOfLines={1}>
+                <Text style={[font.small, { marginLeft: spacing.xs, flex: 1 }]} numberOfLines={1}>
                   {e.date} • {e.location}
                 </Text>
               </Row>
               <Divider style={{ marginVertical: spacing.sm }} />
               <Row>
                 <Avatar seed={e.hostName} size={22} />
-                <Text style={[font.small, { marginLeft: 6, flex: 1 }]} numberOfLines={1}>
+                <Text style={[font.small, { marginLeft: spacing.sm, flex: 1 }]} numberOfLines={1}>
                   Hosted by {e.hostName}
                 </Text>
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
@@ -112,6 +112,6 @@ export { GuestExploreScreen };
 
 const styles = StyleSheet.create({
   between: { justifyContent: 'space-between' },
-  eventCard: { marginBottom: spacing.md, overflow: 'hidden' },
+  eventCard: { marginBottom: spacing.lg, overflow: 'hidden' },
   cover: { width: '100%', height: 150, backgroundColor: colors.surfaceHover },
 });

@@ -31,8 +31,8 @@ function ChartHeading({ icon, title, subtitle, color = colors.primary }) {
         <Ionicons name={icon} size={16} color={color} />
       </View>
       <View style={{ marginLeft: spacing.sm, flex: 1 }}>
-        <Text style={[font.h3, { marginBottom: 0 }]}>{title}</Text>
-        {subtitle ? <Text style={font.tiny}>{subtitle}</Text> : null}
+        <Text style={[font.h3, { marginBottom: 0 }]} numberOfLines={1}>{title}</Text>
+        {subtitle ? <Text style={font.tiny} numberOfLines={1}>{subtitle}</Text> : null}
       </View>
     </Row>
   );
@@ -100,7 +100,7 @@ export default function HostDashboardScreen({ navigation }) {
             <Text style={font.h2}>{(host.name || 'Host').split(' ')[0]}</Text>
           </View>
         </Row>
-        <TouchableOpacity onPress={() => navigation.navigate('HostNotifications')} style={styles.bell} activeOpacity={0.8}>
+        <TouchableOpacity onPress={() => navigation.navigate('HostNotifications')} style={styles.bell} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="notifications-outline" size={22} color={colors.text} />
           <View style={styles.bellDot} />
         </TouchableOpacity>
@@ -158,8 +158,8 @@ export default function HostDashboardScreen({ navigation }) {
                 <Ionicons name="time-outline" size={20} color={colors.amber} />
               </View>
               <View style={{ marginLeft: spacing.md, flex: 1 }}>
-                <Text style={font.h3}>RSVPs awaiting approval</Text>
-                <Text style={font.small}>{pendingCount} request(s) need your review</Text>
+                <Text style={font.h3} numberOfLines={1}>RSVPs awaiting approval</Text>
+                <Text style={[font.small, { lineHeight: 19 }]}>{pendingCount} request(s) need your review</Text>
               </View>
             </Row>
           </Row>
@@ -195,16 +195,19 @@ export default function HostDashboardScreen({ navigation }) {
                 </Text>
                 <Badge tone={STATUS_TONE[e.status] || 'gray'} label={e.status} />
               </Row>
-              <Row style={{ marginTop: 6 }}>
+              <Row style={{ marginTop: spacing.xs }}>
                 <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
-                <Text style={[font.small, { marginLeft: 4 }]} numberOfLines={1}>
+                <Text style={[font.small, { marginLeft: spacing.xs, flex: 1 }]} numberOfLines={1}>
                   {e.date} • {e.location}
                 </Text>
               </Row>
               <Divider style={{ marginVertical: spacing.sm }} />
-              <Row>
-                <Ionicons name="people-outline" size={14} color={colors.primary} />
-                <Text style={[font.small, { marginLeft: 4, color: colors.text, fontWeight: '700' }]}>{count} RSVPs</Text>
+              <Row style={styles.between}>
+                <Row style={{ flex: 1 }}>
+                  <Ionicons name="people-outline" size={14} color={colors.primary} />
+                  <Text style={[font.small, { marginLeft: spacing.xs, color: colors.text, fontWeight: '700' }]}>{count} RSVPs</Text>
+                </Row>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
               </Row>
             </View>
           </Card>

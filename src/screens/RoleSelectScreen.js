@@ -8,15 +8,15 @@ import { loginAsStaff, useIndividualHost, useOrgHost } from '../data/mock';
 
 function RoleCard({ icon, title, desc, onPress, tint = 'rgba(242,84,27,0.10)' }) {
   return (
-    <TouchableOpacity activeOpacity={0.9} onPress={onPress} style={styles.card}>
+    <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.card}>
       <View style={[styles.iconTile, { backgroundColor: tint }]}>
         <Ionicons name={icon} size={24} color={colors.primary} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={[font.h3, { fontSize: 17, fontFamily: 'Inter_800ExtraBold', color: colors.text }]}>{title}</Text>
-        <Text style={[font.small, { fontSize: 13, color: colors.textMuted, marginTop: 2 }]}>{desc}</Text>
+        <Text style={[font.h3, { fontSize: 17, fontFamily: 'Inter_800ExtraBold', color: colors.text }]} numberOfLines={1}>{title}</Text>
+        <Text style={[font.small, { fontSize: 13, color: colors.textMuted, marginTop: 2, lineHeight: 18 }]} numberOfLines={2}>{desc}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
+      <Ionicons name="chevron-forward" size={22} color={colors.textMuted} style={{ marginLeft: 4 }} />
     </TouchableOpacity>
   );
 }
@@ -108,11 +108,11 @@ export default function RoleSelectScreen({ navigation }) {
               style={[font.body, styles.input]}
             />
             <Text style={[font.tiny, styles.hint]}>Demo: INV-GATE-1 / gabe@safalevent.com (QR Scanner) · INV-SAM-2026 / sam@safalevent.com (Coordinator)</Text>
-            <TouchableOpacity style={styles.primaryBtn} onPress={doStaffLogin} activeOpacity={0.85}>
+            <TouchableOpacity style={styles.primaryBtn} onPress={doStaffLogin} activeOpacity={0.8}>
               <Ionicons name="lock-closed" size={16} color="#fff" />
               <Text style={[font.body, { color: '#fff', fontWeight: '700', fontSize: 15 }]}>Sign in as Staff</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { setStaffMode(false); setError(''); }} style={{ alignSelf: 'center', marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <TouchableOpacity onPress={() => { setStaffMode(false); setError(''); }} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ alignSelf: 'center', marginTop: 12, minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Ionicons name="chevron-back" size={15} color={colors.textMuted} />
               <Text style={[font.body, { color: colors.textMuted, fontWeight: '600' }]}>Back</Text>
             </TouchableOpacity>

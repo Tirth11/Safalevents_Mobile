@@ -10,7 +10,7 @@ function LInput({ label, value, onChangeText, placeholder, keyboardType, require
   return (
     <View style={{ marginBottom: spacing.md }}>
       {label ? (
-        <Text style={[font.small, { fontWeight: '700', marginBottom: 4, color: colors.text }]}>
+        <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.xs, color: colors.text }]}>
           {label} {required ? <Text style={{ color: colors.red }}>*</Text> : null}
         </Text>
       ) : null}
@@ -126,7 +126,7 @@ export default function GuestRsvpScreen({ navigation, route }) {
             <Ionicons name={icon} size={56} color={tone} />
           </View>
           <Text style={[font.h1, { marginTop: spacing.lg, textAlign: 'center' }]}>{title}</Text>
-          <Text style={[font.body, { color: colors.textMuted, textAlign: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.lg }]}>{sub}</Text>
+          <Text style={[font.body, { color: colors.textMuted, textAlign: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.lg, lineHeight: 21 }]}>{sub}</Text>
         </View>
 
         {!declined && !maybe ? (
@@ -182,7 +182,7 @@ export default function GuestRsvpScreen({ navigation, route }) {
               style={[styles.respBtn, on && { borderColor: r.color, backgroundColor: r.color + '14' }]}
             >
               <Ionicons name={r.icon} size={22} color={on ? r.color : colors.textMuted} />
-              <Text style={{ marginTop: 6, fontWeight: '700', fontSize: 12.5, color: on ? r.color : colors.textMuted }}>{r.label}</Text>
+              <Text numberOfLines={1} style={{ marginTop: spacing.xs, fontWeight: '700', fontSize: 12.5, color: on ? r.color : colors.textMuted }}>{r.label}</Text>
             </TouchableOpacity>
           );
         })}
@@ -234,20 +234,20 @@ export default function GuestRsvpScreen({ navigation, route }) {
           {/* Attendance count + additional guests */}
           <SectionTitle>How many attending?</SectionTitle>
           <Card style={{ marginBottom: spacing.lg }}>
-            <Text style={[font.small, { fontWeight: '700', marginBottom: 6, color: colors.text }]}>Number of guests (including you)</Text>
+            <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>Number of guests (including you)</Text>
             <Row style={{ marginBottom: extras.length ? spacing.md : 0 }}>
-              <TouchableOpacity onPress={() => setCount(guestCount - 1)} style={styles.stepBtn} activeOpacity={0.8}>
+              <TouchableOpacity onPress={() => setCount(guestCount - 1)} style={styles.stepBtn} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Ionicons name="remove" size={18} color={colors.text} />
               </TouchableOpacity>
               <Text style={{ width: 44, textAlign: 'center', fontWeight: '800', fontSize: 16, color: colors.text }}>{guestCount}</Text>
-              <TouchableOpacity onPress={() => setCount(guestCount + 1)} style={styles.stepBtn} activeOpacity={0.8}>
+              <TouchableOpacity onPress={() => setCount(guestCount + 1)} style={styles.stepBtn} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Ionicons name="add" size={18} color={colors.text} />
               </TouchableOpacity>
             </Row>
 
             {extras.map((g, i) => (
               <View key={i} style={styles.extraBox}>
-                <Text style={{ fontWeight: '700', fontSize: 13, color: colors.text, marginBottom: 8 }}>
+                <Text style={{ fontWeight: '700', fontSize: 13, color: colors.text, marginBottom: spacing.sm }}>
                   Guest {i + 2} <Text style={{ color: colors.textMuted, fontWeight: '500' }}>(+{i + 1})</Text>
                 </Text>
                 <Row style={{ gap: 8 }}>
@@ -297,7 +297,7 @@ export default function GuestRsvpScreen({ navigation, route }) {
         </>
       ) : (
         <Card style={{ marginBottom: spacing.lg }}>
-          <Text style={[font.small, { color: colors.text }]}>
+          <Text style={[font.small, { color: colors.text, lineHeight: 18 }]}>
             {response === 'maybe'
               ? "We'll let the host know you might attend. You can come back and confirm anytime before the event."
               : "We'll let the host know you can't make it this time. No pass will be issued."}
@@ -333,8 +333,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     fontSize: 14,
     color: colors.text,
   },
@@ -362,8 +362,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 12,
-    marginTop: 10,
+    padding: spacing.md,
+    marginTop: spacing.md,
   },
   successRing: { width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center' },
   summaryCover: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.surfaceHover },

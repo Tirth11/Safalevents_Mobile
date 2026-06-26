@@ -84,12 +84,12 @@ export function Button({ label, onPress, variant = 'primary', icon, style, disab
       disabled={disabled}
       style={[
         styles.btn,
-        small && { paddingVertical: 8, paddingHorizontal: 12 },
-        { backgroundColor: v.bg, borderColor: v.border, opacity: disabled ? 0.5 : 1 },
+        small && { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, minHeight: 38 },
+        { backgroundColor: v.bg, borderColor: v.border, opacity: disabled ? 0.45 : 1 },
         style,
       ]}
     >
-      {icon ? <Ionicons name={icon} size={small ? 15 : 17} color={v.fg} style={{ marginRight: 6 }} /> : null}
+      {icon ? <Ionicons name={icon} size={small ? 15 : 17} color={v.fg} style={{ marginRight: spacing.xs }} /> : null}
       <Text style={{ color: v.fg, fontWeight: '700', fontSize: small ? 13 : 15, fontFamily: 'Inter_700Bold' }}>{label}</Text>
     </TouchableOpacity>
   );
@@ -97,8 +97,8 @@ export function Button({ label, onPress, variant = 'primary', icon, style, disab
 
 export function SectionTitle({ children, right }) {
   return (
-    <View style={styles.rowBetween}>
-      <Text style={[font.h3, { marginBottom: spacing.sm }]}>{children}</Text>
+    <View style={[styles.rowBetween, { marginBottom: spacing.sm }]}>
+      <Text style={font.h3}>{children}</Text>
       {right}
     </View>
   );
@@ -145,12 +145,12 @@ export function BrandLockup({ size = 38, onLight = true, subtitle = true, tile =
 
 export function StatCard({ label, value, icon, color = colors.primary, style }) {
   return (
-    <View style={[styles.card, { flex: 1, padding: spacing.lg }, style]}>
+    <View style={[styles.card, { flex: 1, padding: spacing.lg, alignItems: 'flex-start' }, style]}>
       <View style={[styles.iconTile, { backgroundColor: color + '22' }]}>
         <Ionicons name={icon} size={18} color={color} />
       </View>
-      <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 8, fontFamily: 'Inter_800ExtraBold' }}>{value}</Text>
-      <Text style={font.small}>{label}</Text>
+      <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: spacing.sm, fontFamily: 'Inter_800ExtraBold', textAlign: 'left' }}>{value}</Text>
+      <Text style={[font.small, { marginTop: spacing.xs, textAlign: 'left' }]}>{label}</Text>
     </View>
   );
 }
@@ -164,13 +164,13 @@ export function Divider({ style }) {
 }
 
 export function ListItemIcon({ name, color = colors.primary }) {
-  return <Ionicons name={name} size={14} color={color} style={{ marginRight: 6 }} />;
+  return <Ionicons name={name} size={14} color={color} style={{ marginRight: spacing.xs }} />;
 }
 
 export function Field({ label, value, placeholder, multiline, keyboardType }) {
   return (
     <View style={{ marginBottom: spacing.md }}>
-      {label ? <Text style={[font.small, { fontFamily: 'Inter_700Bold', fontWeight: '700', marginBottom: 4, color: colors.text }]}>{label}</Text> : null}
+      {label ? <Text style={[font.small, { fontFamily: 'Inter_700Bold', fontWeight: '700', marginBottom: spacing.xs, color: colors.text }]}>{label}</Text> : null}
       <TextInput
         defaultValue={value}
         placeholder={placeholder}
@@ -188,12 +188,12 @@ export function ToggleRow({ label, desc, value, icon, onChange }) {
   const handle = (v) => { setOn(v); onChange && onChange(v); };
   return (
     <View style={[styles.rowBetween, styles.toggleRow]}>
-      <View style={{ flex: 1, paddingRight: 12 }}>
+      <View style={{ flex: 1, paddingRight: spacing.md }}>
         <Row>
           {icon ? <ListItemIcon name={icon} /> : null}
           <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text, fontFamily: 'Inter_700Bold' }}>{label}</Text>
         </Row>
-        {desc ? <Text style={[font.tiny, { marginTop: 2 }]}>{desc}</Text> : null}
+        {desc ? <Text style={[font.tiny, { marginTop: spacing.xs, lineHeight: 16 }]}>{desc}</Text> : null}
       </View>
       <RNSwitch
         value={on}
@@ -252,8 +252,8 @@ export function EmptyState({ icon = 'sparkles-outline', title, subtitle }) {
       <View style={[styles.iconTile, { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primaryTint }]}>
         <Ionicons name={icon} size={26} color={colors.primary} />
       </View>
-      <Text style={[font.h3, { marginTop: 12 }]}>{title}</Text>
-      {subtitle ? <Text style={[font.small, { textAlign: 'center', marginTop: 4 }]}>{subtitle}</Text> : null}
+      <Text style={[font.h3, { marginTop: spacing.md, textAlign: 'center' }]}>{title}</Text>
+      {subtitle ? <Text style={[font.small, { textAlign: 'center', marginTop: spacing.xs, lineHeight: 19 }]}>{subtitle}</Text> : null}
     </View>
   );
 }
@@ -264,13 +264,18 @@ export function ScreenHeader({ title, subtitle, onBack, right }) {
     <View style={styles.header}>
       <Row>
         {onBack ? (
-          <TouchableOpacity onPress={onBack} style={{ marginRight: 8 }}>
+          <TouchableOpacity
+            onPress={onBack}
+            activeOpacity={0.8}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={{ marginRight: spacing.sm, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginLeft: -spacing.sm }}
+          >
             <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
         ) : null}
         <View style={{ flex: 1 }}>
-          <Text style={font.h2}>{title}</Text>
-          {subtitle ? <Text style={font.small}>{subtitle}</Text> : null}
+          <Text style={font.h2} numberOfLines={1}>{title}</Text>
+          {subtitle ? <Text style={font.small} numberOfLines={1}>{subtitle}</Text> : null}
         </View>
         {right}
       </Row>
@@ -284,7 +289,7 @@ export function ScreenHeader({ title, subtitle, onBack, right }) {
 export function TextField({ label, value, onChangeText, placeholder, multiline, keyboardType, half }) {
   return (
     <View style={{ marginBottom: spacing.md, flex: half ? 1 : undefined }}>
-      {label ? <Text style={[font.small, { fontFamily: 'Inter_700Bold', fontWeight: '700', marginBottom: 4, color: colors.text }]}>{label}</Text> : null}
+      {label ? <Text style={[font.small, { fontFamily: 'Inter_700Bold', fontWeight: '700', marginBottom: spacing.xs, color: colors.text }]}>{label}</Text> : null}
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -302,12 +307,12 @@ export function TextField({ label, value, onChangeText, placeholder, multiline, 
 export function Toggle({ label, desc, value, onValueChange, icon }) {
   return (
     <View style={[styles.rowBetween, styles.toggleRow]}>
-      <View style={{ flex: 1, paddingRight: 12 }}>
+      <View style={{ flex: 1, paddingRight: spacing.md }}>
         <Row>
           {icon ? <ListItemIcon name={icon} /> : null}
           <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text, fontFamily: 'Inter_700Bold' }}>{label}</Text>
         </Row>
-        {desc ? <Text style={[font.tiny, { marginTop: 2 }]}>{desc}</Text> : null}
+        {desc ? <Text style={[font.tiny, { marginTop: spacing.xs, lineHeight: 16 }]}>{desc}</Text> : null}
       </View>
       <RNSwitch value={!!value} onValueChange={onValueChange} trackColor={{ true: colors.primary, false: '#cbd5e1' }} thumbColor="#fff" />
     </View>
@@ -407,8 +412,10 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   badge: {
-    paddingVertical: 3,
-    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
     borderRadius: radius.full,
     alignSelf: 'flex-start',
   },
@@ -429,8 +436,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     fontSize: 14,
     color: colors.text,
     fontFamily: 'Inter_400Regular',
@@ -440,8 +447,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 12,
-    marginBottom: 10,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
   tabsWrap: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 4, columnGap: 4, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: spacing.lg },
   tabBtn: { marginRight: 14, paddingBottom: 6 },
