@@ -348,6 +348,7 @@ export default function HostEventManageScreen({ navigation, route }) {
                 </View>
               ))
             )}
+          </Card>
           )}
 
           {guestSubTab === 'waitlist' && (
@@ -376,6 +377,7 @@ export default function HostEventManageScreen({ navigation, route }) {
                 </View>
               ))
             )}
+          </Card>
           )}
 
           {guestSubTab === 'rejected' && rejected.length > 0 && (
