@@ -18,10 +18,10 @@ import { Card, Badge, Avatar, Button, Row, Divider } from './ui';
 import {
   getCheckinState,
   getCheckedInCount,
-  getPartyMembers,
   getGuestHistorySummary,
   recordArrival,
   resetArrival,
+  addWalkinGuests,
   calcAge,
   meetsAge,
 } from '../data/mock';
@@ -39,18 +39,26 @@ export default function GuestCheckinDetail({
   canViewHistory = true,
 }) {
   const total = rsvp.guestCount || 1;
+  const walkins = rsvp.walkinCount || 0;
   const checked = getCheckedInCount(rsvp);
   const remaining = Math.max(0, total - checked);
+  const actualAttendance = checked + walkins;
   const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
   const state = getCheckinState(rsvp);
-  const [arriving, setArriving] = useState(1);
+  const [walkinCount, setWalkinCount] = useState(1);
+
+  const firstScan = checked === 0;               // nobody checked in yet → whole party pre-selected
+  // Stepper defaults to ALL present. `selRaw` high sentinel → clamps to the max so the
+  // full party (or all remaining) is selected by default; admin taps − to deselect absentees.
+  const maxSel = firstScan ? total : remaining;
+  const [selRaw, setSelRaw] = useState(2);
+  const sel = Math.max(1, Math.min(selRaw, maxSel));
 
   // Entry verdict — denied vs valid vs all-in.
   const denied = result && !result.ok && result.code !== 'duplicate';
   const allIn = !denied && checked >= total;
 
   const log = rsvp.checkInLog || [];
-  const members = getPartyMembers(rsvp.name, total);
   const hist = canViewHistory ? getGuestHistorySummary(rsvp.email) : null;
 
   // Age verification badge
@@ -69,7 +77,7 @@ export default function GuestCheckinDetail({
 
   const doArrival = (n) => {
     recordArrival(rsvp.id, n, scannerName);
-    setArriving(1);
+    setSelRaw(2); // reset stepper back to 2 for the next scan
   };
 
   return (
@@ -124,9 +132,11 @@ export default function GuestCheckinDetail({
           </Row>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-            <Stat label="RSVP Total" value={total} color={colors.text} />
+            <Stat label="RSVP Count" value={total} color={colors.text} />
             <Stat label="Checked-In" value={checked} color={GREEN} />
             <Stat label="Remaining" value={remaining} color={remaining > 0 ? AMBER : colors.textMuted} />
+            <Stat label="Walk-Ins" value={walkins > 0 ? `+${walkins}` : 0} color={walkins > 0 ? GREEN : colors.textMuted} />
+            {walkins > 0 ? <Stat label="Actual Total" value={actualAttendance} color={colors.primary} /> : null}
           </View>
 
           {/* progress */}
@@ -140,26 +150,44 @@ export default function GuestCheckinDetail({
             </View>
           </View>
 
-          {/* stepper / controls */}
+          {/* repeat-scan indicator — same QR scanned again mid-event */}
+          {canCheckin && !firstScan && remaining > 0 ? (
+            <View style={styles.repeatBanner}>
+              <Ionicons name="refresh-circle" size={18} color={'#a16207'} />
+              <Text style={{ marginLeft: spacing.sm, flex: 1, fontWeight: '700', fontSize: 12.5, color: '#a16207', lineHeight: 17 }}>
+                Already partially checked in — {checked} of {total} arrived. Continue with the remaining {remaining}.
+              </Text>
+            </View>
+          ) : null}
+
+          {/* check-in controls — whole party pre-selected; admin taps − to deselect absentees */}
           {canCheckin && remaining > 0 ? (
             <View style={styles.stepperWrap}>
-              <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm }]}>Additional attendees arriving now</Text>
+              <Text style={[font.small, { fontWeight: '700', marginBottom: 2 }]}>
+                {firstScan ? 'Attendees present now' : 'Remaining attendees present now'}
+              </Text>
+              <Text style={[font.tiny, { color: colors.textMuted, marginBottom: spacing.sm, lineHeight: 16 }]}>
+                {maxSel > 1 ? `Up to 2 selected by default — adjust if needed.` : `1 selected by default.`}
+              </Text>
               <Row style={{ gap: spacing.sm, flexWrap: 'wrap', alignItems: 'center' }}>
                 <Row style={styles.stepper}>
-                  <TouchableOpacity activeOpacity={0.8} hitSlop={8} onPress={() => setArriving((a) => Math.max(1, a - 1))} style={styles.stepBtn}>
+                  <TouchableOpacity activeOpacity={0.8} hitSlop={8} onPress={() => setSelRaw(Math.max(1, sel - 1))} style={styles.stepBtn}>
                     <Ionicons name="remove" size={16} color={colors.text} />
                   </TouchableOpacity>
-                  <Text style={{ minWidth: 32, textAlign: 'center', fontWeight: '800', fontSize: 16 }}>{Math.min(arriving, remaining)}</Text>
-                  <TouchableOpacity activeOpacity={0.8} hitSlop={8} onPress={() => setArriving((a) => Math.min(remaining, a + 1))} style={styles.stepBtn}>
+                  <Text style={{ minWidth: 32, textAlign: 'center', fontWeight: '800', fontSize: 16 }}>{sel}</Text>
+                  <TouchableOpacity activeOpacity={0.8} hitSlop={8} onPress={() => setSelRaw(Math.min(maxSel, sel + 1))} style={styles.stepBtn}>
                     <Ionicons name="add" size={16} color={colors.text} />
                   </TouchableOpacity>
                 </Row>
-                <View style={{ flex: 1, minWidth: 130 }}>
-                  <Button label={`Check In ${Math.min(arriving, remaining)}`} variant="accent" icon="checkmark-circle" small onPress={() => doArrival(Math.min(arriving, remaining))} />
+                <View style={{ flex: 1, minWidth: 150 }}>
+                  <Button
+                    label={sel >= maxSel ? `Check In All ${sel}` : `Check In ${sel}`}
+                    variant="accent"
+                    icon="checkmark-circle"
+                    small
+                    onPress={() => doArrival(sel)}
+                  />
                 </View>
-                {remaining > 1 ? (
-                  <Button label={`All ${remaining}`} variant="outline" small onPress={() => doArrival(remaining)} />
-                ) : null}
               </Row>
             </View>
           ) : null}
@@ -178,6 +206,38 @@ export default function GuestCheckinDetail({
             </View>
           ) : null}
 
+          {canCheckin ? (
+            <View style={styles.walkinWrap}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
+                <Ionicons name="person-add-outline" size={15} color={colors.primary} style={{ marginRight: spacing.xs }} />
+                <Text style={[font.small, { fontWeight: '700', color: colors.text }]}>Add Additional Guest (walk-in)</Text>
+              </View>
+              <Text style={[font.tiny, { color: colors.textMuted, marginBottom: spacing.sm, lineHeight: 16 }]}>
+                No personal info needed — enter guest count only. They're checked in immediately.
+              </Text>
+              <Row style={{ gap: spacing.sm, flexWrap: 'wrap', alignItems: 'center' }}>
+                <Row style={styles.stepper}>
+                  <TouchableOpacity activeOpacity={0.8} hitSlop={8} onPress={() => setWalkinCount((n) => Math.max(1, n - 1))} style={styles.stepBtn}>
+                    <Ionicons name="remove" size={16} color={colors.text} />
+                  </TouchableOpacity>
+                  <Text style={{ minWidth: 32, textAlign: 'center', fontWeight: '800', fontSize: 16 }}>{walkinCount}</Text>
+                  <TouchableOpacity activeOpacity={0.8} hitSlop={8} onPress={() => setWalkinCount((n) => n + 1)} style={styles.stepBtn}>
+                    <Ionicons name="add" size={16} color={colors.text} />
+                  </TouchableOpacity>
+                </Row>
+                <View style={{ flex: 1, minWidth: 150 }}>
+                  <Button
+                    label={`+ Add & Check-In ${walkinCount}`}
+                    variant="primary"
+                    icon="person-add-outline"
+                    small
+                    onPress={() => { addWalkinGuests(rsvp.id, walkinCount, scannerName); setWalkinCount(1); }}
+                  />
+                </View>
+              </Row>
+            </View>
+          ) : null}
+
           {!canCheckin ? (
             <Text style={[font.small, { marginTop: spacing.sm, lineHeight: 18 }]}>Your role can view this guest but not check them in.</Text>
           ) : null}
@@ -193,19 +253,46 @@ export default function GuestCheckinDetail({
           </Row>
           <View style={{ paddingLeft: 18 }}>
             <View style={styles.timeLine} />
-            {log.map((l, i) => (
-              <View key={i} style={{ paddingBottom: i < log.length - 1 ? spacing.md : 0, position: 'relative' }}>
-                <View style={styles.timeDot} />
-                <Text style={[font.tiny, { fontWeight: '600' }]} numberOfLines={1}>{l.time}{l.by ? ` · ${l.by}` : ''}</Text>
-                <Text style={{ fontSize: 13.5, fontWeight: '700', color: colors.text }}>
-                  Checked in {l.count} attendee{l.count > 1 ? 's' : ''}
-                </Text>
-              </View>
-            ))}
+            {(() => {
+              let cumChecked = 0;
+              let cumWalk = 0;
+              return log.map((l, i) => {
+                let title;
+                if (l.walkin) {
+                  cumWalk += l.count;
+                  title = `+${l.count} walk-in guest${l.count > 1 ? 's' : ''} added`;
+                } else {
+                  const isFirst = cumChecked === 0;
+                  cumChecked += l.count;
+                  if (isFirst) {
+                    const extra = l.count - 1;
+                    title = extra > 0
+                      ? `Primary guest + ${extra} additional guest${extra > 1 ? 's' : ''} checked in`
+                      : 'Primary guest checked in';
+                  } else {
+                    title = `${l.count} additional guest${l.count > 1 ? 's' : ''} checked in`;
+                  }
+                }
+                const totalLine = l.walkin
+                  ? `Total attendance: ${cumChecked + cumWalk}`
+                  : `Total checked-in: ${cumChecked}`;
+                return (
+                  <View key={i} style={{ paddingBottom: i < log.length - 1 ? spacing.md : 0, position: 'relative' }}>
+                    <View style={[styles.timeDot, l.walkin && { backgroundColor: '#16a34a' }]} />
+                    <Text style={[font.tiny, { fontWeight: '600' }]} numberOfLines={1}>{l.time}{l.by ? ` · ${l.by}` : ''}</Text>
+                    <Text style={{ fontSize: 13.5, fontWeight: '700', color: colors.text }}>{title}</Text>
+                    <Text style={[font.tiny, { color: colors.textMuted, marginTop: 1 }]}>{totalLine}</Text>
+                  </View>
+                );
+              });
+            })()}
           </View>
           <Divider style={{ marginVertical: spacing.sm }} />
           <Text style={[font.small, { fontWeight: '700' }]}>
-            Total Attendance: <Text style={{ color: colors.text }}>{checked} of {total}</Text>
+            Total Attendance:{' '}
+            <Text style={{ color: colors.text }}>
+              {checked} of {total}{walkins > 0 ? ` + ${walkins} walk-in${walkins > 1 ? 's' : ''} = ${actualAttendance} actual` : ''}
+            </Text>
           </Text>
         </Card>
       ) : null}
@@ -215,17 +302,16 @@ export default function GuestCheckinDetail({
         <Card>
           <Text style={styles.kicker}>PARTY MEMBERS ({total})</Text>
           <View style={{ gap: spacing.sm }}>
-            {members.map((m, i) => {
+            {Array.from({ length: total }).map((_, i) => {
               const inHere = i < checked;
-              const real = i === 0 ? null : (rsvp.additionalGuests || [])[i - 1];
-              const display = real ? `${real.firstName} ${real.lastName}` : m;
+              const label = i === 0 ? 'Primary Guest' : `Additional Guest ${i + 1}`;
               return (
                 <Row key={i} style={styles.memberRow}>
                   <View style={[styles.memberDot, { backgroundColor: inHere ? GREEN + '22' : colors.surfaceHover }]}>
                     {inHere ? <Ionicons name="checkmark" size={13} color={GREEN} /> : <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted }}>{i + 1}</Text>}
                   </View>
                   <Text numberOfLines={1} style={{ flex: 1, marginLeft: spacing.sm, fontSize: 13.5, fontWeight: inHere ? '700' : '500', color: inHere ? colors.text : colors.textMuted }}>
-                    {display}
+                    {label}
                   </Text>
                   <Text style={{ fontSize: 11, fontWeight: '700', color: inHere ? GREEN : colors.textMuted, textAlign: 'right' }}>{inHere ? 'Arrived' : 'Pending'}</Text>
                 </Row>
@@ -325,6 +411,8 @@ const styles = StyleSheet.create({
   stat: { flex: 1, backgroundColor: colors.surfaceHover, borderRadius: radius.md, padding: 14, alignItems: 'center' },
   track: { height: 10, backgroundColor: colors.border, borderRadius: 5, overflow: 'hidden' },
   stepperWrap: { backgroundColor: colors.surfaceHover, borderRadius: radius.md, padding: 14, marginTop: spacing.md },
+  walkinWrap: { borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', borderRadius: radius.md, padding: 14, marginTop: spacing.md },
+  repeatBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eab30815', borderWidth: 1, borderColor: '#eab30840', borderLeftWidth: 4, borderLeftColor: '#eab308', borderRadius: radius.md, padding: 12, marginTop: spacing.md },
   stepper: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.surface, alignItems: 'center' },
   stepBtn: { padding: 10 },
   complete: { flexDirection: 'row', alignItems: 'center', backgroundColor: GREEN + '12', borderWidth: 1, borderColor: GREEN + '40', borderRadius: radius.md, padding: 12, marginTop: spacing.md },

@@ -862,6 +862,40 @@ export const resetArrival = (rsvpId) => {
   return rsvp;
 };
 
+// Add walk-in guests to an existing RSVP during check-in. No personal info required —
+// only a count. Walk-ins are immediately counted as checked in.
+export const addWalkinGuests = (rsvpId, count, scannerName = 'Host') => {
+  const rsvp = rsvps.find((r) => r.id === rsvpId);
+  if (!rsvp || count < 1) return null;
+  const stamp = new Date();
+  const entry = {
+    time: stamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    iso: stamp.toISOString(),
+    count,
+    by: scannerName,
+    walkin: true,
+  };
+  rsvp.walkinCount = (rsvp.walkinCount || 0) + count;
+  rsvp.checkInLog = [...(rsvp.checkInLog || []), entry];
+  const ev = getEvent(rsvp.eventId);
+  notifications.unshift({
+    id: 'n_' + Math.random().toString(36).slice(2, 8),
+    type: 'checkin',
+    title: 'Walk-in Guests Added',
+    message: `+${count} additional guest(s) added to ${rsvp.name}'s party.`,
+    time: 'just now',
+    read: false,
+  });
+  auditTrail.unshift({
+    id: 'a_' + Math.random().toString(36).slice(2, 8),
+    actor: scannerName,
+    action: `+${count} walk-in guest(s) added to ${rsvp.name}'s check-in${ev ? ` at ${ev.title}` : ''}`,
+    time: entry.time,
+  });
+  _notify();
+  return rsvp;
+};
+
 // Cross-event guest intelligence by email — accuracy, no-shows, partials, recent.
 export const getGuestHistorySummary = (email) => {
   const guest = MOCK_GUESTS.find((g) => g.email === email);

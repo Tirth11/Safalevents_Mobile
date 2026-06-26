@@ -62,7 +62,7 @@ export default function StaffProfileScreen({ navigation }) {
         label="Log out"
         icon="log-out-outline"
         variant="danger"
-        onPress={() => { auth.signOut(); navigation.navigate('Browse'); }}
+        onPress={() => { auth.signOut(); navigation.replace('Auth'); }}
       />
     </Screen>
   );

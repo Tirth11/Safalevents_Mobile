@@ -43,22 +43,12 @@ export default function GuestRsvpScreen({ navigation, route }) {
   const [phone, setPhone] = useState(GUEST.phone);
   const [guestCount, setGuestCount] = useState(1);
   const [dob, setDob] = useState('');
-  const [extras, setExtras] = useState([]); // [{ firstName, lastName, dob }]
   const [answers, setAnswers] = useState({}); // { [question]: value }
   const [errorMsg, setErrorMsg] = useState('');
   const [submitted, setSubmitted] = useState(null); // result of createGuestRsvp
 
-  const setCount = (n) => {
-    const c = Math.max(1, Math.min(10, n));
-    setGuestCount(c);
-    setExtras((prev) => {
-      const arr = [...prev];
-      while (arr.length < c - 1) arr.push({ firstName: '', lastName: '', dob: '' });
-      arr.length = c - 1;
-      return arr;
-    });
-  };
-  const updateExtra = (i, field, v) => setExtras((prev) => prev.map((g, idx) => (idx === i ? { ...g, [field]: v } : g)));
+  // Additional guests are a headcount only — no names or details collected.
+  const setCount = (n) => setGuestCount(Math.max(1, Math.min(10, n)));
 
   const onSubmit = () => {
     setErrorMsg('');
@@ -73,18 +63,10 @@ export default function GuestRsvpScreen({ navigation, route }) {
       if (!dob) return setErrorMsg('Please enter your date of birth — this is an age-restricted event.');
       if (!meetsAge(dob, minAge)) return setErrorMsg(`You must be at least ${minAge} to attend this event.`);
     }
-    for (let i = 0; i < extras.length; i++) {
-      const g = extras[i];
-      if (!g.firstName.trim() || !g.lastName.trim()) return setErrorMsg(`Enter the first and last name for Guest ${i + 2}.`);
-      if (restricted) {
-        if (!g.dob) return setErrorMsg(`Enter the date of birth for Guest ${i + 2}.`);
-        if (!meetsAge(g.dob, minAge)) return setErrorMsg(`Guest ${i + 2} doesn't meet the ${minAge}+ requirement.`);
-      }
-    }
 
     const res = createGuestRsvp(event.id, {
       name, email, phone, guestCount, dob,
-      additionalGuests: extras,
+      additionalGuests: [],
       answers,
     });
     setSubmitted({ ...res, response: 'going' });
@@ -193,7 +175,7 @@ export default function GuestRsvpScreen({ navigation, route }) {
           <Row>
             <Ionicons name="lock-closed" size={18} color={colors.red} />
             <Text style={[font.small, { marginLeft: spacing.sm, flex: 1, color: colors.text, fontWeight: '700' }]}>
-              This is a {minAge}+ event. A date of birth is required for every attendee.
+              This is a {minAge}+ event. Your date of birth is required; accompanying guests' ages are verified at the door.
             </Text>
           </Row>
         </Card>
@@ -235,7 +217,7 @@ export default function GuestRsvpScreen({ navigation, route }) {
           <SectionTitle>How many attending?</SectionTitle>
           <Card style={{ marginBottom: spacing.lg }}>
             <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>Number of guests (including you)</Text>
-            <Row style={{ marginBottom: extras.length ? spacing.md : 0 }}>
+            <Row>
               <TouchableOpacity onPress={() => setCount(guestCount - 1)} style={styles.stepBtn} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Ionicons name="remove" size={18} color={colors.text} />
               </TouchableOpacity>
@@ -244,25 +226,11 @@ export default function GuestRsvpScreen({ navigation, route }) {
                 <Ionicons name="add" size={18} color={colors.text} />
               </TouchableOpacity>
             </Row>
-
-            {extras.map((g, i) => (
-              <View key={i} style={styles.extraBox}>
-                <Text style={{ fontWeight: '700', fontSize: 13, color: colors.text, marginBottom: spacing.sm }}>
-                  Guest {i + 2} <Text style={{ color: colors.textMuted, fontWeight: '500' }}>(+{i + 1})</Text>
-                </Text>
-                <Row style={{ gap: 8 }}>
-                  <View style={{ flex: 1 }}>
-                    <LInput label="First name" value={g.firstName} onChangeText={(v) => updateExtra(i, 'firstName', v)} placeholder="Jane" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <LInput label="Last name" value={g.lastName} onChangeText={(v) => updateExtra(i, 'lastName', v)} placeholder="Doe" />
-                  </View>
-                </Row>
-                {restricted ? (
-                  <LInput label="Date of birth" value={g.dob} onChangeText={(v) => updateExtra(i, 'dob', v)} placeholder="YYYY-MM-DD" required />
-                ) : null}
-              </View>
-            ))}
+            {guestCount > 1 ? (
+              <Text style={[font.tiny, { color: colors.textMuted, marginTop: spacing.sm, lineHeight: 16 }]}>
+                Bringing {guestCount - 1} additional guest{guestCount - 1 > 1 ? 's' : ''} — just the count, no names needed.
+              </Text>
+            ) : null}
           </Card>
 
           {/* Host questions */}
@@ -356,14 +324,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  extraBox: {
-    backgroundColor: colors.surfaceHover,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    marginTop: spacing.md,
   },
   successRing: { width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center' },
   summaryCover: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.surfaceHover },

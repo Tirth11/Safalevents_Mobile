@@ -424,27 +424,10 @@ export default function HostEventManageScreen({ navigation, route }) {
                           ) : (
                             <Badge tone="amber" label="⚠️ Age unverified — check ID" />
                           )}
-                          {(r.additionalGuests || []).length > 0 ? (
-                            <View style={{ marginTop: spacing.sm }}>
-                              <Text style={[font.tiny, { fontWeight: '700', color: colors.text, marginBottom: spacing.xs }]}>
-                                Party members ({r.additionalGuests.length})
-                              </Text>
-                              {r.additionalGuests.map((g, gi) => {
-                                const ok = g.dob ? meetsAge(g.dob, event.minimumAge) : null;
-                                return (
-                                  <Text key={gi} style={font.tiny}>
-                                    {g.firstName} {g.lastName}
-                                    {g.dob ? (
-                                      <Text style={{ color: ok ? colors.accent : colors.red, fontWeight: '700' }}>
-                                        {`  ${ok ? '✅' : '❌'} ${calcAge(g.dob)} yrs`}
-                                      </Text>
-                                    ) : (
-                                      <Text style={{ color: colors.amber, fontWeight: '700' }}>  ⚠️ No DOB</Text>
-                                    )}
-                                  </Text>
-                                );
-                              })}
-                            </View>
+                          {(r.guestCount || 1) > 1 ? (
+                            <Text style={[font.tiny, { marginTop: spacing.sm, color: colors.textMuted }]}>
+                              +{(r.guestCount || 1) - 1} accompanying guest{(r.guestCount || 1) - 1 > 1 ? 's' : ''} · ages verified at the door
+                            </Text>
                           ) : null}
                         </View>
                       ) : null}

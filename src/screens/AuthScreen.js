@@ -181,9 +181,6 @@ export default function AuthScreen({ navigation, route }) {
       <ScrollView contentContainerStyle={{ padding: spacing.lg }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <BrandLockup size={34} />
-          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -spacing.sm }}>
-            <Ionicons name="close" size={26} color={colors.textMuted} />
-          </TouchableOpacity>
         </View>
 
         {error ? (
@@ -225,7 +222,6 @@ export default function AuthScreen({ navigation, route }) {
               }}
               style={{ width: '100%' }}
             />
-            <Button label="Browse events" variant="outline" icon="compass" onPress={() => navigation.goBack()} style={{ width: '100%', marginTop: spacing.sm }} />
             <TouchableOpacity onPress={() => { setStep('form'); setMode('login'); setError(''); }} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.backLink}>
               <Text style={{ color: colors.textMuted, fontWeight: '600' }}>Back to login</Text>
             </TouchableOpacity>

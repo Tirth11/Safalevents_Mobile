@@ -10,7 +10,6 @@ import { AuthProvider } from './src/auth/AuthContext';
 import PhoneFrame from './src/components/PhoneFrame';
 
 import SplashScreen from './src/screens/SplashScreen';
-import BrowseTabs from './src/navigation/BrowseTabs';
 import AuthScreen from './src/screens/AuthScreen';
 import HostTabs from './src/navigation/HostTabs';
 import GuestTabs from './src/navigation/GuestTabs';
@@ -52,10 +51,8 @@ export default function App() {
           <NavigationContainer>
             <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
               <Stack.Screen name="Splash" component={SplashScreen} />
-              {/* Guest Mode — browse without an account (UC-14) */}
-              <Stack.Screen name="Browse" component={BrowseTabs} />
-              {/* Auth presented as a dismissible modal → cancel returns to Guest Mode */}
-              <Stack.Screen name="Auth" component={AuthScreen} options={{ presentation: 'modal' }} />
+              {/* Login-first: Auth is the entry point after install (no guest landing) */}
+              <Stack.Screen name="Auth" component={AuthScreen} />
 
               {/* Authenticated flows */}
               <Stack.Screen name="HostTabs" component={HostTabs} />

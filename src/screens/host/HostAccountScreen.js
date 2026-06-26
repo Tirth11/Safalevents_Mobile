@@ -382,7 +382,7 @@ export default function HostAccountScreen({ navigation }) {
         label="Log out"
         variant="danger"
         icon="log-out-outline"
-        onPress={() => { auth.signOut(); navigation.navigate('Browse'); }}
+        onPress={() => { auth.signOut(); navigation.replace('Auth'); }}
       />
     </Screen>
   );

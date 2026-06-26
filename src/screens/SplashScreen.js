@@ -4,8 +4,6 @@ import { colors } from '../theme/theme';
 import { BrandLockup } from '../components/ui';
 import { useAuth } from '../auth/AuthContext';
 
-// Brief branded splash. Routes a remembered user straight to their flow,
-// otherwise lands in Guest Mode (Browse) — no login wall (UC-14).
 export default function SplashScreen({ navigation }) {
   const auth = useAuth();
 
@@ -15,7 +13,7 @@ export default function SplashScreen({ navigation }) {
       if (auth.user && auth.user.role !== 'staff') {
         navigation.replace(auth.user.role === 'host' ? 'HostTabs' : 'GuestTabs');
       } else {
-        navigation.replace('Browse');
+        navigation.replace('Auth');
       }
     }, 650);
     return () => clearTimeout(t);
