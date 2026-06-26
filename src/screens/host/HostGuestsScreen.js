@@ -487,24 +487,7 @@ export default function HostGuestsScreen({ navigation }) {
                           </View>
                         </View>
 
-                        {/* Party members */}
-                        <View style={{ marginBottom: 12 }}>
-                          <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.4, marginBottom: 8 }}>PARTY MEMBERS</Text>
-                          <View style={{ gap: 6 }}>
-                            {members.map((m, mi) => {
-                              const isIn = mi < checked;
-                              return (
-                                <View key={mi} style={[s.memberRow, { backgroundColor: isIn ? '#16a34a08' : colors.surfaceHover, borderColor: isIn ? '#16a34a25' : colors.border }]}>
-                                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: isIn ? '#16a34a18' : colors.border, alignItems: 'center', justifyContent: 'center' }}>
-                                    <Ionicons name={isIn ? 'checkmark-circle' : 'people-outline'} size={14} color={isIn ? '#16a34a' : colors.textMuted} />
-                                  </View>
-                                  <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: isIn ? colors.text : colors.textMuted, marginLeft: 10 }}>{m}</Text>
-                                  <Text style={{ fontSize: 10, fontWeight: '700', color: isIn ? '#16a34a' : colors.textMuted }}>{isIn ? 'IN' : 'PENDING'}</Text>
-                                </View>
-                              );
-                            })}
-                          </View>
-                        </View>
+
 
                         {/* Check-in controls */}
                         {remaining > 0 ? (

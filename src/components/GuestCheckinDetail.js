@@ -297,29 +297,7 @@ export default function GuestCheckinDetail({
         </Card>
       ) : null}
 
-      {/* ── 5. PARTY MEMBERS ── */}
-      {total > 1 ? (
-        <Card>
-          <Text style={styles.kicker}>PARTY MEMBERS ({total})</Text>
-          <View style={{ gap: spacing.sm }}>
-            {Array.from({ length: total }).map((_, i) => {
-              const inHere = i < checked;
-              const label = i === 0 ? 'Primary Guest' : `Additional Guest ${i + 1}`;
-              return (
-                <Row key={i} style={styles.memberRow}>
-                  <View style={[styles.memberDot, { backgroundColor: inHere ? GREEN + '22' : colors.surfaceHover }]}>
-                    {inHere ? <Ionicons name="checkmark" size={13} color={GREEN} /> : <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted }}>{i + 1}</Text>}
-                  </View>
-                  <Text numberOfLines={1} style={{ flex: 1, marginLeft: spacing.sm, fontSize: 13.5, fontWeight: inHere ? '700' : '500', color: inHere ? colors.text : colors.textMuted }}>
-                    {label}
-                  </Text>
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: inHere ? GREEN : colors.textMuted, textAlign: 'right' }}>{inHere ? 'Arrived' : 'Pending'}</Text>
-                </Row>
-              );
-            })}
-          </View>
-        </Card>
-      ) : null}
+
 
       {/* ── 6 + 7. CROSS-EVENT INTELLIGENCE + VERDICT ── */}
       {hist ? (
