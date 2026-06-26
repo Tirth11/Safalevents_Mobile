@@ -60,7 +60,7 @@ export default function HostGuestsScreen({ navigation }) {
   const [notesMap, setNotesMap] = useState({});
   const [showCheckinPanel, setShowCheckinPanel] = useState(false);
   const [checkinState, setCheckinState] = useState({});
-  const [arrivingNow, setArrivingNow] = useState(1);
+  const [arrivingNowMap, setArrivingNowMap] = useState({});
 
   // ── Computed ───────────────────────────────────────────────────────────────
   const stats = useMemo(() => ({
@@ -425,7 +425,7 @@ export default function HostGuestsScreen({ navigation }) {
               <SectionLabel icon="flash-outline">Quick Actions</SectionLabel>
               <View style={{ gap: 8 }}>
                 {[
-                  { icon: 'qr-code-outline', label: showCheckinPanel ? 'Hide Check-In Panel' : 'Check-In Scanner', highlight: true, onPress: () => { setShowCheckinPanel(!showCheckinPanel); setCheckinState({}); setArrivingNow(1); } },
+                  { icon: 'qr-code-outline', label: showCheckinPanel ? 'Hide Check-In Panel' : 'Check-In Scanner', highlight: true, onPress: () => { setShowCheckinPanel(!showCheckinPanel); setCheckinState({}); setArrivingNowMap({}); } },
                   { icon: 'notifications-outline', label: 'Send Reminder', onPress: () => Alert.alert('Send Reminder', `Reminder sent to ${g.name}.`) },
                   { icon: 'chatbox-outline', label: 'Send Message', onPress: () => Alert.alert('Send Message', `Opening message composer for ${g.name}.`) },
                   { icon: 'document-text-outline', label: 'View RSVP History', onPress: () => setHistoryModal('rsvp') },
@@ -454,6 +454,7 @@ export default function HostGuestsScreen({ navigation }) {
                     const total = h.rsvpCount;
                     const checked = checkinState[idx] != null ? checkinState[idx] : h.actual;
                     const remaining = total - checked;
+                    const arrivingNow = arrivingNowMap[idx] !== undefined ? arrivingNowMap[idx] : remaining;
                     const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
                     const members = getPartyMembers(g.name, total);
                     const evSt = checked >= total
@@ -511,33 +512,23 @@ export default function HostGuestsScreen({ navigation }) {
                             <Row style={{ flexWrap: 'wrap', gap: 10 }}>
                               {/* Stepper */}
                               <View style={s.stepper}>
-                                <TouchableOpacity onPress={() => setArrivingNow(Math.max(1, arrivingNow - 1))} activeOpacity={0.8} style={s.stepperBtn}>
+                                <TouchableOpacity onPress={() => setArrivingNowMap(p => ({ ...p, [idx]: Math.max(1, arrivingNow - 1) }))} activeOpacity={0.8} style={s.stepperBtn}>
                                   <Ionicons name="remove" size={14} color={colors.text} />
                                 </TouchableOpacity>
                                 <Text style={{ minWidth: 28, textAlign: 'center', fontWeight: '800', fontSize: 15 }}>{Math.min(arrivingNow, remaining)}</Text>
-                                <TouchableOpacity onPress={() => setArrivingNow(Math.min(remaining, arrivingNow + 1))} activeOpacity={0.8} style={s.stepperBtn}>
+                                <TouchableOpacity onPress={() => setArrivingNowMap(p => ({ ...p, [idx]: Math.min(remaining, arrivingNow + 1) }))} activeOpacity={0.8} style={s.stepperBtn}>
                                   <Ionicons name="add" size={14} color={colors.text} />
                                 </TouchableOpacity>
                               </View>
                               {/* Check In button */}
                               <TouchableOpacity
-                                onPress={() => { setCheckinState((prev) => ({ ...prev, [idx]: checked + Math.min(arrivingNow, remaining) })); setArrivingNow(1); }}
+                                onPress={() => { setCheckinState((prev) => ({ ...prev, [idx]: checked + Math.min(arrivingNow, remaining) })); setArrivingNowMap(p => ({ ...p, [idx]: undefined })); }}
                                 activeOpacity={0.85}
                                 style={[s.checkInBtn, { flex: 1, minWidth: 120 }]}
                               >
                                 <Ionicons name="checkmark-circle" size={14} color="#fff" />
-                                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13, marginLeft: 6 }}>Check In {Math.min(arrivingNow, remaining)}</Text>
+                                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13, marginLeft: 6 }}>Check In {arrivingNow >= remaining ? `All ${remaining}` : arrivingNow}</Text>
                               </TouchableOpacity>
-                              {/* All N button */}
-                              {remaining > 1 && (
-                                <TouchableOpacity
-                                  onPress={() => setCheckinState((prev) => ({ ...prev, [idx]: total }))}
-                                  activeOpacity={0.85}
-                                  style={s.allBtn}
-                                >
-                                  <Text style={{ fontWeight: '700', fontSize: 12, color: colors.text }}>All {remaining}</Text>
-                                </TouchableOpacity>
-                              )}
                             </Row>
                           </View>
                         ) : (
@@ -851,7 +842,7 @@ export default function HostGuestsScreen({ navigation }) {
                       setSelectedGuest(guest);
                       setShowCheckinPanel(false);
                       setCheckinState({});
-                      setArrivingNow(1);
+                      setArrivingNowMap({});
                       setHistoryModal(null);
                     }}
                     style={{ paddingHorizontal: 14, paddingVertical: 7, minHeight: 0 }}

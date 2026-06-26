@@ -51,7 +51,7 @@ export default function GuestCheckinDetail({
   // Stepper defaults to ALL present. `selRaw` high sentinel → clamps to the max so the
   // full party (or all remaining) is selected by default; admin taps − to deselect absentees.
   const maxSel = firstScan ? total : remaining;
-  const [selRaw, setSelRaw] = useState(2);
+  const [selRaw, setSelRaw] = useState(9999);
   const sel = Math.max(1, Math.min(selRaw, maxSel));
 
   // Entry verdict — denied vs valid vs all-in.
@@ -77,7 +77,7 @@ export default function GuestCheckinDetail({
 
   const doArrival = (n) => {
     recordArrival(rsvp.id, n, scannerName);
-    setSelRaw(2); // reset stepper back to 2 for the next scan
+    setSelRaw(9999); // reset stepper back to "all" for the next scan
   };
 
   return (
@@ -167,7 +167,7 @@ export default function GuestCheckinDetail({
                 {firstScan ? 'Attendees present now' : 'Remaining attendees present now'}
               </Text>
               <Text style={[font.tiny, { color: colors.textMuted, marginBottom: spacing.sm, lineHeight: 16 }]}>
-                {maxSel > 1 ? `Up to 2 selected by default — adjust if needed.` : `1 selected by default.`}
+                All {maxSel} selected by default — tap − to deselect anyone who didn't arrive.
               </Text>
               <Row style={{ gap: spacing.sm, flexWrap: 'wrap', alignItems: 'center' }}>
                 <Row style={styles.stepper}>
