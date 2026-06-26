@@ -75,6 +75,13 @@ const MANAGE_TABS = [
   { key: 'checkin', label: 'Check-in' },
 ];
 
+const GUEST_TABS = [
+  { key: 'confirmed', label: 'Confirmed' },
+  { key: 'approval', label: 'Approval' },
+  { key: 'waitlist', label: 'Waitlist' },
+  { key: 'rejected', label: 'Rejected' },
+];
+
 function Answers({ answers }) {
   const entries = Object.entries(answers || {});
   if (!entries.length) return null;
@@ -120,6 +127,7 @@ export default function HostEventManageScreen({ navigation, route }) {
   const event = getEvent(route.params?.eventId) || events[0];
   const eventRsvps = getRsvps(event.id);
   const [active, setActive] = useState('overview');
+  const [guestSubTab, setGuestSubTab] = useState('confirmed'); // sub-tab for Guests view
   const [scanResult, setScanResult] = useState(null); // result of QR validate
   const [arriving, setArriving] = useState(1);         // stepper for arrivals
   const [passInput, setPassInput] = useState('');      // manual pass id entry
@@ -193,7 +201,7 @@ export default function HostEventManageScreen({ navigation, route }) {
     title: event.title, date: event.date, time: event.time, location: event.location,
     capacity: String(event.capacity || ''), description: event.description,
     seriesType: event.seriesType || 'None',
-    approvalRequired: !!event.approvalRequired, messagingEnabled: event.messagingEnabled !== false,
+    approvalRequired: !!event.approvalRequired, autoCheckIn: !!event.autoCheckIn, messagingEnabled: event.messagingEnabled !== false,
     allowSelfEdit: !!event.allowSelfEdit, enablePayments: !!event.enablePayments,
     ageRestricted: !!event.ageRestricted, minimumAge: String(event.minimumAge || 18),
   });
@@ -202,7 +210,7 @@ export default function HostEventManageScreen({ navigation, route }) {
     updateEvent(event.id, {
       title: edit.title, date: edit.date, time: edit.time, location: edit.location,
       capacity: Number(edit.capacity) || 0, description: edit.description, seriesType: edit.seriesType,
-      approvalRequired: edit.approvalRequired, messagingEnabled: edit.messagingEnabled,
+      approvalRequired: edit.approvalRequired, autoCheckIn: edit.autoCheckIn, messagingEnabled: edit.messagingEnabled,
       allowSelfEdit: edit.allowSelfEdit, enablePayments: edit.enablePayments,
       ageRestricted: edit.ageRestricted, minimumAge: Number(edit.minimumAge) || 18,
     });
@@ -306,7 +314,10 @@ export default function HostEventManageScreen({ navigation, route }) {
 
       {active === 'guests' && (
         <View>
-          <Card style={{ marginBottom: spacing.lg }}>
+          <Tabs tabs={GUEST_TABS} active={guestSubTab} onChange={setGuestSubTab} />
+
+          {guestSubTab === 'approval' && (
+            <Card style={{ marginTop: spacing.md, marginBottom: spacing.lg }}>
             <Row style={[styles.between, { marginBottom: spacing.md }]}>
               <Row>
                 <Text style={[font.h3, { marginRight: spacing.sm }]}>Under Approval</Text>
@@ -337,9 +348,10 @@ export default function HostEventManageScreen({ navigation, route }) {
                 </View>
               ))
             )}
-          </Card>
+          )}
 
-          <Card style={{ marginBottom: spacing.lg }}>
+          {guestSubTab === 'waitlist' && (
+            <Card style={{ marginTop: spacing.md, marginBottom: spacing.lg }}>
             <Text style={[font.h3, { marginBottom: 4 }]}>Waitlist — Under Approval</Text>
             <Text style={[font.small, { marginBottom: spacing.md }]}>Event at capacity ({goingApproved.length}/{event.capacity})</Text>
             {waitlist.length === 0 ? (
@@ -364,10 +376,10 @@ export default function HostEventManageScreen({ navigation, route }) {
                 </View>
               ))
             )}
-          </Card>
+          )}
 
-          {rejected.length > 0 && (
-            <Card style={{ marginBottom: spacing.lg }}>
+          {guestSubTab === 'rejected' && rejected.length > 0 && (
+            <Card style={{ marginTop: spacing.md, marginBottom: spacing.lg }}>
               <Text style={[font.h3, { marginBottom: spacing.md }]}>Rejected</Text>
               {rejected.map((r, i) => (
                 <View key={r.id}>
@@ -384,7 +396,8 @@ export default function HostEventManageScreen({ navigation, route }) {
             </Card>
           )}
 
-          <Card>
+          {guestSubTab === 'confirmed' && (
+            <Card style={{ marginTop: spacing.md, marginBottom: spacing.lg }}>
             <Row style={[styles.between, { marginBottom: spacing.md }]}>
               <Text style={font.h3}>Confirmed attendees</Text>
               <Button label="Export" variant="ghost" icon="download-outline" small onPress={exportGuests} />
@@ -441,6 +454,7 @@ export default function HostEventManageScreen({ navigation, route }) {
               ))
             )}
           </Card>
+          )}
         </View>
       )}
 
@@ -782,6 +796,7 @@ export default function HostEventManageScreen({ navigation, route }) {
 
           <Card style={{ marginBottom: spacing.lg }}>
             <Toggle label="Require RSVP approval" value={edit.approvalRequired} onValueChange={(v) => setE('approvalRequired', v)} icon="shield-checkmark-outline" />
+            <Toggle label="Automatic Check-In" desc="Scan QR to instantly check in all guests" value={edit.autoCheckIn} onValueChange={(v) => setE('autoCheckIn', v)} icon="flash-outline" />
             <Toggle label="Allow guest messaging" value={edit.messagingEnabled} onValueChange={(v) => setE('messagingEnabled', v)} icon="chatbubbles-outline" />
             <Toggle label="Allow guest self-edit" value={edit.allowSelfEdit} onValueChange={(v) => setE('allowSelfEdit', v)} icon="create-outline" />
             <Toggle label="Paid ticket" value={edit.enablePayments} onValueChange={(v) => setE('enablePayments', v)} icon="card-outline" />

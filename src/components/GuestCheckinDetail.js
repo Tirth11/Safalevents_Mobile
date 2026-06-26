@@ -11,7 +11,7 @@
 //   canCheckin     show the +/- check-in controls (permission)
 //   canViewHistory show the cross-event attendance intelligence (permission)
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font } from '../theme/theme';
 import { Card, Badge, Avatar, Button, Row, Divider } from './ui';
@@ -21,6 +21,8 @@ import {
   getGuestHistorySummary,
   recordArrival,
   resetArrival,
+  getEventCapacityStatus,
+  waitlistWalkins,
   addWalkinGuests,
   calcAge,
   meetsAge,
@@ -48,11 +50,9 @@ export default function GuestCheckinDetail({
   const [walkinCount, setWalkinCount] = useState(1);
 
   const firstScan = checked === 0;               // nobody checked in yet → whole party pre-selected
-  // Stepper defaults to ALL present. `selRaw` high sentinel → clamps to the max so the
-  // full party (or all remaining) is selected by default; admin taps − to deselect absentees.
   const maxSel = firstScan ? total : remaining;
   const [selRaw, setSelRaw] = useState(9999);
-  const sel = Math.max(1, Math.min(selRaw, maxSel));
+  const sel = selRaw === 9999 ? Math.max(1, remaining) : Math.max(1, selRaw);
 
   // Entry verdict — denied vs valid vs all-in.
   const denied = result && !result.ok && result.code !== 'duplicate';
@@ -76,8 +76,32 @@ export default function GuestCheckinDetail({
   }
 
   const doArrival = (n) => {
+    const capStatus = getEventCapacityStatus(rsvp.eventId);
+    const excess = Math.max(0, n - remaining);
+    
+    if (excess > capStatus.remaining) {
+      Alert.alert(
+        'Event Capacity Reached',
+        'The additional guest(s) cannot be checked in because the event has reached its maximum capacity.\n\nWould you like to place them on the waitlist?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Add to Waitlist', 
+            onPress: () => {
+              const eligible = n - excess;
+              if (eligible > 0) recordArrival(rsvp.id, eligible, scannerName);
+              waitlistWalkins(rsvp.eventId, rsvp.id, excess, scannerName);
+              setSelRaw(9999);
+            }
+          }
+        ]
+      );
+      return;
+    }
+
     recordArrival(rsvp.id, n, scannerName);
     setSelRaw(9999); // reset stepper back to "all" for the next scan
+    Alert.alert('Check-In Successful', `${n} attendee(s) have been checked in.`);
   };
 
   return (
@@ -160,28 +184,25 @@ export default function GuestCheckinDetail({
             </View>
           ) : null}
 
-          {/* check-in controls — whole party pre-selected; admin taps − to deselect absentees */}
+          {/* check-in controls */}
           {canCheckin && remaining > 0 ? (
             <View style={styles.stepperWrap}>
               <Text style={[font.small, { fontWeight: '700', marginBottom: 2 }]}>
                 {firstScan ? 'Attendees present now' : 'Remaining attendees present now'}
               </Text>
-              <Text style={[font.tiny, { color: colors.textMuted, marginBottom: spacing.sm, lineHeight: 16 }]}>
-                All {maxSel} selected by default — tap − to deselect anyone who didn't arrive.
-              </Text>
-              <Row style={{ gap: spacing.sm, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Row style={{ gap: spacing.sm, flexWrap: 'wrap', alignItems: 'center', marginTop: spacing.sm }}>
                 <Row style={styles.stepper}>
                   <TouchableOpacity activeOpacity={0.8} hitSlop={8} onPress={() => setSelRaw(Math.max(1, sel - 1))} style={styles.stepBtn}>
                     <Ionicons name="remove" size={16} color={colors.text} />
                   </TouchableOpacity>
                   <Text style={{ minWidth: 32, textAlign: 'center', fontWeight: '800', fontSize: 16 }}>{sel}</Text>
-                  <TouchableOpacity activeOpacity={0.8} hitSlop={8} onPress={() => setSelRaw(Math.min(maxSel, sel + 1))} style={styles.stepBtn}>
+                  <TouchableOpacity activeOpacity={0.8} hitSlop={8} onPress={() => setSelRaw(sel + 1)} style={styles.stepBtn}>
                     <Ionicons name="add" size={16} color={colors.text} />
                   </TouchableOpacity>
                 </Row>
                 <View style={{ flex: 1, minWidth: 150 }}>
                   <Button
-                    label={sel >= maxSel ? `Check In All ${sel}` : `Check In ${sel}`}
+                    label={sel > remaining ? `Check In All ${remaining} + ${sel - remaining} Walk-in${sel - remaining > 1 ? 's' : ''}` : `Check In ${sel >= remaining && total > 1 ? `All ${remaining}` : sel}`}
                     variant="accent"
                     icon="checkmark-circle"
                     small
@@ -205,7 +226,6 @@ export default function GuestCheckinDetail({
               ) : null}
             </View>
           ) : null}
-
           {canCheckin ? (
             <View style={styles.walkinWrap}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
@@ -213,7 +233,7 @@ export default function GuestCheckinDetail({
                 <Text style={[font.small, { fontWeight: '700', color: colors.text }]}>Add Additional Guest (walk-in)</Text>
               </View>
               <Text style={[font.tiny, { color: colors.textMuted, marginBottom: spacing.sm, lineHeight: 16 }]}>
-                No personal info needed — enter guest count only. They're checked in immediately.
+                Check in unexpected walk-ins for this party.
               </Text>
               <Row style={{ gap: spacing.sm, flexWrap: 'wrap', alignItems: 'center' }}>
                 <Row style={styles.stepper}>
@@ -231,13 +251,33 @@ export default function GuestCheckinDetail({
                     variant="primary"
                     icon="person-add-outline"
                     small
-                    onPress={() => { addWalkinGuests(rsvp.id, walkinCount, scannerName); setWalkinCount(1); }}
+                    onPress={() => {
+                      const capStatus = getEventCapacityStatus(rsvp.eventId);
+                      if (walkinCount > capStatus.remaining) {
+                        Alert.alert(
+                          'Event Capacity Reached',
+                          'The additional guest(s) cannot be checked in because the event has reached its maximum capacity.\n\nWould you like to place them on the waitlist?',
+                          [
+                            { text: 'Cancel', style: 'cancel' },
+                            { 
+                              text: 'Add to Waitlist', 
+                              onPress: () => {
+                                waitlistWalkins(rsvp.eventId, rsvp.id, walkinCount, scannerName);
+                                setWalkinCount(1);
+                              }
+                            }
+                          ]
+                        );
+                      } else {
+                        addWalkinGuests(rsvp.id, walkinCount, scannerName);
+                        setWalkinCount(1);
+                      }
+                    }}
                   />
                 </View>
               </Row>
             </View>
           ) : null}
-
           {!canCheckin ? (
             <Text style={[font.small, { marginTop: spacing.sm, lineHeight: 18 }]}>Your role can view this guest but not check them in.</Text>
           ) : null}

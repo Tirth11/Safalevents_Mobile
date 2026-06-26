@@ -6,7 +6,7 @@ import { Screen, Card, Badge, Button, SectionTitle, Avatar, Row, ApprovalBadge, 
 import GuestCheckinDetail from '../../components/GuestCheckinDetail';
 import {
   useStore, getCurrentStaff, getEvent, getRsvps, validateScan, checkInGuest, staffCan, calcAge, meetsAge,
-  MOCK_GUESTS, getTrustBadge, getEventStatus, getPartyMembers,
+  MOCK_GUESTS, getTrustBadge, getEventStatus, getPartyMembers, getEventCapacityStatus, waitlistWalkins
 } from '../../data/mock';
 
 export default function StaffCheckinScreen() {
@@ -19,6 +19,7 @@ export default function StaffCheckinScreen() {
   const [manualId, setManualId] = useState('');
   const [result, setResult] = useState(null);
   const [arrivalCount, setArrivalCount] = useState(1);
+  const [autoSuccess, setAutoSuccess] = useState(null);
 
   const goingApproved = eventRsvps.filter((r) => r.status === 'going' && r.approvalState === 'APPROVED');
   const arrived = goingApproved.filter((r) => r.checkedIn);
@@ -31,16 +32,61 @@ export default function StaffCheckinScreen() {
   const handleScan = (passId) => {
     if (!passId) return;
     const scanResult = validateScan(event.id, passId);
-    setResult(scanResult);
     setScanning(false);
+    setAutoSuccess(null);
+
     // Reset arrival count: default to remaining party members
     if (scanResult.ok && scanResult.rsvp) {
       const already = scanResult.rsvp.checkedInCount || 0;
       const remaining = (scanResult.rsvp.guestCount || 1) - already;
       setArrivalCount(Math.max(1, remaining));
+
+      if (event.autoCheckIn && remaining > 0) {
+        const capStatus = getEventCapacityStatus(event.id);
+        let eligible = remaining;
+        let excess = 0;
+        
+        if (capStatus.remaining < remaining) {
+          eligible = Math.max(1, capStatus.remaining);
+          if (eligible > remaining) eligible = remaining;
+          excess = remaining - eligible;
+        }
+
+        const newCount = already + eligible;
+        const scannerName = `${staff?.name || 'Gate Staff'} (Staff)`;
+
+        scanResult.rsvp.checkedInCount = newCount;
+        if (!scanResult.rsvp.checkInLog) scanResult.rsvp.checkInLog = [];
+        scanResult.rsvp.checkInLog.push({
+          count: eligible,
+          at: new Date().toISOString(),
+          by: scannerName,
+        });
+
+        if (newCount >= (scanResult.rsvp.guestCount || 1)) {
+          checkInGuest(scanResult.rsvp.id, scannerName);
+        } else if (eligible > 0) {
+          checkInGuest(scanResult.rsvp.id, scannerName); // triggers notification even for partial
+        }
+
+        if (excess > 0) {
+          waitlistWalkins(event.id, scanResult.rsvp.id, excess, scannerName);
+        }
+
+        setAutoSuccess({
+          rsvp: scanResult.rsvp,
+          eligible,
+          excess,
+          total: scanResult.rsvp.guestCount || 1,
+          checkedInCount: newCount
+        });
+        setResult(null);
+        return;
+      }
     } else {
       setArrivalCount(1);
     }
+    setResult(scanResult);
   };
 
   const confirmArrival = (rsvp, count) => {
@@ -143,6 +189,33 @@ export default function StaffCheckinScreen() {
         </Card>
       ) : null}
 
+      {autoSuccess ? (
+        <View style={{ marginBottom: spacing.lg }}>
+          <Card style={{ borderColor: colors.green, borderWidth: 1.5, alignItems: 'center', paddingVertical: spacing.xl }}>
+            <Ionicons name="checkmark-circle" size={56} color={colors.green} style={{ marginBottom: spacing.sm }} />
+            <Text style={{ fontSize: 22, fontWeight: '800', color: colors.green, marginBottom: spacing.xs }}>Check-In Successful</Text>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 2 }}>{autoSuccess.rsvp.name}</Text>
+            <Text style={{ fontSize: 14, color: colors.textMuted, marginBottom: spacing.lg }}>
+              Total RSVP: {autoSuccess.total} • Checked In: {autoSuccess.checkedInCount}
+            </Text>
+
+            {autoSuccess.excess > 0 && (
+              <View style={{ backgroundColor: colors.amber + '20', padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.amber, marginBottom: spacing.lg, alignSelf: 'stretch' }}>
+                <Row style={{ marginBottom: spacing.xs }}>
+                  <Ionicons name="warning" size={16} color={colors.amber} style={{ marginRight: spacing.xs }} />
+                  <Text style={{ color: colors.amber, fontWeight: '800' }}>Event Capacity Reached</Text>
+                </Row>
+                <Text style={{ fontSize: 13, color: colors.text, lineHeight: 18 }}>
+                  Primary guest checked in. <Text style={{ fontWeight: '700' }}>{autoSuccess.excess}</Text> additional guests were added to the waitlist and are waiting for host approval.
+                </Text>
+              </View>
+            )}
+
+            <Button label="Scan Next Guest" variant="primary" onPress={() => { setAutoSuccess(null); setScanning(true); }} style={{ minWidth: 200 }} />
+          </Card>
+        </View>
+      ) : null}
+
       {/* Scan result — full guest details via shared component */}
       {result && result.rsvp ? (
         <View style={{ marginBottom: spacing.lg }}>
@@ -154,7 +227,14 @@ export default function StaffCheckinScreen() {
             canCheckin={staffCan('checkin')}
             canViewHistory={staffCan('history_view') || staffCan('guests_view')}
           />
-          <Button label="Scan next guest" variant="outline" icon="qr-code-outline" onPress={() => { setResult(null); setScanning(true); }} style={{ marginTop: spacing.md }} />
+          <Row style={{ marginTop: spacing.md, gap: spacing.sm }}>
+            <View style={{ flex: 1 }}>
+              <Button label="Scan Next" variant="outline" icon="qr-code-outline" onPress={() => { setResult(null); setScanning(true); }} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button label="Done" variant="primary" icon="checkmark" onPress={() => { setResult(null); setScanning(false); }} />
+            </View>
+          </Row>
         </View>
       ) : result ? (
         <Card style={{ marginBottom: spacing.lg, borderColor: toneFor(result.code), borderWidth: 1.5 }}>

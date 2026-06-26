@@ -422,6 +422,7 @@ export const createEvent = (data, asDraft = false) => {
     maxGuestsPerRsvp: Number(data.maxGuestsPerRsvp) || 1,
     rsvpDeadline: data.rsvpDeadline || '',
     approvalRequired: !!data.approvalRequired,
+    autoCheckIn: !!data.autoCheckIn,
     messagingEnabled: data.messagingEnabled !== false,
     allowSelfEdit: !!data.allowSelfEdit,
     allowSelfCancellation: !!data.allowSelfCancellation,
@@ -828,8 +829,11 @@ export const recordArrival = (rsvpId, count, scannerName = 'Host') => {
     to: rsvp.email,
     channel: 'Email',
     subject: rsvp.fullyCheckedIn
-      ? `Welcome! Your full party is checked in to ${ev ? ev.title : 'the event'}`
-      : `${next}/${total} of your party checked in to ${ev ? ev.title : 'the event'}`,
+      ? `Welcome: Check-in completed for ${ev ? ev.title : 'the event'}`
+      : `Update: Partial Check-in for ${ev ? ev.title : 'the event'}`,
+    body: rsvp.fullyCheckedIn
+      ? `Hi ${rsvp.name},\n\nYour check-in for "${ev ? ev.title : 'the event'}" has been successfully completed.\n\nGuests Checked In: ${next} of ${total}\n\nEnjoy the event!`
+      : `Hi ${rsvp.name},\n\nYour check-in for "${ev ? ev.title : 'the event'}" has been recorded.\n\nGuests Checked In: ${next} of ${total}\n\nThe remaining guests in your RSVP can still check in using the same QR code.\n\nEnjoy the event!`,
     time: 'just now',
   });
   notifications.unshift({
@@ -848,6 +852,70 @@ export const recordArrival = (rsvpId, count, scannerName = 'Host') => {
   });
   _notify();
   return rsvp;
+};
+
+export const getEventCapacityStatus = (eventId) => {
+  const event = getEvent(eventId);
+  if (!event) return { capacity: 0, currentGoing: 0, remaining: 0, full: false };
+  
+  const currentGoingCount = rsvps
+    .filter(r => r.eventId === eventId && r.status === 'going' && r.approvalState !== 'REJECTED')
+    .reduce((sum, r) => sum + (r.guestCount || 1), 0);
+    
+  const capacity = event.capacity || 100;
+  return {
+    capacity,
+    currentGoing: currentGoingCount,
+    remaining: Math.max(0, capacity - currentGoingCount),
+    full: currentGoingCount >= capacity
+  };
+};
+
+export const waitlistWalkins = (eventId, primaryRsvpId, walkinCount, scannerName = 'Staff') => {
+  const primaryRsvp = rsvps.find(r => r.id === primaryRsvpId);
+  if (!primaryRsvp) return null;
+  const ev = getEvent(eventId);
+  if (!ev) return null;
+
+  const newRsvp = {
+    id: 'r_' + Math.random().toString(36).slice(2, 8),
+    eventId,
+    name: `Walk-ins (${primaryRsvp.name})`,
+    email: primaryRsvp.email,
+    phone: primaryRsvp.phone,
+    linkedTo: primaryRsvpId,
+    checkedIn: false,
+    timestamp: new Date().toISOString(),
+    answers: {},
+    guestCount: walkinCount,
+    preferredChannel: primaryRsvp.preferredChannel || 'Email',
+    status: 'waitlist',
+    approvalState: 'UNDER_APPROVAL'
+  };
+  rsvps.push(newRsvp);
+
+  // Host notification
+  notifications.unshift({
+    id: 'n_' + Math.random().toString(36).slice(2, 8),
+    type: 'rsvp',
+    title: 'New Walk-In Approval Request',
+    message: `Requested by: ${scannerName} (Check-In Staff). ${primaryRsvp.name} requested ${walkinCount} additional guests. Approve or Reject in Waitlist.`,
+    time: 'just now',
+    read: false,
+  });
+
+  // Guest notification
+  outbox.unshift({
+    id: 'o_' + Math.random().toString(36).slice(2, 8),
+    to: primaryRsvp.email,
+    channel: 'Email',
+    subject: `Update: Walk-ins waitlisted for ${ev.title}`,
+    body: `Hi ${primaryRsvp.name},\n\nYour check-in for "${ev.title}" has been completed.\n\n${walkinCount} additional guest(s) could not be checked in because the event has reached capacity.\n\nThey have been added to the event waitlist and are awaiting host approval.\n\nYou will be notified once a decision has been made.`,
+    time: 'just now',
+  });
+
+  _notify();
+  return newRsvp;
 };
 
 // Reset a guest's arrivals (undo) — clears partial check-in state.
@@ -1077,6 +1145,12 @@ export const integrations = [
   { id: 'mailchimp', name: 'Mailchimp', desc: 'Sync guests to email campaigns', icon: 'mail-outline', color: '#FFE01B', connected: false },
   { id: 'whatsapp', name: 'WhatsApp', desc: 'Send invites & reminders on WhatsApp', icon: 'logo-whatsapp', color: '#25D366', connected: true },
   { id: 'zapier', name: 'Zapier', desc: 'Automate workflows with 5,000+ apps', icon: 'flash-outline', color: '#FF4F00', connected: false },
+  { id: 'jotform', name: 'Jotform', desc: 'Build custom registration forms', icon: 'document-text-outline', color: '#FA8900', connected: false },
+  { id: 'gsheets', name: 'Google Sheets', desc: 'Export guest lists & analytics', icon: 'stats-chart-outline', color: '#0F9D58', connected: false },
+  { id: 'slack', name: 'Slack', desc: 'Get instant RSVP & check-in alerts', icon: 'logo-slack', color: '#E01E5A', connected: false },
+  { id: 'twilio', name: 'Twilio', desc: 'Send SMS reminders & alerts', icon: 'chatbubbles-outline', color: '#F22F46', connected: false },
+  { id: 'hubspot', name: 'HubSpot', desc: 'Sync event attendees to CRM', icon: 'people-circle-outline', color: '#FF7A59', connected: false },
+  { id: 'safalmybuy', name: 'SafalMyBuy', desc: 'Connect for event integrations', icon: 'cart-outline', color: '#6366F1', connected: false }
 ];
 export const toggleIntegration = (id) => {
   const it = integrations.find((x) => x.id === id);

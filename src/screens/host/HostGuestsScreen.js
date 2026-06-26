@@ -490,36 +490,58 @@ export default function HostGuestsScreen({ navigation }) {
 
 
                         {/* Check-in controls */}
-                        {remaining > 0 ? (
-                          <View style={{ backgroundColor: colors.surfaceHover, borderRadius: 10, padding: 12 }}>
-                            <Row style={{ flexWrap: 'wrap', gap: 10 }}>
-                              {/* Stepper */}
-                              <View style={s.stepper}>
-                                <TouchableOpacity onPress={() => setArrivingNowMap(p => ({ ...p, [idx]: Math.max(1, arrivingNow - 1) }))} activeOpacity={0.8} style={s.stepperBtn}>
-                                  <Ionicons name="remove" size={14} color={colors.text} />
-                                </TouchableOpacity>
-                                <Text style={{ minWidth: 28, textAlign: 'center', fontWeight: '800', fontSize: 15 }}>{Math.min(arrivingNow, remaining)}</Text>
-                                <TouchableOpacity onPress={() => setArrivingNowMap(p => ({ ...p, [idx]: Math.min(remaining, arrivingNow + 1) }))} activeOpacity={0.8} style={s.stepperBtn}>
-                                  <Ionicons name="add" size={14} color={colors.text} />
-                                </TouchableOpacity>
-                              </View>
-                              {/* Check In button */}
-                              <TouchableOpacity
-                                onPress={() => { setCheckinState((prev) => ({ ...prev, [idx]: checked + Math.min(arrivingNow, remaining) })); setArrivingNowMap(p => ({ ...p, [idx]: undefined })); }}
-                                activeOpacity={0.85}
-                                style={[s.checkInBtn, { flex: 1, minWidth: 120 }]}
-                              >
-                                <Ionicons name="checkmark-circle" size={14} color="#fff" />
-                                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13, marginLeft: 6 }}>Check In {arrivingNow >= remaining ? `All ${remaining}` : arrivingNow}</Text>
+                        <View style={{ backgroundColor: colors.surfaceHover, borderRadius: 10, padding: 12 }}>
+                          <Row style={{ flexWrap: 'wrap', gap: 10 }}>
+                            {/* Stepper */}
+                            <View style={s.stepper}>
+                              <TouchableOpacity onPress={() => setArrivingNowMap(p => ({ ...p, [idx]: Math.max(1, arrivingNow - 1) }))} activeOpacity={0.8} style={s.stepperBtn}>
+                                <Ionicons name="remove" size={14} color={colors.text} />
                               </TouchableOpacity>
-                            </Row>
-                          </View>
-                        ) : (
-                          <View style={{ backgroundColor: '#16a34a0a', borderWidth: 1, borderColor: '#16a34a25', borderRadius: 10, padding: 10, flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="checkmark-circle" size={16} color="#16a34a" />
-                            <Text style={{ color: '#16a34a', fontWeight: '700', fontSize: 13, marginLeft: 8 }}>All {total} attendees checked in</Text>
-                          </View>
-                        )}
+                              <Text style={{ minWidth: 28, textAlign: 'center', fontWeight: '800', fontSize: 15 }}>{arrivingNow}</Text>
+                              <TouchableOpacity onPress={() => setArrivingNowMap(p => ({ ...p, [idx]: arrivingNow + 1 }))} activeOpacity={0.8} style={s.stepperBtn}>
+                                <Ionicons name="add" size={14} color={colors.text} />
+                              </TouchableOpacity>
+                            </View>
+                            {/* Check In button */}
+                            <TouchableOpacity
+                              onPress={() => {
+                                if (arrivingNow > remaining) {
+                                  Alert.alert(
+                                    'Event Capacity Reached',
+                                    'The additional guest(s) cannot be checked in because the event has reached its maximum capacity.\n\nWould you like to place them on the waitlist?',
+                                    [
+                                      { text: 'Cancel', style: 'cancel' },
+                                      {
+                                        text: 'Add to Waitlist',
+                                        onPress: () => {
+                                          setCheckinState((prev) => ({ ...prev, [idx]: checked + remaining }));
+                                          setArrivingNowMap(p => ({ ...p, [idx]: undefined }));
+                                        }
+                                      }
+                                    ]
+                                  );
+                                } else {
+                                  setCheckinState((prev) => ({ ...prev, [idx]: checked + arrivingNow }));
+                                  setArrivingNowMap(p => ({ ...p, [idx]: undefined }));
+                                }
+                              }}
+                              activeOpacity={0.85}
+                              style={[s.checkInBtn, { flex: 1, minWidth: 120 }]}
+                            >
+                              {remaining <= 0 ? (
+                                <>
+                                  <Ionicons name="person-add" size={14} color="#fff" />
+                                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13, marginLeft: 6 }}>Add {arrivingNow} Walk-in{arrivingNow > 1 ? 's' : ''}</Text>
+                                </>
+                              ) : (
+                                <>
+                                  <Ionicons name="checkmark-circle" size={14} color="#fff" />
+                                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13, marginLeft: 6 }}>{arrivingNow > remaining ? `Check In All ${remaining} + Walk-ins` : (arrivingNow >= remaining && total > 1 ? `Check In All ${remaining}` : `Check In ${arrivingNow}`)}</Text>
+                                </>
+                              )}
+                            </TouchableOpacity>
+                          </Row>
+                        </View>
                       </Card>
                     );
                   })}
