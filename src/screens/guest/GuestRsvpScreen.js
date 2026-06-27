@@ -192,6 +192,24 @@ export default function GuestRsvpScreen({ navigation, route }) {
         </Card>
       ) : null}
 
+      {event.dressCode && event.dressCode !== 'No Dress Code' && goingFlow ? (
+        <Card style={{ marginBottom: spacing.lg, backgroundColor: colors.primary + '0a', borderColor: colors.primary }}>
+          <Row style={{ alignItems: 'flex-start' }}>
+            <Ionicons name="shirt-outline" size={18} color={colors.primary} style={{ marginTop: 2 }} />
+            <View style={{ flex: 1, marginLeft: spacing.sm }}>
+              <Text style={[font.small, { color: colors.text, fontWeight: '700' }]}>
+                Dress Code: {event.dressCode === 'Other' ? (event.customDressCode || 'Custom attire') : event.dressCode}
+              </Text>
+              {event.dressCodeAvoid ? (
+                <Text style={[font.tiny, { color: colors.red, marginTop: 4, fontWeight: '600' }]}>
+                  🚫 Please avoid: {event.dressCodeAvoid}
+                </Text>
+              ) : null}
+            </View>
+          </Row>
+        </Card>
+      ) : null}
+
       {/* Your details — always shown */}
       <SectionTitle>Your details</SectionTitle>
       <Card style={{ marginBottom: spacing.lg }}>

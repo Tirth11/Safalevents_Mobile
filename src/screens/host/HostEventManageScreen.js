@@ -43,9 +43,11 @@ import {
   meetsAge,
   getEventPhotos,
   uploadPhoto,
-  setPhotoStatus,
+  approvePhoto,
+  rejectPhoto,
   deletePhoto,
-  MOCK_GUESTS,
+  DRESS_CODES,
+  DRESS_CODE_COVER_PRESETS,
   validateScan,
   getCheckinState,
   getCheckedInCount,
@@ -204,6 +206,12 @@ export default function HostEventManageScreen({ navigation, route }) {
     approvalRequired: !!event.approvalRequired, autoCheckIn: !!event.autoCheckIn, messagingEnabled: event.messagingEnabled !== false,
     allowSelfEdit: !!event.allowSelfEdit, enablePayments: !!event.enablePayments,
     ageRestricted: !!event.ageRestricted, minimumAge: String(event.minimumAge || 18),
+    dressCode: event.dressCode || 'No Dress Code',
+    customDressCode: event.customDressCode || '',
+    dressCodeDescription: event.dressCodeDescription || '',
+    dressCodeAvoid: event.dressCodeAvoid || '',
+    dressCodeInstructions: event.dressCodeInstructions || '',
+    dressCodeCover: event.dressCodeCover || '',
   });
   const setE = (k, v) => setEdit((p) => ({ ...p, [k]: v }));
   const saveSettings = () => {
@@ -213,6 +221,12 @@ export default function HostEventManageScreen({ navigation, route }) {
       approvalRequired: edit.approvalRequired, autoCheckIn: edit.autoCheckIn, messagingEnabled: edit.messagingEnabled,
       allowSelfEdit: edit.allowSelfEdit, enablePayments: edit.enablePayments,
       ageRestricted: edit.ageRestricted, minimumAge: Number(edit.minimumAge) || 18,
+      dressCode: edit.dressCode,
+      customDressCode: edit.customDressCode,
+      dressCodeDescription: edit.dressCodeDescription,
+      dressCodeAvoid: edit.dressCodeAvoid,
+      dressCodeInstructions: edit.dressCodeInstructions,
+      dressCodeCover: edit.dressCodeCover,
     });
     Alert.alert('Saved', 'Event settings updated.');
   };
@@ -788,6 +802,36 @@ export default function HostEventManageScreen({ navigation, route }) {
             <TextField label="Location" value={edit.location} onChangeText={(t) => setE('location', t)} />
             <TextField label="Capacity" value={edit.capacity} onChangeText={(t) => setE('capacity', t)} keyboardType="numeric" />
             <TextField label="Description" value={edit.description} onChangeText={(t) => setE('description', t)} multiline />
+          </Card>
+
+          <SectionTitle>Dress Code</SectionTitle>
+          <Card style={{ marginBottom: spacing.lg }}>
+            <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>Attire Type</Text>
+            <Chips options={DRESS_CODES} value={edit.dressCode} onChange={(v) => setE('dressCode', v)} />
+            
+            {edit.dressCode === 'Other' && (
+              <TextField label="Custom Dress Code" value={edit.customDressCode} onChangeText={(t) => setE('customDressCode', t)} placeholder="e.g. Wear something blue, Neon Party" />
+            )}
+            
+            {edit.dressCode !== 'No Dress Code' && (
+              <>
+                <TextField label="Dress Code Description" value={edit.dressCodeDescription} onChangeText={(t) => setE('dressCodeDescription', t)} placeholder="Describe the style or vibe…" multiline />
+                <TextField label="Things to Avoid" value={edit.dressCodeAvoid} onChangeText={(t) => setE('dressCodeAvoid', t)} placeholder="e.g. Please avoid shorts and flip-flops" />
+                <TextField label="Additional Instructions" value={edit.dressCodeInstructions} onChangeText={(t) => setE('dressCodeInstructions', t)} placeholder="e.g. All guests are requested to wear white attire" />
+
+                <Text style={[font.small, { fontWeight: '700', marginTop: spacing.md, marginBottom: spacing.sm, color: colors.text }]}>Outfit Inspiration Reference Photo</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs }}>
+                  {DRESS_CODE_COVER_PRESETS.map((url) => {
+                    const on = edit.dressCodeCover === url;
+                    return (
+                      <TouchableOpacity key={url} activeOpacity={0.85} onPress={() => setE('dressCodeCover', url)} style={{ width: 64, height: 64, borderRadius: radius.md, overflow: 'hidden', borderWidth: on ? 3 : 0, borderColor: colors.primary }}>
+                        <Image source={{ uri: url }} style={{ width: '100%', height: '100%' }} />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            )}
           </Card>
 
           <SectionTitle>Recurrence</SectionTitle>

@@ -163,6 +163,18 @@ export default function GuestTicketPassScreen({ navigation, route }) {
   const additionalGuests = myRsvp?.additionalGuests || [];
   const referenceId = myRsvp ? myRsvp.id.toUpperCase() : 'RSVP-' + event.id;
 
+  const handleAddToCalendar = (calendarName) => {
+    let msg = `Added "${event.title}" to your ${calendarName}.\n\nDate: ${event.date} • ${event.time}\nVenue: ${event.location}`;
+    if (event.dressCode && event.dressCode !== 'No Dress Code') {
+      const dcName = event.dressCode === 'Other' ? (event.customDressCode || 'Custom attire') : event.dressCode;
+      msg += `\n\nDress Code: ${dcName}`;
+      if (event.dressCodeAvoid) {
+        msg += `\n(Avoid: ${event.dressCodeAvoid})`;
+      }
+    }
+    Alert.alert('Calendar Invite Created', msg);
+  };
+
   return (
     <Screen>
       <ScreenHeader title="Event Pass" onBack={() => navigation.goBack()} />
@@ -258,6 +270,14 @@ export default function GuestTicketPassScreen({ navigation, route }) {
             <Ionicons name="location-outline" size={14} color={colors.textMuted} />
             <Text style={[font.small, { marginLeft: spacing.xs, flex: 1 }]} numberOfLines={2}>{event.location}</Text>
           </Row>
+          {event.dressCode && event.dressCode !== 'No Dress Code' && (
+            <Row style={{ marginTop: spacing.xs, alignSelf: 'stretch' }}>
+              <Ionicons name="shirt-outline" size={14} color={colors.textMuted} />
+              <Text style={[font.small, { marginLeft: spacing.xs, flex: 1, fontWeight: '700', color: colors.primary }]} numberOfLines={1}>
+                Dress Code: {event.dressCode === 'Other' ? (event.customDressCode || 'Custom attire') : event.dressCode}
+              </Text>
+            </Row>
+          )}
 
           <Divider />
 
@@ -399,7 +419,7 @@ export default function GuestTicketPassScreen({ navigation, route }) {
             variant="outline"
             icon="calendar"
             small
-            onPress={() => Alert.alert('Add to Calendar', 'Prototype — not wired')}
+            onPress={() => handleAddToCalendar('Google Calendar')}
           />
         </View>
         <View style={{ flex: 1, marginLeft: spacing.sm }}>
@@ -408,7 +428,7 @@ export default function GuestTicketPassScreen({ navigation, route }) {
             variant="outline"
             icon="calendar"
             small
-            onPress={() => Alert.alert('Add to Calendar', 'Prototype — not wired')}
+            onPress={() => handleAddToCalendar('Apple Calendar')}
           />
         </View>
       </Row>

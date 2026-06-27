@@ -23,6 +23,8 @@ import {
   COVER_PRESETS,
   ACCENT_THEMES,
   EVENT_TYPES,
+  DRESS_CODES,
+  DRESS_CODE_COVER_PRESETS,
 } from '../../data/mock';
 
 const STEPS = ['Basics', 'Theme', 'Visibility', 'Rules'];
@@ -41,6 +43,7 @@ export default function HostCreateEventScreen({ navigation }) {
     sendRsvpConfirmationEmail: true, sendRsvpConfirmationSms: false, sendPreEventReminders: true, sendPostEventFeedbackEmail: false,
     enablePayments: false, ticketPrice: '', bankName: '', holderName: '', routing: '', account: '',
     questions: [''],
+    dressCode: 'No Dress Code', customDressCode: '', dressCodeDescription: '', dressCodeAvoid: '', dressCodeInstructions: '', dressCodeCover: '',
   });
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -152,6 +155,36 @@ export default function HostCreateEventScreen({ navigation }) {
               <TextField half label="Max guests / RSVP" value={form.maxGuestsPerRsvp} onChangeText={(t) => set('maxGuestsPerRsvp', t)} placeholder="1" keyboardType="numeric" />
             </Row>
             <TextField label="RSVP deadline" value={form.rsvpDeadline} onChangeText={(t) => set('rsvpDeadline', t)} placeholder="YYYY-MM-DD" />
+          </Card>
+
+          <SectionTitle>Dress Code</SectionTitle>
+          <Card style={{ marginBottom: spacing.lg }}>
+            <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>Attire Type</Text>
+            <Chips options={DRESS_CODES} value={form.dressCode} onChange={(v) => set('dressCode', v)} />
+            
+            {form.dressCode === 'Other' && (
+              <TextField label="Custom Dress Code" value={form.customDressCode} onChangeText={(t) => set('customDressCode', t)} placeholder="e.g. Wear something blue, Neon Party" />
+            )}
+            
+            {form.dressCode !== 'No Dress Code' && (
+              <>
+                <TextField label="Dress Code Description" value={form.dressCodeDescription} onChangeText={(t) => set('dressCodeDescription', t)} placeholder="Describe the style or vibe…" multiline />
+                <TextField label="Things to Avoid" value={form.dressCodeAvoid} onChangeText={(t) => set('dressCodeAvoid', t)} placeholder="e.g. Please avoid shorts and flip-flops" />
+                <TextField label="Additional Instructions" value={form.dressCodeInstructions} onChangeText={(t) => set('dressCodeInstructions', t)} placeholder="e.g. All guests are requested to wear white attire" />
+
+                <Text style={[font.small, { fontWeight: '700', marginTop: spacing.md, marginBottom: spacing.sm, color: colors.text }]}>Outfit Inspiration Reference Photo</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs }}>
+                  {DRESS_CODE_COVER_PRESETS.map((url) => {
+                    const on = form.dressCodeCover === url;
+                    return (
+                      <TouchableOpacity key={url} activeOpacity={0.85} onPress={() => set('dressCodeCover', url)} style={{ width: 64, height: 64, borderRadius: radius.md, overflow: 'hidden', borderWidth: on ? 3 : 0, borderColor: colors.primary }}>
+                        <Image source={{ uri: url }} style={{ width: '100%', height: '100%' }} />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            )}
           </Card>
         </View>
       )}

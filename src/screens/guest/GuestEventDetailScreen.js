@@ -77,6 +77,49 @@ export default function GuestEventDetailScreen({ navigation, route }) {
           <Text style={[font.body, { lineHeight: 21 }]}>{event.description}</Text>
         </Card>
 
+        {event.dressCode && event.dressCode !== 'No Dress Code' ? (
+          <>
+            <SectionTitle>Dress Code</SectionTitle>
+            <Card style={{ marginBottom: spacing.lg }}>
+              <Row style={{ gap: spacing.sm, marginBottom: spacing.sm, alignItems: 'center' }}>
+                <Ionicons name="shirt-outline" size={18} color={colors.primary} />
+                <Badge tone="accent" label={event.dressCode === 'Other' ? (event.customDressCode || 'Custom attire') : event.dressCode} />
+              </Row>
+              
+              {event.dressCodeDescription ? (
+                <Text style={[font.body, { marginBottom: spacing.sm, lineHeight: 18 }]}>
+                  {event.dressCodeDescription}
+                </Text>
+              ) : null}
+
+              {event.dressCodeAvoid ? (
+                <Row style={{ marginBottom: spacing.sm, alignItems: 'flex-start' }}>
+                  <Ionicons name="close-circle" size={16} color={colors.red} style={{ marginTop: 2 }} />
+                  <Text style={[font.small, { marginLeft: spacing.xs, color: colors.red, fontWeight: '600', flex: 1 }]}>
+                    Avoid: {event.dressCodeAvoid}
+                  </Text>
+                </Row>
+              ) : null}
+
+              {event.dressCodeInstructions ? (
+                <Row style={{ alignItems: 'flex-start' }}>
+                  <Ionicons name="information-circle" size={16} color={colors.primary} style={{ marginTop: 2 }} />
+                  <Text style={[font.small, { marginLeft: spacing.xs, color: colors.text, flex: 1 }]}>
+                    {event.dressCodeInstructions}
+                  </Text>
+                </Row>
+              ) : null}
+
+              {event.dressCodeCover ? (
+                <View style={{ marginTop: spacing.md, borderRadius: radius.md, overflow: 'hidden' }}>
+                  <Text style={[font.tiny, { fontWeight: '700', marginBottom: spacing.xs, color: colors.textMuted }]}>OUTFIT INSPIRATION</Text>
+                  <Image source={{ uri: event.dressCodeCover }} style={{ width: '100%', height: 160, borderRadius: radius.md }} />
+                </View>
+              ) : null}
+            </Card>
+          </>
+        ) : null}
+
         {event.questions.length > 0 ? (
           <>
             <SectionTitle>What the host asks</SectionTitle>

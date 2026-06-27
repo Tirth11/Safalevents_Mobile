@@ -17,6 +17,22 @@ export const GUEST = {
   avatarSeed: 'Alice Vance',
 };
 
+export const DRESS_CODES = [
+  'Casual', 'Smart Casual', 'Business Casual', 'Business Formal', 'Formal',
+  'Black Tie', 'Black Tie Optional', 'Cocktail Attire', 'Semi-Formal',
+  'Traditional / Ethnic Wear', 'Festive Wear', 'Cultural Attire',
+  'White Party (All White)', 'Black Outfit', 'Color Theme', 'Costume / Cosplay',
+  'Sportswear', 'Beach Wear', 'Wedding Attire', 'Uniform', 'No Dress Code', 'Other'
+];
+
+export const DRESS_CODE_COVER_PRESETS = [
+  'https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?auto=format&fit=crop&w=800&q=80', // casual / smart casual
+  'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80', // formal / suit
+  'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=800&q=80', // party / cocktail
+  'https://images.unsplash.com/photo-1496345875659-11f7dd282d1d?auto=format&fit=crop&w=800&q=80', // sportswear / smart
+  'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=800&q=80', // beach / summer
+];
+
 // ─── Accounts (unified login / signup) ──────────────────────────────────────
 // Registered host/guest accounts. status: ACTIVE | PENDING_ADMIN_APPROVAL | REJECTED.
 // Staff are NOT here — they join via an Invite ID (see `staff` + loginAsStaff).
@@ -65,6 +81,10 @@ export const events = [
     photoUploadPermission: 'guests',
     requirePhotoApproval: true,
     questions: ['Any food allergies?', 'Song request for the DJ?'],
+    dressCode: 'Smart Casual',
+    dressCodeAvoid: 'shorts and flip-flops',
+    dressCodeInstructions: 'Collared shirts requested for men. No athletic wear.',
+    dressCodeCover: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: '2',
@@ -441,6 +461,12 @@ export const createEvent = (data, asDraft = false) => {
     hostEmail: host.email || HOST.email,
     questions: Array.isArray(data.questions) ? data.questions.filter((q) => (q || '').trim()) : [],
     rating: 0,
+    dressCode: data.dressCode || 'No Dress Code',
+    customDressCode: data.customDressCode || '',
+    dressCodeDescription: data.dressCodeDescription || '',
+    dressCodeAvoid: data.dressCodeAvoid || '',
+    dressCodeInstructions: data.dressCodeInstructions || '',
+    dressCodeCover: data.dressCodeCover || '',
   };
   events.unshift(record);
   _notify();
@@ -1028,13 +1054,22 @@ export const createGuestRsvp = (eventId, data = {}) => {
   else myRsvps.unshift(ticket);
 
   // Confirmation to the guest.
+  let confirmationSubject = approvalState === 'UNDER_APPROVAL'
+    ? `We received your RSVP for ${ev.title} — pending approval`
+    : `You're confirmed for ${ev.title}!`;
+  if (ev.dressCode && ev.dressCode !== 'No Dress Code') {
+    const dcName = ev.dressCode === 'Other' ? (ev.customDressCode || 'Custom') : ev.dressCode;
+    confirmationSubject += ` · Dress Code: ${dcName}`;
+    if (ev.dressCodeAvoid) {
+      confirmationSubject += ` (Avoid: ${ev.dressCodeAvoid})`;
+    }
+  }
+
   outbox.unshift({
     id: 'o_' + Math.random().toString(36).slice(2, 8),
     to: record.email,
     channel: ev.sendRsvpConfirmationSms ? 'SMS' : 'Email',
-    subject: approvalState === 'UNDER_APPROVAL'
-      ? `We received your RSVP for ${ev.title} — pending approval`
-      : `You're confirmed for ${ev.title}!`,
+    subject: confirmationSubject,
     time: 'just now',
   });
   // Notify the host.
