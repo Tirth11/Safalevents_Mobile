@@ -1,5 +1,4 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, StyleSheet, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font, shadow, avatarUrl } from '../../theme/theme';
 import {
@@ -12,7 +11,7 @@ import {
   Row,
   Divider,
 } from '../../components/ui';
-import { events, getEvent, getEventPhotos, uploadPhoto, useStore } from '../../data/mock';
+import { events, getEvent, getEventPhotos, uploadPhoto, useStore, myRsvps } from '../../data/mock';
 import { useAuth, gateAction } from '../../auth/AuthContext';
 
 export default function GuestEventDetailScreen({ navigation, route }) {
@@ -36,8 +35,9 @@ export default function GuestEventDetailScreen({ navigation, route }) {
           <Ionicons name="chevron-back" size={24} color={colors.white} />
         </TouchableOpacity>
         <View style={styles.coverText}>
-          <Row style={{ gap: 8 }}>
-            <Badge tone="primary" label={event.eventType} />
+          <Row style={{ gap: 8, flexWrap: 'wrap' }}>
+            <Badge tone="primary" label={event.eventType === 'Other' ? (event.customEventType || 'Special Event') : event.eventType} />
+            <Badge tone="blue" label={event.eventMode || 'Onsite'} />
             {event.ageRestricted ? <Badge tone="red" label={`🔒 ${event.minimumAge}+ Event`} /> : null}
           </Row>
           <Text style={[font.h1, { color: colors.white, marginTop: spacing.sm }]} numberOfLines={2}>{event.title}</Text>
@@ -53,8 +53,24 @@ export default function GuestEventDetailScreen({ navigation, route }) {
             </Text>
           </Row>
           <Row style={{ marginBottom: spacing.sm }}>
-            <Ionicons name="location-outline" size={18} color={colors.primary} />
-            <Text style={[font.body, { marginLeft: spacing.sm, flex: 1 }]} numberOfLines={2}>{event.location}</Text>
+            <Ionicons
+              name={
+                event.eventMode === 'Virtual'
+                  ? 'videocam-outline'
+                  : event.eventMode === 'Hybrid'
+                  ? 'globe-outline'
+                  : 'location-outline'
+              }
+              size={18}
+              color={colors.primary}
+            />
+            <Text style={[font.body, { marginLeft: spacing.sm, flex: 1 }]} numberOfLines={2}>
+              {event.eventMode === 'Virtual'
+                ? 'Virtual Event'
+                : event.eventMode === 'Hybrid'
+                ? `Hybrid • ${event.venueName || event.location}`
+                : event.venueName || event.location}
+            </Text>
           </Row>
           <Row style={{ marginBottom: spacing.sm }}>
             <Ionicons name="people-outline" size={18} color={colors.primary} />
@@ -76,6 +92,114 @@ export default function GuestEventDetailScreen({ navigation, route }) {
         <Card style={{ marginBottom: spacing.lg }}>
           <Text style={[font.body, { lineHeight: 21 }]}>{event.description}</Text>
         </Card>
+
+        {/* Onsite / Hybrid Venue Details */}
+        {(event.eventMode === 'Onsite' || event.eventMode === 'Hybrid') && event.venueName ? (
+          <>
+            <SectionTitle>Venue Details</SectionTitle>
+            <Card style={{ marginBottom: spacing.lg }}>
+              <Text style={[font.h3, { marginBottom: spacing.xs }]}>{event.venueName}</Text>
+              <Text style={[font.body, { color: colors.text }]}>{event.venueAddressLine1}</Text>
+              {event.venueAddressLine2 ? <Text style={[font.body, { color: colors.text }]}>{event.venueAddressLine2}</Text> : null}
+              <Text style={[font.body, { color: colors.textMuted }]}>
+                {event.venueCity}, {event.venueState} {event.venuePostalCode}
+              </Text>
+              <Text style={[font.body, { color: colors.textMuted, marginBottom: spacing.md }]}>
+                {event.venueCountry}
+              </Text>
+
+              {event.venueInstructions ? (
+                <View style={{ marginBottom: spacing.md, padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.primary + '08' }}>
+                  <Text style={[font.tiny, { fontWeight: '700', color: colors.textMuted, marginBottom: 2 }]}>ADDITIONAL VENUE INFORMATION</Text>
+                  <Text style={font.small}>{event.venueInstructions}</Text>
+                </View>
+              ) : null}
+
+              {event.venueMapLink ? (
+                <Button
+                  label="View on Map"
+                  variant="outline"
+                  icon="map-outline"
+                  onPress={() => {
+                    Linking.openURL(event.venueMapLink).catch(() =>
+                      Alert.alert('Error', 'Could not open map link.')
+                    );
+                  }}
+                />
+              ) : null}
+            </Card>
+          </>
+        ) : null}
+
+        {/* Virtual / Hybrid Meeting Details (with access control) */}
+        {(event.eventMode === 'Virtual' || event.eventMode === 'Hybrid') && (
+          <>
+            <SectionTitle>Meeting Details</SectionTitle>
+            {(() => {
+              const myRsvp = myRsvps.find((r) => r.eventId === event.id);
+              const isConfirmed = myRsvp && myRsvp.status === 'going' && myRsvp.approvalState === 'APPROVED';
+
+              if (!isConfirmed) {
+                return (
+                  <Card style={{ marginBottom: spacing.lg, borderColor: colors.amber, backgroundColor: colors.amber + '0a' }}>
+                    <Row style={{ alignItems: 'flex-start' }}>
+                      <Ionicons name="lock-closed-outline" size={18} color={colors.amber} style={{ marginTop: 2 }} />
+                      <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                        <Text style={[font.body, { fontWeight: '700', color: colors.text }]}>Meeting Details Locked</Text>
+                        <Text style={[font.small, { color: colors.textMuted, marginTop: 4, lineHeight: 17 }]}>
+                          The virtual meeting credentials will be unlocked once your RSVP is approved and confirmed.
+                        </Text>
+                      </View>
+                    </Row>
+                  </Card>
+                );
+              }
+
+              return (
+                <Card style={{ marginBottom: spacing.lg }}>
+                  <Row style={{ marginBottom: spacing.md, justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Badge tone="green" label={`Platform: ${event.meetingPlatform || 'Zoom'}`} />
+                    <Ionicons name="videocam-outline" size={20} color={colors.accent} />
+                  </Row>
+
+                  <Button
+                    label="Join Meeting"
+                    variant="primary"
+                    icon="log-in-outline"
+                    style={{ marginBottom: spacing.md }}
+                    onPress={() => {
+                      Linking.openURL(event.meetingLink).catch(() =>
+                        Alert.alert('Error', 'Could not open meeting link.')
+                      );
+                    }}
+                  />
+
+                  {event.meetingId ? (
+                    <Row style={{ justifyContent: 'space-between', marginBottom: spacing.xs }}>
+                      <Text style={font.small}>Meeting ID</Text>
+                      <Text style={[font.body, { fontWeight: '700' }]}>{event.meetingId}</Text>
+                    </Row>
+                  ) : null}
+
+                  {event.meetingPasscode ? (
+                    <Row style={{ justifyContent: 'space-between', marginBottom: spacing.sm }}>
+                      <Text style={font.small}>Passcode</Text>
+                      <Text style={[font.body, { fontWeight: '700', color: colors.primary }]}>{event.meetingPasscode}</Text>
+                    </Row>
+                  ) : null}
+
+                  {event.meetingInstructions ? (
+                    <View style={{ marginTop: spacing.md, padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.primary + '08' }}>
+                      <Text style={[font.tiny, { fontWeight: '700', color: colors.textMuted, marginBottom: 2 }]}>JOINING INSTRUCTIONS</Text>
+                      <Text style={font.small}>{event.meetingInstructions}</Text>
+                    </View>
+                  ) : null}
+                </Card>
+              );
+            })()}
+          </>
+        )}
+
 
         {event.dressCode && event.dressCode !== 'No Dress Code' ? (
           <>

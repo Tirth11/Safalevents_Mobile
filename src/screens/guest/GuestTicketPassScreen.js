@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert, StyleSheet, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, StyleSheet, TextInput, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font, shadow, avatarUrl } from '../../theme/theme';
 import {
@@ -266,10 +266,47 @@ export default function GuestTicketPassScreen({ navigation, route }) {
               {event.date} • {event.time}
             </Text>
           </Row>
-          <Row style={{ marginTop: spacing.xs, alignSelf: 'stretch' }}>
-            <Ionicons name="location-outline" size={14} color={colors.textMuted} />
-            <Text style={[font.small, { marginLeft: spacing.xs, flex: 1 }]} numberOfLines={2}>{event.location}</Text>
-          </Row>
+          {/* Mode-specific Ticket details */}
+          {(event.eventMode === 'Onsite' || event.eventMode === 'Hybrid') && event.venueName ? (
+            <View style={{ alignSelf: 'stretch', marginTop: spacing.xs }}>
+              <Row style={{ alignItems: 'flex-start' }}>
+                <Ionicons name="location-outline" size={14} color={colors.textMuted} style={{ marginTop: 2 }} />
+                <View style={{ flex: 1, marginLeft: spacing.xs }}>
+                  <Text style={[font.small, { fontWeight: '700' }]}>{event.venueName}</Text>
+                  <Text style={font.tiny}>{event.venueAddressLine1}{event.venueAddressLine2 ? ` ${event.venueAddressLine2}` : ''}</Text>
+                  <Text style={font.tiny}>{event.venueCity}, {event.venueState} {event.venuePostalCode}</Text>
+                  {event.venueMapLink ? (
+                    <TouchableOpacity onPress={() => Linking.openURL(event.venueMapLink)}>
+                      <Text style={[font.tiny, { color: colors.primary, fontWeight: '700', marginTop: 2 }]}>View on Map</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              </Row>
+            </View>
+          ) : (event.eventMode !== 'Virtual' && event.eventMode !== 'Hybrid') ? (
+            <Row style={{ marginTop: spacing.xs, alignSelf: 'stretch' }}>
+              <Ionicons name="location-outline" size={14} color={colors.textMuted} />
+              <Text style={[font.small, { marginLeft: spacing.xs, flex: 1 }]} numberOfLines={2}>{event.location}</Text>
+            </Row>
+          ) : null}
+
+          {(event.eventMode === 'Virtual' || event.eventMode === 'Hybrid') ? (
+            <View style={{ alignSelf: 'stretch', marginTop: spacing.xs }}>
+              <Row style={{ alignItems: 'flex-start' }}>
+                <Ionicons name="videocam-outline" size={14} color={colors.textMuted} style={{ marginTop: 2 }} />
+                <View style={{ flex: 1, marginLeft: spacing.xs }}>
+                  <Text style={[font.small, { fontWeight: '700' }]}>Virtual Meeting ({event.meetingPlatform || 'Zoom'})</Text>
+                  {event.meetingLink ? (
+                    <TouchableOpacity onPress={() => Linking.openURL(event.meetingLink)}>
+                      <Text style={[font.tiny, { color: colors.primary, fontWeight: '700', marginTop: 2 }]} numberOfLines={1}>Join Meeting</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                  {event.meetingId ? <Text style={font.tiny}>ID: {event.meetingId}</Text> : null}
+                  {event.meetingPasscode ? <Text style={font.tiny}>Passcode: {event.meetingPasscode}</Text> : null}
+                </View>
+              </Row>
+            </View>
+          ) : null}
           {event.dressCode && event.dressCode !== 'No Dress Code' && (
             <Row style={{ marginTop: spacing.xs, alignSelf: 'stretch' }}>
               <Ionicons name="shirt-outline" size={14} color={colors.textMuted} />

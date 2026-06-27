@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Image, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Image, StyleSheet, Linking, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font } from '../../theme/theme';
 import { Screen, Card, Badge, Button, SectionTitle, Row, Divider, ScreenHeader } from '../../components/ui';
@@ -135,6 +135,46 @@ export default function GuestRsvpScreen({ navigation, route }) {
           </Card>
         ) : null}
 
+        {!declined && !maybe && !pending && !waitlisted && (event.eventMode === 'Virtual' || event.eventMode === 'Hybrid') ? (
+          <Card style={{ marginBottom: spacing.lg, borderColor: colors.accent, backgroundColor: colors.accent + '08' }}>
+            <Text style={[font.h3, { marginBottom: spacing.xs }]}>Virtual Access Unlocked</Text>
+            <Text style={[font.small, { marginBottom: spacing.md, color: colors.textMuted }]}>
+              You are confirmed! Tap below to join the virtual meeting.
+            </Text>
+            <Button
+              label={`Join on ${event.meetingPlatform || 'Zoom'}`}
+              variant="primary"
+              icon="videocam-outline"
+              style={{ marginBottom: spacing.md }}
+              onPress={() => {
+                if (event.meetingLink) {
+                  Linking.openURL(event.meetingLink).catch(() =>
+                    Alert.alert('Error', 'Could not open meeting link.')
+                  );
+                }
+              }}
+            />
+            {event.meetingId ? (
+              <Row style={{ justifyContent: 'space-between', marginBottom: 4 }}>
+                <Text style={font.small}>Meeting ID</Text>
+                <Text style={[font.small, { fontWeight: '700' }]}>{event.meetingId}</Text>
+              </Row>
+            ) : null}
+            {event.meetingPasscode ? (
+              <Row style={{ justifyContent: 'space-between', marginBottom: 4 }}>
+                <Text style={font.small}>Passcode</Text>
+                <Text style={[font.small, { fontWeight: '700', color: colors.primary }]}>{event.meetingPasscode}</Text>
+              </Row>
+            ) : null}
+            {event.meetingInstructions ? (
+              <View style={{ marginTop: spacing.sm, padding: spacing.sm, borderRadius: radius.sm, backgroundColor: colors.primary + '0a' }}>
+                <Text style={[font.tiny, { fontWeight: '700', color: colors.textMuted }]}>INSTRUCTIONS</Text>
+                <Text style={font.tiny}>{event.meetingInstructions}</Text>
+              </View>
+            ) : null}
+          </Card>
+        ) : null}
+
         {!declined && !maybe && !pending && !waitlisted ? (
           <Button label="View My Pass" variant="primary" icon="qr-code-outline" onPress={() => navigation.navigate('GuestTicketPass', { eventId: event.id })} style={{ marginBottom: spacing.md }} />
         ) : null}
@@ -150,6 +190,23 @@ export default function GuestRsvpScreen({ navigation, route }) {
   return (
     <Screen>
       <ScreenHeader title="RSVP" subtitle={event.title} onBack={() => navigation.goBack()} />
+
+      <Card style={{ marginBottom: spacing.md }}>
+        <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <Badge tone="primary" label={event.eventType === 'Other' ? (event.customEventType || 'Special Event') : event.eventType} />
+          <Badge tone="blue" label={event.eventMode || 'Onsite'} />
+        </Row>
+        <Text style={[font.h3, { marginTop: spacing.xs }]}>{event.title}</Text>
+        
+        {(event.eventMode === 'Onsite' || event.eventMode === 'Hybrid') && event.venueName ? (
+          <Row style={{ marginTop: spacing.sm }}>
+            <Ionicons name="location-outline" size={14} color={colors.textMuted} />
+            <Text style={[font.small, { marginLeft: 4, flex: 1 }]} numberOfLines={1}>
+              {event.venueName} · {event.venueCity}, {event.venueState}
+            </Text>
+          </Row>
+        ) : null}
+      </Card>
 
       {/* Response selector — Going / Maybe / Can't go */}
       <SectionTitle>Will you attend?</SectionTitle>

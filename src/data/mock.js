@@ -65,7 +65,7 @@ export const events = [
     cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80',
     description:
       'Cocktails, high-fidelity music, and networking under the stars. Meet creatives, developers, and designers. Premium dress code.',
-    eventType: 'Party',
+    eventType: 'Networking Event',
     status: 'Published',
     capacity: 100,
     approvalRequired: false,
@@ -85,6 +85,15 @@ export const events = [
     dressCodeAvoid: 'shorts and flip-flops',
     dressCodeInstructions: 'Collared shirts requested for men. No athletic wear.',
     dressCodeCover: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80',
+    eventMode: 'Onsite',
+    venueName: 'Penthouse Lounge',
+    venueAddressLine1: '450 Park Avenue',
+    venueCity: 'New York City',
+    venueState: 'NY',
+    venueCountry: 'USA',
+    venuePostalCode: '10022',
+    venueMapLink: 'https://maps.google.com/?q=Penthouse+Lounge+Manhattan',
+    venueInstructions: 'Take the elevators to the 30th floor. Valet parking available.',
   },
   {
     id: '2',
@@ -107,6 +116,19 @@ export const events = [
     hostEmail: 'jordan@startup.com',
     rating: 4.5,
     questions: ['What are you building?', 'Looking for funding?'],
+    eventMode: 'Hybrid',
+    venueName: 'Venture Hub HQ',
+    venueAddressLine1: '123 Mission St',
+    venueCity: 'San Francisco',
+    venueState: 'CA',
+    venueCountry: 'USA',
+    venuePostalCode: '94105',
+    venueMapLink: 'https://maps.google.com/?q=Venture+Hub+HQ+San+Francisco',
+    meetingPlatform: 'Zoom',
+    meetingLink: 'https://zoom.us/j/9876543210',
+    meetingId: '987 654 3210',
+    meetingPasscode: 'STARTUP',
+    meetingInstructions: 'Meeting lobby opens 10 minutes prior.',
   },
   {
     id: '3',
@@ -284,7 +306,17 @@ export const ACCENT_THEMES = [
   { key: 'midnight', name: 'Midnight', colors: ['#1e293b', '#7c3aed'] },
 ];
 
-export const EVENT_TYPES = ['Party', 'Meetup', 'Meeting', 'Webinar', 'Workshop', 'Religious', 'Wedding', 'Other'];
+export const EVENT_TYPES = [
+  'Birthday Party', 'Wedding', 'Anniversary', 'Engagement', 'Baby Shower',
+  'Housewarming', 'Corporate Event', 'Conference', 'Seminar', 'Workshop',
+  'Networking Event', 'Product Launch', 'Award Ceremony', 'Cultural Event',
+  'Festival', 'Religious Event', 'Holiday Celebration', 'Charity Event',
+  'Fundraiser', 'Sports Event', 'Concert', 'Comedy Show', 'Music Event',
+  'Meetup', 'Family Gathering', 'Community Event', 'Graduation Party',
+  'Farewell Party', 'Reunion', 'Other'
+];
+
+export const MEETING_PLATFORMS = ['Zoom', 'Microsoft Teams', 'Google Meet', 'Webex', 'Other'];
 
 // ─── Event photo albums (EP-001) ──────────────────────────────────────────────
 // status: APPROVED | PENDING | REJECTED. role: host | guest.
@@ -467,6 +499,22 @@ export const createEvent = (data, asDraft = false) => {
     dressCodeAvoid: data.dressCodeAvoid || '',
     dressCodeInstructions: data.dressCodeInstructions || '',
     dressCodeCover: data.dressCodeCover || '',
+    customEventType: data.customEventType || '',
+    eventMode: data.eventMode || 'Onsite',
+    venueName: data.venueName || '',
+    venueAddressLine1: data.venueAddressLine1 || '',
+    venueAddressLine2: data.venueAddressLine2 || '',
+    venueCity: data.venueCity || '',
+    venueState: data.venueState || '',
+    venueCountry: data.venueCountry || '',
+    venuePostalCode: data.venuePostalCode || '',
+    venueMapLink: data.venueMapLink || '',
+    venueInstructions: data.venueInstructions || '',
+    meetingPlatform: data.meetingPlatform || 'Zoom',
+    meetingLink: data.meetingLink || '',
+    meetingId: data.meetingId || '',
+    meetingPasscode: data.meetingPasscode || '',
+    meetingInstructions: data.meetingInstructions || '',
   };
   events.unshift(record);
   _notify();
@@ -1057,11 +1105,28 @@ export const createGuestRsvp = (eventId, data = {}) => {
   let confirmationSubject = approvalState === 'UNDER_APPROVAL'
     ? `We received your RSVP for ${ev.title} — pending approval`
     : `You're confirmed for ${ev.title}!`;
+  
+  // Dress Code
   if (ev.dressCode && ev.dressCode !== 'No Dress Code') {
     const dcName = ev.dressCode === 'Other' ? (ev.customDressCode || 'Custom') : ev.dressCode;
     confirmationSubject += ` · Dress Code: ${dcName}`;
     if (ev.dressCodeAvoid) {
       confirmationSubject += ` (Avoid: ${ev.dressCodeAvoid})`;
+    }
+  }
+
+  // Event Mode Details
+  const mode = ev.eventMode || 'Onsite';
+  if (mode === 'Onsite' || mode === 'Hybrid') {
+    confirmationSubject += ` · Venue: ${ev.venueName || ev.location}`;
+    if (ev.venueMapLink) {
+      confirmationSubject += ` (Map: ${ev.venueMapLink})`;
+    }
+  }
+  if ((mode === 'Virtual' || mode === 'Hybrid') && approvalState === 'APPROVED') {
+    confirmationSubject += ` · Join ${ev.meetingPlatform || 'Meeting'}: ${ev.meetingLink}`;
+    if (ev.meetingPasscode) {
+      confirmationSubject += ` (Passcode: ${ev.meetingPasscode})`;
     }
   }
 

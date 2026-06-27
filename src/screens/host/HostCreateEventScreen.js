@@ -25,6 +25,7 @@ import {
   EVENT_TYPES,
   DRESS_CODES,
   DRESS_CODE_COVER_PRESETS,
+  MEETING_PLATFORMS,
 } from '../../data/mock';
 
 const STEPS = ['Basics', 'Theme', 'Visibility', 'Rules'];
@@ -33,7 +34,7 @@ export default function HostCreateEventScreen({ navigation }) {
   const host = getCurrentHost();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
-    title: '', eventType: 'Party', date: '', time: '', location: '', description: '',
+    title: '', eventType: 'Birthday Party', date: '', time: '', location: '', description: '',
     accentTheme: ACCENT_THEMES[0].key, cover: COVER_PRESETS[0],
     privacy: 'Public', rsvpStatus: 'Open', capacity: '', maxGuestsPerRsvp: '1', rsvpDeadline: '',
     approvalRequired: false, messagingEnabled: true, allowSelfEdit: false, allowSelfCancellation: false,
@@ -44,6 +45,22 @@ export default function HostCreateEventScreen({ navigation }) {
     enablePayments: false, ticketPrice: '', bankName: '', holderName: '', routing: '', account: '',
     questions: [''],
     dressCode: 'No Dress Code', customDressCode: '', dressCodeDescription: '', dressCodeAvoid: '', dressCodeInstructions: '', dressCodeCover: '',
+    customEventType: '',
+    eventMode: 'Onsite',
+    venueName: '',
+    venueAddressLine1: '',
+    venueAddressLine2: '',
+    venueCity: '',
+    venueState: '',
+    venueCountry: '',
+    venuePostalCode: '',
+    venueMapLink: '',
+    venueInstructions: '',
+    meetingPlatform: 'Zoom',
+    meetingLink: '',
+    meetingId: '',
+    meetingPasscode: '',
+    meetingInstructions: '',
   });
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -52,8 +69,20 @@ export default function HostCreateEventScreen({ navigation }) {
   const removeQuestion = (i) => setForm((p) => ({ ...p, questions: p.questions.filter((_, idx) => idx !== i) }));
 
   const finish = (asDraft) => {
+    let locationString = '';
+    let cityString = '';
+    if (form.eventMode === 'Virtual') {
+      locationString = 'Virtual Event';
+      cityString = 'Online';
+    } else {
+      locationString = `${form.venueName}, ${form.venueCity}, ${form.venueState}`;
+      cityString = form.venueCity;
+    }
+
     const data = {
       ...form,
+      location: locationString,
+      city: cityString,
       bank: form.enablePayments
         ? { bankName: form.bankName, holderName: form.holderName, routing: form.routing, account: form.account }
         : null,
@@ -63,7 +92,27 @@ export default function HostCreateEventScreen({ navigation }) {
     navigation.replace('HostEventManage', { eventId: ev.id });
   };
 
-  const next = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
+  const next = () => {
+    if (step === 0) {
+      if (!form.title.trim()) { Alert.alert('Required', 'Please enter an event title.'); return; }
+      if (!form.eventType) { Alert.alert('Required', 'Please select an event type.'); return; }
+      if (!form.eventMode) { Alert.alert('Required', 'Please select an event mode.'); return; }
+      if (form.eventMode === 'Onsite' || form.eventMode === 'Hybrid') {
+        if (!form.venueName.trim()) { Alert.alert('Required', 'Please enter a venue name.'); return; }
+        if (!form.venueAddressLine1.trim()) { Alert.alert('Required', 'Please enter an address.'); return; }
+        if (!form.venueCity.trim()) { Alert.alert('Required', 'Please enter a city.'); return; }
+        if (!form.venueState.trim()) { Alert.alert('Required', 'Please enter a state.'); return; }
+        if (!form.venueCountry.trim()) { Alert.alert('Required', 'Please enter a country.'); return; }
+        if (!form.venuePostalCode.trim()) { Alert.alert('Required', 'Please enter a postal code.'); return; }
+      }
+      if (form.eventMode === 'Virtual' || form.eventMode === 'Hybrid') {
+        if (!form.meetingLink.trim()) { Alert.alert('Required', 'Please enter a virtual meeting link.'); return; }
+      }
+      if (!form.date.trim()) { Alert.alert('Required', 'Please enter a date.'); return; }
+      if (!form.time.trim()) { Alert.alert('Required', 'Please enter a time.'); return; }
+    }
+    setStep((s) => Math.min(STEPS.length - 1, s + 1));
+  };
   const back = () => setStep((s) => Math.max(0, s - 1));
 
   // Phase 1d — gate create-event for unverified org hosts (jump to Account tab).
@@ -79,16 +128,57 @@ export default function HostCreateEventScreen({ navigation }) {
       {/* ── Step 1: Basics ── */}
       {step === 0 && (
         <Card style={{ marginBottom: spacing.lg }}>
-          <TextField label="Event title" value={form.title} onChangeText={(t) => set('title', t)} placeholder="e.g. Summer Rooftop Mixer" />
-          <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>Event type</Text>
+          <TextField label="Event title *" value={form.title} onChangeText={(t) => set('title', t)} placeholder="e.g. Summer Rooftop Mixer" />
+          <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>Event type *</Text>
           <Chips options={EVENT_TYPES} value={form.eventType} onChange={(v) => set('eventType', v)} />
+          {form.eventType === 'Other' && (
+            <TextField label="Custom Event Type *" value={form.customEventType} onChangeText={(t) => set('customEventType', t)} placeholder="e.g. Pet Adoption Drive" />
+          )}
           <View style={{ height: spacing.md }} />
           <Row style={{ gap: spacing.md }}>
-            <TextField half label="Date" value={form.date} onChangeText={(t) => set('date', t)} placeholder="YYYY-MM-DD" />
-            <TextField half label="Time" value={form.time} onChangeText={(t) => set('time', t)} placeholder="19:00" />
+            <TextField half label="Date *" value={form.date} onChangeText={(t) => set('date', t)} placeholder="YYYY-MM-DD" />
+            <TextField half label="Time *" value={form.time} onChangeText={(t) => set('time', t)} placeholder="19:00" />
           </Row>
-          <TextField label="Location" value={form.location} onChangeText={(t) => set('location', t)} placeholder="Venue, City, State" />
           <TextField label="Description" value={form.description} onChangeText={(t) => set('description', t)} placeholder="Tell guests what to expect…" multiline />
+          
+          <Divider />
+
+          <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>Event Mode *</Text>
+          <Chips options={['Onsite', 'Virtual', 'Hybrid']} value={form.eventMode} onChange={(v) => set('eventMode', v)} />
+          
+          {(form.eventMode === 'Onsite' || form.eventMode === 'Hybrid') && (
+            <View style={{ marginTop: spacing.md }}>
+              <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>Physical Venue Details</Text>
+              <TextField label="Venue Name *" value={form.venueName} onChangeText={(t) => set('venueName', t)} placeholder="e.g. The Grand Ballroom" />
+              <TextField label="Address Line 1 *" value={form.venueAddressLine1} onChangeText={(t) => set('venueAddressLine1', t)} placeholder="Street address" />
+              <TextField label="Address Line 2 (Optional)" value={form.venueAddressLine2} onChangeText={(t) => set('venueAddressLine2', t)} placeholder="Apartment, suite, unit, etc." />
+              <Row style={{ gap: spacing.md }}>
+                <TextField half label="City *" value={form.venueCity} onChangeText={(t) => set('venueCity', t)} placeholder="City" />
+                <TextField half label="State *" value={form.venueState} onChangeText={(t) => set('venueState', t)} placeholder="State" />
+              </Row>
+              <Row style={{ gap: spacing.md }}>
+                <TextField half label="Country *" value={form.venueCountry} onChangeText={(t) => set('venueCountry', t)} placeholder="Country" />
+                <TextField half label="Postal Code *" value={form.venuePostalCode} onChangeText={(t) => set('venuePostalCode', t)} placeholder="ZIP/Postal Code" />
+              </Row>
+              <TextField label="Location Map Link (Optional)" value={form.venueMapLink} onChangeText={(t) => set('venueMapLink', t)} placeholder="e.g. https://maps.google.com/?q=..." />
+              <TextField label="Additional Venue Info (Optional)" value={form.venueInstructions} onChangeText={(t) => set('venueInstructions', t)} placeholder="e.g. Parking instructions, gate number" multiline />
+            </View>
+          )}
+
+          {(form.eventMode === 'Virtual' || form.eventMode === 'Hybrid') && (
+            <View style={{ marginTop: spacing.md }}>
+              <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>Virtual Meeting Details</Text>
+              <Text style={[font.tiny, { fontWeight: '700', marginBottom: spacing.xs, color: colors.textMuted }]}>Meeting Platform</Text>
+              <Chips options={MEETING_PLATFORMS} value={form.meetingPlatform} onChange={(v) => set('meetingPlatform', v)} />
+              <View style={{ height: spacing.xs }} />
+              <TextField label="Meeting Link *" value={form.meetingLink} onChangeText={(t) => set('meetingLink', t)} placeholder="e.g. Zoom or Meet URL" />
+              <Row style={{ gap: spacing.md }}>
+                <TextField half label="Meeting ID (Optional)" value={form.meetingId} onChangeText={(t) => set('meetingId', t)} placeholder="ID" />
+                <TextField half label="Passcode (Optional)" value={form.meetingPasscode} onChangeText={(t) => set('meetingPasscode', t)} placeholder="Passcode" />
+              </Row>
+              <TextField label="Joining Instructions (Optional)" value={form.meetingInstructions} onChangeText={(t) => set('meetingInstructions', t)} placeholder="e.g. Please join 10 minutes early" multiline />
+            </View>
+          )}
         </Card>
       )}
 
