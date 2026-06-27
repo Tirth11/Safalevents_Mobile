@@ -35,8 +35,15 @@ We have successfully implemented the **Event Mode, Event Type, & Location Config
 - Shows mode badges and address/joining details on the pass card.
 - Wired simulated Apple/Google Calendar reminders to include the mode-specific venue address or virtual links.
 
+## Deliverables Generated & Pushed to Git
+
+We generated and checked in the following files under the `docs/` folder in the mobile repository:
+1. **`Safal_Events_PRD_Complete.docx`**: End-to-end detailed Word Document containing complete product requirements, multi-role definitions, 24 detailed user stories with Acceptance Criteria (UAT), and manual/automated test scenarios.
+2. **`Safal_Events_Sprint_Planning.xlsx`**: Detailed spreadsheet mapping all 24 user stories across 4 Sprint cycles, tracking Priorities, Story Points, Target Platforms, User Roles, and Statuses.
+3. **`Safal_Events_Mobile_App_Functional_Map.xlsx`**: Detailed spreadsheet mapping Host, Guest, and Staff mobile screen flows, detailing Screen names, Action descriptions, Inputs/Form fields, buttons/triggers, and business rules/UAT mapping.
+
 ---
 
 ## Verification Results
 - Verified that all mobile screens compile with Babel successfully.
-- Staged and locally committed all modifications to the mobile repository.
+- Staged and pushed all modifications and documents to the GitHub repository: `git@github.com:safalvir/SafalEvents_Mockup_Mobile.git`.
