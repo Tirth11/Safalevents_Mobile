@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Alert, StyleSheet, Linking, Share, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Alert, StyleSheet, Linking, Share, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font } from '../../theme/theme';
 import {
@@ -101,6 +101,42 @@ function Answers({ answers }) {
   );
 }
 
+// Multi-channel picker for broadcasts (Email / SMS / WhatsApp)
+const BROADCAST_CHANNELS = [
+  { key: 'Email', icon: 'mail-outline', color: colors.primary },
+  { key: 'SMS', icon: 'chatbubble-outline', color: colors.blue },
+  { key: 'WhatsApp', icon: 'logo-whatsapp', color: '#25D366' },
+];
+function ChannelPicker({ selected, onToggle }) {
+  return (
+    <View style={{ marginBottom: spacing.sm }}>
+      <Text style={[font.tiny, { fontWeight: '700', color: colors.textMuted, marginBottom: spacing.xs, textTransform: 'uppercase', letterSpacing: 0.3 }]}>Channel</Text>
+      <Row style={{ gap: spacing.sm, flexWrap: 'wrap' }}>
+        {BROADCAST_CHANNELS.map((ch) => {
+          const on = selected.includes(ch.key);
+          return (
+            <TouchableOpacity
+              key={ch.key}
+              activeOpacity={0.8}
+              onPress={() => onToggle(ch.key)}
+              style={{
+                flexDirection: 'row', alignItems: 'center', gap: 5,
+                paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.full,
+                borderWidth: on ? 2 : 1, borderColor: on ? ch.color : colors.border,
+                backgroundColor: on ? ch.color + '14' : colors.surface,
+              }}
+            >
+              <Ionicons name={ch.icon} size={15} color={on ? ch.color : colors.textMuted} />
+              <Text style={{ fontSize: 12.5, fontWeight: '700', color: on ? ch.color : colors.textMuted }}>{ch.key}</Text>
+              {on ? <Ionicons name="checkmark" size={13} color={ch.color} /> : null}
+            </TouchableOpacity>
+          );
+        })}
+      </Row>
+    </View>
+  );
+}
+
 // Attendee-level inline check-in controls (used in Guests tab + Check-in going list)
 function AttendeeCheckinControls({ r }) {
   const cs = getCheckinState(r);
@@ -191,13 +227,17 @@ export default function HostEventManageScreen({ navigation, route }) {
     setCommentText('');
   };
 
-  // ── Broadcast ──
+  // ── Broadcast (multi-channel: Email / SMS / WhatsApp) ──
   const [bcast, setBcast] = useState('');
+  const [bcastChannels, setBcastChannels] = useState(['Email']);
+  const toggleBcastChannel = (ch) =>
+    setBcastChannels((prev) => (prev.includes(ch) ? prev.filter((c) => c !== ch) : [...prev, ch]));
   const sendBroadcast = () => {
     if (!bcast.trim()) { Alert.alert('Empty message', 'Write a message to send.'); return; }
-    const n = broadcast(event.id, bcast.trim());
+    if (bcastChannels.length === 0) { Alert.alert('Pick a channel', 'Select at least one channel (Email, SMS or WhatsApp).'); return; }
+    const n = broadcast(event.id, bcast.trim(), bcastChannels);
     setBcast('');
-    Alert.alert('Broadcast sent', `Message queued to ${n} guest(s). See Notification Logs.`);
+    Alert.alert('Broadcast sent', `Message queued to ${n} guest(s) via ${bcastChannels.join(', ')}. See Notification Logs.`);
   };
 
   // ── Settings edit ──
@@ -364,6 +404,7 @@ export default function HostEventManageScreen({ navigation, route }) {
           {/* Broadcast + Export quick actions */}
           <Card style={{ marginBottom: spacing.lg }}>
             <Text style={[font.h3, { marginBottom: spacing.sm }]}>Message all guests</Text>
+            <ChannelPicker selected={bcastChannels} onToggle={toggleBcastChannel} />
             <TextField value={bcast} onChangeText={setBcast} placeholder="Compose a broadcast to all confirmed guests…" multiline />
             <Row style={{ gap: spacing.md, alignItems: 'stretch' }}>
               <View style={{ flex: 1 }}><Button label="Send broadcast" variant="primary" icon="megaphone-outline" onPress={sendBroadcast} /></View>
@@ -572,7 +613,7 @@ export default function HostEventManageScreen({ navigation, route }) {
                       <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }} numberOfLines={1}>{o.subject}</Text>
                       <Text style={[font.tiny, { marginTop: spacing.xs }]} numberOfLines={1}>{o.to} · {o.time}</Text>
                     </View>
-                    <Badge tone={o.channel === 'SMS' ? 'blue' : 'primary'} label={o.channel} />
+                    <Badge tone={o.channel === 'WhatsApp' ? 'green' : o.channel === 'SMS' ? 'blue' : 'primary'} label={o.channel} />
                   </Row>
                 </View>
               ))
@@ -674,6 +715,7 @@ export default function HostEventManageScreen({ navigation, route }) {
           </Card>
           <Card style={{ marginBottom: spacing.lg }}>
             <Text style={[font.h3, { marginBottom: spacing.sm }]}>Broadcast to all guests</Text>
+            <ChannelPicker selected={bcastChannels} onToggle={toggleBcastChannel} />
             <TextField value={bcast} onChangeText={setBcast} placeholder="Type a message for all confirmed guests…" multiline />
             <Button label="Send broadcast" variant="primary" icon="megaphone-outline" onPress={sendBroadcast} />
           </Card>
@@ -840,8 +882,8 @@ export default function HostEventManageScreen({ navigation, route }) {
                 <View key={o.id}>
                   {i > 0 ? <Divider /> : null}
                   <Row style={{ alignItems: 'flex-start' }}>
-                    <View style={[styles.iconTile, { backgroundColor: o.channel === 'SMS' ? colors.blueTint : colors.primaryTint }]}>
-                      <Ionicons name={o.channel === 'SMS' ? 'call-outline' : 'mail-outline'} size={14} color={o.channel === 'SMS' ? colors.blue : colors.primary} />
+                    <View style={[styles.iconTile, { backgroundColor: o.channel === 'WhatsApp' ? '#25D36618' : o.channel === 'SMS' ? colors.blueTint : colors.primaryTint }]}>
+                      <Ionicons name={o.channel === 'WhatsApp' ? 'logo-whatsapp' : o.channel === 'SMS' ? 'call-outline' : 'mail-outline'} size={14} color={o.channel === 'WhatsApp' ? '#25D366' : o.channel === 'SMS' ? colors.blue : colors.primary} />
                     </View>
                     <View style={{ flex: 1, marginLeft: spacing.md }}>
                       <Text style={{ fontWeight: '700', fontSize: 13.5, color: colors.text }} numberOfLines={1}>{o.subject}</Text>

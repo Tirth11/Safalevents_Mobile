@@ -588,16 +588,22 @@ export const addManualGuest = (eventId, data) => {
 
 // ─── Broadcast to all guests (Phase 3) ──────────────────────────────────────
 // Logs one outbox entry per confirmed guest; returns the number reached.
-export const broadcast = (eventId, subject, channel = 'Email') => {
+export const broadcast = (eventId, subject, channels = ['Email']) => {
   const ev = getEvent(eventId);
+  const chList = Array.isArray(channels) ? channels : [channels];
   const recipients = rsvps.filter((r) => r.eventId === eventId && r.status === 'going');
   recipients.forEach((r) => {
-    outbox.unshift({
-      id: 'o_' + Math.random().toString(36).slice(2, 8),
-      to: r.email || r.name,
-      channel,
-      subject: subject || `Update for ${ev ? ev.title : 'your event'}`,
-      time: 'just now',
+    chList.forEach((channel) => {
+      // SMS/WhatsApp require a phone; Email requires an email.
+      if ((channel === 'SMS' || channel === 'WhatsApp') && !r.phone) return;
+      if (channel === 'Email' && !r.email) return;
+      outbox.unshift({
+        id: 'o_' + Math.random().toString(36).slice(2, 8),
+        to: channel === 'Email' ? (r.email || r.name) : (r.phone || r.name),
+        channel,
+        subject: subject || `Update for ${ev ? ev.title : 'your event'}`,
+        time: 'just now',
+      });
     });
   });
   _notify();
