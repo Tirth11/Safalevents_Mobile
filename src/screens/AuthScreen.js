@@ -280,7 +280,14 @@ export default function AuthScreen({ navigation, route }) {
                   <Field half label="First name" value={f.firstName} onChangeText={(t) => set('firstName', t)} placeholder="Alex" />
                   <Field half label="Last name" value={f.lastName} onChangeText={(t) => set('lastName', t)} placeholder="Rivera" />
                 </View>
-                <Field label="City" value={f.city} onChangeText={(t) => set('city', t)} placeholder="New York" />
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <Field half label="City" value={f.city} onChangeText={(t) => set('city', t)} placeholder="New York" />
+                  <Field half label="State" value={f.state} onChangeText={(t) => set('state', t)} placeholder="NY" />
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: colors.border }}>
+                  <Text style={{ flex: 1, color: colors.textMuted, fontSize: 13.5 }}>Country</Text>
+                  <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '600' }}>USA</Text>
+                </View>
               </>
             ) : null}
 
@@ -301,6 +308,10 @@ export default function AuthScreen({ navigation, route }) {
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Field half label="City" value={f.city} onChangeText={(t) => set('city', t)} placeholder="New York" />
                   <Field half label="State" value={f.state} onChangeText={(t) => set('state', t)} placeholder="NY" />
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: colors.border }}>
+                  <Text style={{ flex: 1, color: colors.textMuted, fontSize: 13.5 }}>Country</Text>
+                  <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '600' }}>USA</Text>
                 </View>
                 <Field label="Contact person" value={f.contactName} onChangeText={(t) => set('contactName', t)} placeholder="Maya Sharma" />
                 <View style={styles.docNote}>
