@@ -14,7 +14,7 @@ const ORG_TYPES = ['NGO', 'Temple', 'Company', 'Community', 'Other'];
 const DEMO_PERSONAS = [
   { key: 'host', title: 'Alex Rivera · Host', desc: 'Manage events, approvals & analytics.', contact: 'alex@safalevent.com', icon: 'grid', tint: 'rgba(242,84,27,0.10)' },
   { key: 'guest', title: 'Alice Vance · Guest', desc: 'Tickets, QR passes, explore events.', contact: 'alice@example.com', icon: 'ticket', tint: 'rgba(0,166,62,0.12)' },
-  { key: 'staff', title: 'Sam Carter · Staff', desc: 'Coordinator — approvals & check-in.', invite: 'INV-SAM-2026', contact: 'sam@safalevent.com', icon: 'shield-checkmark', tint: 'rgba(124,58,237,0.14)' },
+  { key: 'staff', title: 'Sam Carter · Staff', desc: 'Coordinator — approvals & check-in.', invite: 'ORG-SAFAL-2026', contact: 'sam@safalevent.com', icon: 'shield-checkmark', tint: 'rgba(124,58,237,0.14)' },
   { key: 'pending', title: 'Safal Foundation · Org host', desc: 'Unverified org — see the verification gate.', contact: 'org@safalevent.com', icon: 'time', tint: 'rgba(234,179,8,0.16)' },
 ];
 
@@ -58,7 +58,7 @@ export default function AuthScreen({ navigation, route }) {
     firstName: '', lastName: '', email: '', phone: '', city: '', state: '',
     orgName: '', orgType: 'NGO', website: '', contactName: '', name: '',
   });
-  const [staffForm, setStaffForm] = useState({ inviteId: '', contact: '' });
+  const [staffForm, setStaffForm] = useState({ orgId: '', contact: '' });
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
 
   const isOrg = role === 'host' && hostType === 'organization';
@@ -122,7 +122,7 @@ export default function AuthScreen({ navigation, route }) {
     // Register: provision the account.
     const newUser = role === 'host'
       ? { role: 'host', hostType, name: isOrg ? (f.orgName || 'My Organization') : (`${f.firstName} ${f.lastName}`.trim() || HOST.name), email: f.email.trim() || HOST.email, phone: f.phone.trim() }
-      : { role: 'guest', name: f.name.trim() || GUEST.name, email: f.email.trim() || GUEST.email, phone: f.phone.trim() };
+      : { role: 'guest', name: (`${f.firstName} ${f.lastName}`.trim()) || GUEST.name, email: f.email.trim() || GUEST.email, phone: f.phone.trim() };
     // Org hosts start unverified: no docs yet (uploaded inside the app), PENDING.
     if (isOrg) {
       newUser.orgDocsUploaded = false;
@@ -144,7 +144,7 @@ export default function AuthScreen({ navigation, route }) {
 
   const doStaffLogin = () => {
     setError('');
-    const res = loginAsStaff(staffForm.inviteId, staffForm.contact);
+    const res = loginAsStaff(staffForm.orgId, staffForm.contact);
     if (!res.success) { setError(res.error); return; }
     auth.signIn({ role: 'staff', name: res.staff.name, email: res.staff.email });
     routeAfterAuth({ role: 'staff' });
@@ -193,10 +193,10 @@ export default function AuthScreen({ navigation, route }) {
         {staffMode ? (
           <View>
             <Text style={font.h2}>Login as Staff</Text>
-            <Text style={[font.small, { marginBottom: spacing.lg, lineHeight: 19 }]}>Use the Invite ID your host shared with you.</Text>
-            <Field label="Invite ID" value={staffForm.inviteId} autoCapitalize="characters" onChangeText={(t) => setStaffForm({ ...staffForm, inviteId: t })} placeholder="INV-XXXXXX" />
+            <Text style={[font.small, { marginBottom: spacing.lg, lineHeight: 19 }]}>Sign in with your Organization ID.</Text>
+            <Field label="Organization ID" value={staffForm.orgId} autoCapitalize="characters" onChangeText={(t) => setStaffForm({ ...staffForm, orgId: t })} placeholder="ORG-XXXXXX" />
             <Field label="Email or phone" value={staffForm.contact} autoCapitalize="none" onChangeText={(t) => setStaffForm({ ...staffForm, contact: t })} placeholder="you@email.com" />
-            <Text style={styles.hint}>Demo: INV-GATE-1 / gabe@safalevent.com (QR Scanner) · INV-SAM-2026 / sam@safalevent.com (Coordinator)</Text>
+            <Text style={styles.hint}>Demo: ORG-SAFAL-2026 / gabe@safalevent.com (QR Scanner) · ORG-SAFAL-2026 / sam@safalevent.com (Coordinator)</Text>
             <Button label="Sign in as Staff" icon="lock-closed" onPress={doStaffLogin} style={{ marginTop: spacing.md }} />
             <TouchableOpacity onPress={() => { setStaffMode(false); setError(''); }} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.backLink}>
               <Ionicons name="chevron-back" size={15} color={colors.textMuted} />
@@ -270,7 +270,10 @@ export default function AuthScreen({ navigation, route }) {
 
             {/* GUEST register */}
             {mode === 'register' && role === 'guest' ? (
-              <Field label="Full name" value={f.name} onChangeText={(t) => set('name', t)} placeholder="Alice Vance" />
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Field half label="First name" value={f.firstName} onChangeText={(t) => set('firstName', t)} placeholder="Alice" />
+                <Field half label="Last name" value={f.lastName} onChangeText={(t) => set('lastName', t)} placeholder="Vance" />
+              </View>
             ) : null}
 
             {/* HOST individual register */}
@@ -313,7 +316,11 @@ export default function AuthScreen({ navigation, route }) {
                   <Text style={{ flex: 1, color: colors.textMuted, fontSize: 13.5 }}>Country</Text>
                   <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '600' }}>USA</Text>
                 </View>
-                <Field label="Contact person" value={f.contactName} onChangeText={(t) => set('contactName', t)} placeholder="Maya Sharma" />
+                <Text style={styles.label}>Primary contact</Text>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <Field half label="First name" value={f.firstName} onChangeText={(t) => set('firstName', t)} placeholder="Alex" />
+                  <Field half label="Last name" value={f.lastName} onChangeText={(t) => set('lastName', t)} placeholder="Rivera" />
+                </View>
                 <View style={styles.docNote}>
                   <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
                   <Text style={{ color: colors.textMuted, fontSize: 12, flex: 1, lineHeight: 17 }}>

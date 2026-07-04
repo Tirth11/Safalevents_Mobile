@@ -232,7 +232,7 @@ export default function HostCreateEventScreen({ navigation }) {
           <SectionTitle>Visibility</SectionTitle>
           <Card style={{ marginBottom: spacing.lg }}>
             <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>Privacy</Text>
-            <Chips options={['Public', 'Private', 'Unlisted']} value={form.privacy} onChange={(v) => set('privacy', v)} />
+            <Chips options={['Public', 'Private', 'Invite Only']} value={form.privacy} onChange={(v) => set('privacy', v)} />
             <View style={{ height: spacing.md }} />
             <Text style={[font.small, { fontWeight: '700', marginBottom: spacing.sm, color: colors.text }]}>RSVP status</Text>
             <Chips options={['Open', 'Closed']} value={form.rsvpStatus} onChange={(v) => set('rsvpStatus', v)} />
