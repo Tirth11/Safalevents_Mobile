@@ -55,7 +55,7 @@ export default function AuthScreen({ navigation, route }) {
   const [loginUser, setLoginUser] = useState(null); // the looked-up account during login
   const [registeredOrg, setRegisteredOrg] = useState(null); // org record created at signup
   const [f, setF] = useState({
-    firstName: '', lastName: '', email: '', phone: '', city: '', state: '',
+    firstName: '', lastName: '', email: '', phone: '', city: '', state: '', country: 'USA',
     orgName: '', orgType: 'NGO', website: '', contactName: '', name: '',
   });
   const [staffForm, setStaffForm] = useState({ orgId: '', contact: '' });
@@ -270,10 +270,20 @@ export default function AuthScreen({ navigation, route }) {
 
             {/* GUEST register */}
             {mode === 'register' && role === 'guest' ? (
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Field half label="First name" value={f.firstName} onChangeText={(t) => set('firstName', t)} placeholder="Alice" />
-                <Field half label="Last name" value={f.lastName} onChangeText={(t) => set('lastName', t)} placeholder="Vance" />
-              </View>
+              <>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <Field half label="First name" value={f.firstName} onChangeText={(t) => set('firstName', t)} placeholder="Alice" />
+                  <Field half label="Last name" value={f.lastName} onChangeText={(t) => set('lastName', t)} placeholder="Vance" />
+                </View>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <Field half label="City" value={f.city} onChangeText={(t) => set('city', t)} placeholder="New York" />
+                  <Field half label="State" value={f.state} onChangeText={(t) => set('state', t)} placeholder="NY" />
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: colors.border }}>
+                  <Text style={{ flex: 1, color: colors.textMuted, fontSize: 13.5 }}>Country</Text>
+                  <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '600' }}>USA</Text>
+                </View>
+              </>
             ) : null}
 
             {/* HOST individual register */}
