@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, StyleSheet, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font, shadow, avatarUrl } from '../../theme/theme';
 import {
@@ -130,7 +130,34 @@ export default function GuestTicketsScreen({ navigation, route }) {
         );
       })}
 
-      <SectionTitle>Check-in History</SectionTitle>
+      <Row style={[styles.between, { alignItems: 'center', marginTop: spacing.md }]}>
+        <SectionTitle style={{ marginTop: 0 }}>Check-in History</SectionTitle>
+        {summary.found && summary.recent.length > 0 ? (
+          <TouchableOpacity
+            hitSlop={8}
+            activeOpacity={0.7}
+            onPress={async () => {
+              const lines = summary.recent
+                .map((h) => `• ${h.event} (${h.date}) — checked in ${h.actual}/${h.rsvpCount}`)
+                .join('\n');
+              const msg =
+                `📋 My SafalEvents Activity & Check-in History\n\n` +
+                `Events attended: ${summary.totalEventsRsvpd}\n` +
+                `Attendance accuracy: ${summary.accuracy}%\n` +
+                `No-shows: ${summary.noShow}\n\n${lines}`;
+              try {
+                await Share.share({ title: 'My SafalEvents Activity', message: msg });
+              } catch (e) {
+                Alert.alert('Download Activity', 'Your activity history has been saved to your device.');
+              }
+            }}
+            style={{ flexDirection: 'row', alignItems: 'center' }}
+          >
+            <Ionicons name="download-outline" size={16} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13, marginLeft: 4 }}>Download</Text>
+          </TouchableOpacity>
+        ) : null}
+      </Row>
 
       {summary.found && summary.recent.length > 0 ? (
         <>

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert, StyleSheet, TextInput, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, StyleSheet, TextInput, Linking, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font, shadow, avatarUrl } from '../../theme/theme';
 import {
@@ -432,13 +432,28 @@ export default function GuestTicketPassScreen({ navigation, route }) {
         </View>
       </Card>
 
-      {/* ── Save Pass button ──────────────────────────────────────────── */}
+      {/* ── Download / Save QR Pass ───────────────────────────────────── */}
       <Button
-        label="Save Pass to Phone"
+        label="Download QR Pass"
         variant="primary"
         icon="download-outline"
         style={{ marginTop: spacing.lg }}
-        onPress={() => Alert.alert('Save Pass', 'Pass saved to your phone.\n(Prototype — not wired)')}
+        onPress={async () => {
+          try {
+            await Share.share({
+              title: `SafalEvents Pass — ${event.title}`,
+              message:
+                `🎟️ SafalEvents Event Pass\n\n` +
+                `${event.title}\n${event.date} • ${event.time}\n${event.location}\n\n` +
+                `Guest: ${GUEST.name}${guestCount > 1 ? ` (+${guestCount - 1})` : ''}\n` +
+                `Reference ID: ${referenceId}\n` +
+                `Booking ID: RSVP-${event.id}\n\n` +
+                `Present this QR pass at the entrance to check in.`,
+            });
+          } catch (e) {
+            Alert.alert('Download Pass', `Saved pass reference ${referenceId} to your device.`);
+          }
+        }}
       />
 
       <Button

@@ -14,7 +14,7 @@ import {
   Tabs,
   VerificationGate,
 } from '../../components/ui';
-import { events, getRsvps, useStore, getCurrentHost, hostFullyVerified } from '../../data/mock';
+import { events, getRsvps, useStore, getCurrentHost, hostFullyVerified, deleteEvent } from '../../data/mock';
 
 const STATUS_TONE = {
   Published: 'green',
@@ -56,6 +56,19 @@ export default function HostEventsScreen({ navigation, route }) {
 
       {events.map((e) => {
         const count = getRsvps(e.id).length;
+        // "Not yet taken place" — a Draft, or an event whose start is still in the future.
+        const eventStart = new Date(`${e.date}T${e.time || '00:00'}`);
+        const notOccurred = e.status === 'Draft' || (!isNaN(eventStart.getTime()) && eventStart > new Date());
+        const confirmDelete = () => {
+          Alert.alert(
+            'Delete event?',
+            `This permanently deletes "${e.title}" and all its guest RSVP logs. This cannot be undone.`,
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Delete', style: 'destructive', onPress: () => deleteEvent(e.id) },
+            ]
+          );
+        };
         return (
           <Card key={e.id} padded={false} style={{ marginBottom: spacing.md, overflow: 'hidden' }}>
             <Image source={{ uri: e.cover }} style={styles.cover} />
@@ -86,12 +99,24 @@ export default function HostEventsScreen({ navigation, route }) {
                     {count} RSVPs · cap {e.capacity}
                   </Text>
                 </Row>
-                <Button
-                  label="Manage"
-                  variant="outline"
-                  small
-                  onPress={() => navigation.navigate('HostEventManage', { eventId: e.id })}
-                />
+                <Row>
+                  {notOccurred ? (
+                    <TouchableOpacity
+                      onPress={confirmDelete}
+                      hitSlop={8}
+                      activeOpacity={0.7}
+                      style={styles.deleteBtn}
+                    >
+                      <Ionicons name="trash-outline" size={18} color={colors.red} />
+                    </TouchableOpacity>
+                  ) : null}
+                  <Button
+                    label="Manage"
+                    variant="outline"
+                    small
+                    onPress={() => navigation.navigate('HostEventManage', { eventId: e.id })}
+                  />
+                </Row>
               </Row>
             </View>
           </Card>
@@ -104,4 +129,14 @@ export default function HostEventsScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   between: { justifyContent: 'space-between' },
   cover: { width: '100%', height: 120, backgroundColor: colors.surfaceHover },
+  deleteBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
 });
