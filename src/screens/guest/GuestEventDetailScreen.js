@@ -244,7 +244,7 @@ export default function GuestEventDetailScreen({ navigation, route }) {
           </>
         ) : null}
 
-        {event.questions.length > 0 ? (
+        {event.questions?.length > 0 ? (
           <>
             <SectionTitle>What the host asks</SectionTitle>
             <Card style={{ marginBottom: spacing.lg }}>
