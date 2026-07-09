@@ -496,6 +496,14 @@ export default function GuestTicketPassScreen({ navigation, route }) {
       ) : null}
 
       <Button
+        label="Give event feedback"
+        variant="outline"
+        icon="chatbox-ellipses-outline"
+        style={{ marginTop: spacing.md }}
+        onPress={() => navigation.navigate('GuestFeedback', { eventId: event.id })}
+      />
+
+      <Button
         label="Back to My Tickets"
         variant="ghost"
         icon="chevron-back"

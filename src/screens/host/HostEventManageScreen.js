@@ -74,6 +74,7 @@ const MANAGE_TABS = [
   { key: 'polls', label: 'Polls' },
   { key: 'comments', label: 'Comments' },
   { key: 'payments', label: 'Payments' },
+  { key: 'feedback', label: 'Feedback' },
   { key: 'logs', label: 'Notification Logs' },
   { key: 'settings', label: 'Settings' },
   { key: 'checkin', label: 'Check-in' },
@@ -867,6 +868,19 @@ export default function HostEventManageScreen({ navigation, route }) {
           <Card>
             <Text style={[font.h3, { marginBottom: spacing.sm }]}>Connect a processor</Text>
             <Button label="Connect payments" variant="outline" icon="card-outline" onPress={() => Alert.alert('Connect payments', 'Prototype — payment processor connection is simulated.')} />
+          </Card>
+        </View>
+      )}
+
+      {active === 'feedback' && (
+        <View>
+          <Card style={{ marginBottom: spacing.lg }}>
+            <Text style={[font.h3, { marginBottom: spacing.xs }]}>Event Feedback</Text>
+            <Text style={[font.small, { color: colors.textMuted, marginBottom: spacing.md }]}>
+              Build a form with up to 5 custom questions, set expected outcomes, publish, send invites and review analytics.
+            </Text>
+            <Button label="Open feedback builder" variant="primary" icon="chatbox-ellipses-outline"
+              onPress={() => navigation.navigate('HostFeedback', { eventId: event.id })} />
           </Card>
         </View>
       )}

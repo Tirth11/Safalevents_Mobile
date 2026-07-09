@@ -405,6 +405,88 @@ export function useStore() {
   return _version;
 }
 
+// ─── Feedback form builder + responses ────────────────────────────────────────
+const _feedbackForms = {};      // eventId -> form
+const _feedbackResponses = [];  // { id, eventId, name, email, answers, submittedAt }
+
+const _defaultFeedbackForm = () => ({
+  status: 'Draft', // Draft | Published | Closed
+  questions: [
+    { id: 'q1', type: 'rating', text: 'How would you rate the event overall?', required: true, options: [], expected: { kind: 'min_rating', value: 4 } },
+  ],
+  invitesSent: 0,
+});
+
+export const getFeedbackForm = (eventId) => {
+  if (!_feedbackForms[eventId]) _feedbackForms[eventId] = _defaultFeedbackForm();
+  return _feedbackForms[eventId];
+};
+export const saveFeedbackForm = (eventId, form) => {
+  const existing = getFeedbackForm(eventId);
+  const questions = (form.questions || []).slice(0, 5);
+  _feedbackForms[eventId] = { ...existing, ...form, questions };
+  _notify();
+  return _feedbackForms[eventId];
+};
+export const publishFeedbackForm = (eventId) => {
+  const f = getFeedbackForm(eventId);
+  if (!f.questions.length) return { error: 'Add at least one question before publishing.' };
+  if (f.questions.some((q) => !(q.text || '').trim())) {
+    return { error: 'Please write the question text for all questions before publishing.' };
+  }
+  f.status = 'Published'; _notify(); return f;
+};
+export const closeFeedbackForm = (eventId) => {
+  const f = getFeedbackForm(eventId); f.status = 'Closed'; _notify(); return f;
+};
+export const sendFeedbackInvites = (eventId, count) => {
+  const f = getFeedbackForm(eventId); f.invitesSent = (f.invitesSent || 0) + count; _notify(); return f;
+};
+export const getFeedbackResponses = (eventId) => _feedbackResponses.filter((r) => r.eventId === eventId);
+export const submitFeedbackResponse = (eventId, { name, email, answers }) => {
+  const r = {
+    id: 'fb_' + Math.random().toString(36).slice(2, 9),
+    eventId, name: (name || '').trim() || 'Anonymous Guest',
+    email: (email || '').trim() || 'guest@example.com', answers,
+    submittedAt: '2026-07-09T12:00:00Z',
+  };
+  _feedbackResponses.push(r); _notify(); return r;
+};
+export const scoreFeedbackSentiment = (text) => {
+  if (!text) return 'neutral';
+  const t = text.toLowerCase();
+  const pos = ['great','amazing','love','loved','excellent','awesome','fantastic','good','enjoyed','best','wonderful','perfect'];
+  const neg = ['bad','poor','worst','hate','disappointing','boring','late','rude','terrible','awful','slow','cold'];
+  let s = 0; pos.forEach((w) => t.includes(w) && s++); neg.forEach((w) => t.includes(w) && s--);
+  return s > 0 ? 'positive' : s < 0 ? 'negative' : 'neutral';
+};
+export const getFeedbackAnalytics = (eventId) => {
+  const form = getFeedbackForm(eventId);
+  const responses = getFeedbackResponses(eventId);
+  const total = responses.length;
+  const invitesSent = form.invitesSent || 0;
+  const responseRate = invitesSent > 0 ? Math.round((total / invitesSent) * 100) : 0;
+  const perQuestion = form.questions.map((q) => {
+    const vals = responses.map((r) => (r.answers || {})[q.id]).filter((v) => v !== undefined && v !== '' && v !== null);
+    if (q.type === 'rating') {
+      const nums = vals.map(Number).filter((n) => !isNaN(n));
+      const avg = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
+      const dist = [1, 2, 3, 4, 5].map((s) => nums.filter((n) => n === s).length);
+      const met = q.expected?.kind === 'min_rating' ? avg >= q.expected.value : null;
+      return { q, kind: 'rating', count: nums.length, avg: Math.round(avg * 10) / 10, dist, met };
+    }
+    if (q.type === 'single' || q.type === 'multi') {
+      const counts = {}; (q.options || []).forEach((o) => (counts[o] = 0));
+      vals.forEach((v) => (Array.isArray(v) ? v : [v]).forEach((o) => (counts[o] = (counts[o] || 0) + 1)));
+      return { q, kind: 'choice', count: vals.length, counts };
+    }
+    const sentiments = { positive: 0, neutral: 0, negative: 0 };
+    const texts = vals.map(String); texts.forEach((v) => sentiments[scoreFeedbackSentiment(v)]++);
+    return { q, kind: 'text', count: texts.length, sentiments, samples: texts.slice(0, 10) };
+  });
+  return { form, total, invitesSent, responseRate, perQuestion, responses };
+};
+
 // The signed-in staff member (set on "Login as Staff"). null otherwise.
 let _currentStaff = null;
 export const setCurrentStaff = (s) => { _currentStaff = s; _notify(); };
