@@ -243,7 +243,9 @@ export default function HostEventManageScreen({ navigation, route }) {
 
   // ── Settings edit ──
   const [edit, setEdit] = useState({
-    title: event.title, date: event.date, time: event.time, location: event.location,
+    title: event.title, date: event.date, time: event.time,
+    endDate: event.endDate || event.date, endTime: event.endTime || event.time,
+    location: event.location,
     capacity: String(event.capacity || ''), description: event.description,
     seriesType: event.seriesType || 'None',
     approvalRequired: !!event.approvalRequired, autoCheckIn: !!event.autoCheckIn, messagingEnabled: event.messagingEnabled !== false,
@@ -289,8 +291,10 @@ export default function HostEventManageScreen({ navigation, route }) {
     if (edit.eventMode === 'Virtual' || edit.eventMode === 'Hybrid') {
       if (!edit.meetingLink.trim()) { Alert.alert('Required', 'Please enter a virtual meeting link.'); return; }
     }
-    if (!edit.date.trim()) { Alert.alert('Required', 'Please enter a date.'); return; }
-    if (!edit.time.trim()) { Alert.alert('Required', 'Please enter a time.'); return; }
+    if (!edit.date.trim()) { Alert.alert('Required', 'Please enter a start date.'); return; }
+    if (!edit.time.trim()) { Alert.alert('Required', 'Please enter a start time.'); return; }
+    if (!edit.endDate.trim()) { Alert.alert('Required', 'Please enter an end date.'); return; }
+    if (!edit.endTime.trim()) { Alert.alert('Required', 'Please enter an end time.'); return; }
 
     let locationString = '';
     let cityString = '';
@@ -304,6 +308,7 @@ export default function HostEventManageScreen({ navigation, route }) {
 
     updateEvent(event.id, {
       title: edit.title, date: edit.date, time: edit.time, 
+      endDate: edit.endDate, endTime: edit.endTime,
       location: locationString,
       city: cityString,
       capacity: Number(edit.capacity) || 0, description: edit.description, seriesType: edit.seriesType,
@@ -923,8 +928,23 @@ export default function HostEventManageScreen({ navigation, route }) {
             )}
             <View style={{ height: spacing.md }} />
             <Row style={{ gap: spacing.md }}>
-              <TextField half label="Date *" value={edit.date} onChangeText={(t) => setE('date', t)} placeholder="YYYY-MM-DD" />
-              <TextField half label="Time *" value={edit.time} onChangeText={(t) => setE('time', t)} placeholder="19:00" />
+              <TextField half label="Start Date *" value={edit.date} onChangeText={(t) => {
+                setEdit(prev => ({ ...prev, date: t, endDate: prev.endDate || t }));
+              }} placeholder="YYYY-MM-DD" />
+              <TextField half label="Start Time *" value={edit.time} onChangeText={(t) => {
+                let autoEnd = edit.endTime;
+                if (!autoEnd && t) {
+                  const [h, m] = t.split(':').map(Number);
+                  if (!isNaN(h) && !isNaN(m)) {
+                    autoEnd = `${String((h + 1) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                  }
+                }
+                setEdit(prev => ({ ...prev, time: t, endTime: autoEnd }));
+              }} placeholder="19:00" />
+            </Row>
+            <Row style={{ gap: spacing.md }}>
+              <TextField half label="End Date *" value={edit.endDate || ''} onChangeText={(t) => setE('endDate', t)} placeholder="YYYY-MM-DD" />
+              <TextField half label="End Time *" value={edit.endTime || ''} onChangeText={(t) => setE('endTime', t)} placeholder="20:00" />
             </Row>
             <TextField label="Capacity" value={edit.capacity} onChangeText={(t) => setE('capacity', t)} keyboardType="numeric" />
             <TextField label="Description" value={edit.description} onChangeText={(t) => setE('description', t)} multiline />

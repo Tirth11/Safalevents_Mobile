@@ -34,7 +34,7 @@ export default function HostCreateEventScreen({ navigation }) {
   const host = getCurrentHost();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
-    title: '', eventType: 'Birthday Party', date: '', time: '', location: '', description: '',
+    title: '', eventType: 'Birthday Party', date: '', time: '', endDate: '', endTime: '', location: '', description: '',
     accentTheme: ACCENT_THEMES[0].key, cover: COVER_PRESETS[0],
     privacy: 'Public', rsvpStatus: 'Open', capacity: '', maxGuestsPerRsvp: '1', rsvpDeadline: '',
     approvalRequired: false, messagingEnabled: true, allowSelfEdit: false, allowSelfCancellation: false,
@@ -83,6 +83,8 @@ export default function HostCreateEventScreen({ navigation }) {
       ...form,
       location: locationString,
       city: cityString,
+      endDate: form.endDate || form.date,
+      endTime: form.endTime || form.time,
       bank: form.enablePayments
         ? { bankName: form.bankName, holderName: form.holderName, routing: form.routing, account: form.account }
         : null,
@@ -108,8 +110,10 @@ export default function HostCreateEventScreen({ navigation }) {
       if (form.eventMode === 'Virtual' || form.eventMode === 'Hybrid') {
         if (!form.meetingLink.trim()) { Alert.alert('Required', 'Please enter a virtual meeting link.'); return; }
       }
-      if (!form.date.trim()) { Alert.alert('Required', 'Please enter a date.'); return; }
-      if (!form.time.trim()) { Alert.alert('Required', 'Please enter a time.'); return; }
+      if (!form.date.trim()) { Alert.alert('Required', 'Please enter a start date.'); return; }
+      if (!form.time.trim()) { Alert.alert('Required', 'Please enter a start time.'); return; }
+      if (!form.endDate.trim()) { Alert.alert('Required', 'Please enter an end date.'); return; }
+      if (!form.endTime.trim()) { Alert.alert('Required', 'Please enter an end time.'); return; }
     }
     setStep((s) => Math.min(STEPS.length - 1, s + 1));
   };
@@ -136,8 +140,23 @@ export default function HostCreateEventScreen({ navigation }) {
           )}
           <View style={{ height: spacing.md }} />
           <Row style={{ gap: spacing.md }}>
-            <TextField half label="Date *" value={form.date} onChangeText={(t) => set('date', t)} placeholder="YYYY-MM-DD" />
-            <TextField half label="Time *" value={form.time} onChangeText={(t) => set('time', t)} placeholder="19:00" />
+            <TextField half label="Start Date *" value={form.date} onChangeText={(t) => {
+              setForm((prev) => ({ ...prev, date: t, endDate: prev.endDate || t }));
+            }} placeholder="YYYY-MM-DD" />
+            <TextField half label="Start Time *" value={form.time} onChangeText={(t) => {
+              let autoEnd = form.endTime;
+              if (!autoEnd && t) {
+                const [h, m] = t.split(':').map(Number);
+                if (!isNaN(h) && !isNaN(m)) {
+                  autoEnd = `${String((h + 1) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                }
+              }
+              setForm((prev) => ({ ...prev, time: t, endTime: autoEnd }));
+            }} placeholder="19:00" />
+          </Row>
+          <Row style={{ gap: spacing.md }}>
+            <TextField half label="End Date *" value={form.endDate} onChangeText={(t) => set('endDate', t)} placeholder="YYYY-MM-DD" />
+            <TextField half label="End Time *" value={form.endTime} onChangeText={(t) => set('endTime', t)} placeholder="20:00" />
           </Row>
           <TextField label="Description" value={form.description} onChangeText={(t) => set('description', t)} placeholder="Tell guests what to expect…" multiline />
           

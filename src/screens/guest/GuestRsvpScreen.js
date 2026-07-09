@@ -119,7 +119,7 @@ export default function GuestRsvpScreen({ navigation, route }) {
                 <Text style={[font.h3]} numberOfLines={2}>{event.title}</Text>
                 <Row style={{ marginTop: 4 }}>
                   <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
-                  <Text style={[font.small, { marginLeft: 4 }]}>{event.date} • {event.time}</Text>
+                  <Text style={[font.small, { marginLeft: 4 }]}>{event.date} • {event.time}{event.endTime ? ` – ${event.endTime}` : ''}</Text>
                 </Row>
                 <Row style={{ marginTop: 2 }}>
                   <Ionicons name="people-outline" size={13} color={colors.textMuted} />

@@ -49,7 +49,7 @@ export default function GuestEventDetailScreen({ navigation, route }) {
           <Row style={{ marginBottom: spacing.sm }}>
             <Ionicons name="calendar-outline" size={18} color={colors.primary} />
             <Text style={[font.body, { marginLeft: spacing.sm }]}>
-              {event.date} • {event.time}
+              {event.date} • {event.time}{event.endTime ? ` – ${event.endTime}` : ''}
             </Text>
           </Row>
           <Row style={{ marginBottom: spacing.sm }}>

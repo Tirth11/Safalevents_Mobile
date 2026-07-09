@@ -164,7 +164,7 @@ export default function GuestTicketPassScreen({ navigation, route }) {
   const referenceId = myRsvp ? myRsvp.id.toUpperCase() : 'RSVP-' + event.id;
 
   const handleAddToCalendar = (calendarName) => {
-    let msg = `Added "${event.title}" to your ${calendarName}.\n\nDate: ${event.date} • ${event.time}\nVenue: ${event.location}`;
+    let msg = `Added "${event.title}" to your ${calendarName}.\n\nDate: ${event.date} • ${event.time}${event.endTime ? ' – ' + event.endTime : ''}\nVenue: ${event.location}`;
     if (event.dressCode && event.dressCode !== 'No Dress Code') {
       const dcName = event.dressCode === 'Other' ? (event.customDressCode || 'Custom attire') : event.dressCode;
       msg += `\n\nDress Code: ${dcName}`;
@@ -263,7 +263,7 @@ export default function GuestTicketPassScreen({ navigation, route }) {
           <Row style={{ marginTop: spacing.sm, alignSelf: 'flex-start' }}>
             <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
             <Text style={[font.small, { marginLeft: spacing.xs }]}>
-              {event.date} • {event.time}
+               {event.date} • {event.time}{event.endTime ? ` – ${event.endTime}` : ''}
             </Text>
           </Row>
           {/* Mode-specific Ticket details */}
@@ -444,7 +444,7 @@ export default function GuestTicketPassScreen({ navigation, route }) {
               title: `SafalEvents Pass — ${event.title}`,
               message:
                 `🎟️ SafalEvents Event Pass\n\n` +
-                `${event.title}\n${event.date} • ${event.time}\n${event.location}\n\n` +
+                `${event.title}\n${event.date} • ${event.time}${event.endTime ? ' – ' + event.endTime : ''}\n${event.location}\n\n` +
                 `Guest: ${GUEST.name}${guestCount > 1 ? ` (+${guestCount - 1})` : ''}\n` +
                 `Reference ID: ${referenceId}\n` +
                 `Booking ID: RSVP-${event.id}\n\n` +
