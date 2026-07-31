@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, font } from '../theme/theme';
 import { Button, BrandLockup } from '../components/ui';
+import AuthShowcasePanel from '../components/AuthShowcasePanel';
 import { HOST, GUEST, loginAsStaff, loginByContact, registerUser, findUser, setCurrentHost } from '../data/mock';
 import { useAuth } from '../auth/AuthContext';
 
@@ -182,6 +183,9 @@ export default function AuthScreen({ navigation, route }) {
         <View style={styles.header}>
           <BrandLockup size={34} />
         </View>
+
+        {/* Product proof showcase (login/register visual hero) */}
+        {!staffMode && step === 'form' ? <AuthShowcasePanel /> : null}
 
         {error ? (
           <View style={styles.errorBox}>
