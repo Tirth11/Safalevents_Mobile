@@ -8,7 +8,8 @@ import { View, Image, StyleSheet } from 'react-native';
  * Clean, light, breathing room. No stats clutter, no feed wall.
  */
 
-const PHOTO = 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80';
+// Better event photo: people celebrating with warm sunlight
+const PHOTO = 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=900&h=1000&q=85';
 
 export default function AuthShowcasePanel() {
   return (
